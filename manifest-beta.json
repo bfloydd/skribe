@@ -1,0 +1,11 @@
+{
+	"id": "vts",
+	"name": "VTS",
+	"version": "0.0.1",
+	"minAppVersion": "0.15.0",
+	"description": "Video Transcriber & Summarizer",
+	"author": "Ben Floyd",
+	"authorUrl": "https://b.floy.dev",
+	"fundingUrl": "https://paypal.me/bfloydd",
+	"isDesktopOnly": false
+}
