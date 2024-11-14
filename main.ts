@@ -1,4 +1,4 @@
-import { App, Editor, MarkdownView, Modal, Notice, Plugin, PluginSettingTab, Setting, ItemView, WorkspaceLeaf } from 'obsidian';
+import { App, Editor, MarkdownView, Modal, Notice, Plugin, PluginSettingTab, Setting, ItemView, WorkspaceLeaf, Command } from 'obsidian';
 
 // Remember to rename these classes and interfaces!
 
@@ -49,45 +49,35 @@ export default class VTS extends Plugin {
 	view: TranscriptionView;
 
 	async onload() {
+		console.log('Loading VTS plugin...');
+		
 		await this.loadSettings();
 
+		// Register the view
 		this.registerView(
 			VIEW_TYPE_TRANSCRIPTION,
 			(leaf) => new TranscriptionView(leaf)
 		);
 
+		// Add command with explicit editor check
 		this.addCommand({
-			id: 'get-video-transcription',
-			name: 'Get Video Transcription',
-			editorCallback: async (editor: Editor) => {
-				const selection = editor.getSelection();
-				if (!selection) {
-					new Notice('No URL selected');
-					return;
+			id: 'vts-get-selected-transcript',
+			name: 'VTS: Get Selected Video Transcript',
+			icon: 'quote',
+			checkCallback: (checking: boolean) => {
+				const activeView = this.app.workspace.getActiveViewOfType(MarkdownView);
+				if (activeView) {
+					if (!checking) {
+						this.handleTranscriptRequest(activeView).catch(console.error);
+					}
+					return true;
 				}
-
-				if (!this.isYouTubeUrl(selection)) {
-					new Notice('Invalid YouTube URL');
-					return;
-				}
-
-				const videoId = this.extractVideoId(selection);
-				if (!videoId) {
-					new Notice('Could not extract video ID');
-					return;
-				}
-
-				try {
-					const transcript = await this.getYouTubeTranscript(videoId);
-					const view = await this.activateView();
-					view.setContent(transcript);
-				} catch (error) {
-					new Notice('Failed to fetch transcript');
-					console.error(error);
-				}
+				return false;
 			}
 		});
 
+		console.log('VTS plugin loaded, command registered');
+		
 		this.addSettingTab(new VTSSettingTab(this.app, this));
 	}
 
@@ -136,6 +126,37 @@ export default class VTS extends Plugin {
 		const regExp = /^.*(youtu\.be\/|v\/|u\/\w\/|embed\/|watch\?v=|\&v=)([^#\&\?]*).*/;
 		const match = url.match(regExp);
 		return (match && match[2].length === 11) ? match[2] : null;
+	}
+
+	private async handleTranscriptRequest(activeView: MarkdownView) {
+		const editor = activeView.editor;
+		const selection = editor.getSelection();
+		if (!selection) {
+			new Notice('Please select a YouTube URL first');
+			return;
+		}
+
+		if (!this.isYouTubeUrl(selection)) {
+			new Notice('Invalid YouTube URL. Please select a valid YouTube URL');
+			return;
+		}
+
+		const videoId = this.extractVideoId(selection);
+		if (!videoId) {
+			new Notice('Could not extract video ID from the URL');
+			return;
+		}
+
+		new Notice('Fetching transcript...');
+		try {
+			const transcript = await this.getYouTubeTranscript(videoId);
+			const view = await this.activateView();
+			view.setContent(transcript);
+			new Notice('Transcript loaded successfully');
+		} catch (error) {
+			new Notice('Failed to fetch transcript. Check console for details');
+			console.error('VTS Transcript Error:', error);
+		}
 	}
 }
 
