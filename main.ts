@@ -1,4 +1,5 @@
 import { App, Editor, MarkdownView, Modal, Notice, Plugin, PluginSettingTab, Setting, ItemView, WorkspaceLeaf, Command } from 'obsidian';
+import { YoutubeTranscript } from 'youtube-transcript';
 
 // Remember to rename these classes and interfaces!
 
@@ -53,31 +54,29 @@ export default class VTS extends Plugin {
 		
 		await this.loadSettings();
 
-		// Register the view
+		// Simplified command registration for testing
+		this.addCommand({
+			id: 'get-selected-transcript',
+			name: 'Get Selected Video Transcript',
+				callback: () => {
+					console.log('Command executed - simple callback');
+					const markdownView = this.app.workspace.getActiveViewOfType(MarkdownView);
+					if (markdownView) {
+						this.handleTranscriptRequest(markdownView);
+					} else {
+						new Notice('Please open a markdown file first');
+					}
+				}
+		});
+
+		// console.log('Command registered:', this.app.commands.commands); // Debug registered commands
+
+		// Register view
 		this.registerView(
 			VIEW_TYPE_TRANSCRIPTION,
 			(leaf) => new TranscriptionView(leaf)
 		);
 
-		// Add command with explicit editor check
-		this.addCommand({
-			id: 'vts-get-selected-transcript',
-			name: 'VTS: Get Selected Video Transcript',
-			icon: 'quote',
-			checkCallback: (checking: boolean) => {
-				const activeView = this.app.workspace.getActiveViewOfType(MarkdownView);
-				if (activeView) {
-					if (!checking) {
-						this.handleTranscriptRequest(activeView).catch(console.error);
-					}
-					return true;
-				}
-				return false;
-			}
-		});
-
-		console.log('VTS plugin loaded, command registered');
-		
 		this.addSettingTab(new VTSSettingTab(this.app, this));
 	}
 
@@ -111,10 +110,64 @@ export default class VTS extends Plugin {
 	}
 
 	async getYouTubeTranscript(videoId: string): Promise<string> {
-		// This is where you'd implement the YouTube API call
-		// You'll need to use the YouTube Data API or a third-party library
-		// For now, returning a placeholder
-		return `Transcript for video ${videoId}`;
+		try {
+			console.log('→ Starting API request for video:', videoId);
+
+
+
+
+
+
+
+			
+			if (!this.settings.youtubeApiKey) {
+				throw new Error('YouTube API key not configured');
+			}
+
+			// First, get the caption tracks list
+			const captions_url = `https://www.googleapis.com/youtube/v3/captions?part=snippet&videoId=${videoId}&key=${this.settings.youtubeApiKey}`;
+			const response = await fetch(captions_url);
+			console.log('→ Captions list response status:', response.status);
+			
+			const data = await response.json();
+			console.log('→ Captions list data:', data);
+
+			if (!data.items || data.items.length === 0) {
+				throw new Error('No captions found for this video');
+			}
+
+			// Find English captions (or the first available)
+			const captionTrack = data.items.find((item: any) => 
+				item.snippet.language === 'en'
+			) || data.items[0];
+
+			console.log('→ Selected caption track:', captionTrack);
+
+			// Get the actual transcript using timedtext API
+			const transcriptUrl = `https://www.youtube.com/api/timedtext?lang=${captionTrack.snippet.language}&v=${videoId}&fmt=srv3`;
+			const transcriptResponse = await fetch(transcriptUrl);
+			const transcriptText = await transcriptResponse.text();
+			
+			console.log('→ Transcript response:', transcriptText);
+
+			// Parse the XML response
+			const parser = new DOMParser();
+			const xmlDoc = parser.parseFromString(transcriptText, "text/xml");
+			const textElements = xmlDoc.getElementsByTagName('text');
+			
+			// Combine all text elements
+			let fullTranscript = '';
+			for (let i = 0; i < textElements.length; i++) {
+				fullTranscript += textElements[i].textContent + ' ';
+			}
+
+			console.log('→ Processed transcript:', fullTranscript);
+			return fullTranscript.trim();
+
+		} catch (error) {
+			console.error('Error fetching transcript:', error);
+			throw error;
+		}
 	}
 
 	isYouTubeUrl(url: string): boolean {
@@ -129,8 +182,11 @@ export default class VTS extends Plugin {
 	}
 
 	private async handleTranscriptRequest(activeView: MarkdownView) {
+		console.log('handleTranscriptRequest called');
 		const editor = activeView.editor;
 		const selection = editor.getSelection();
+		console.log('Selected text:', selection);
+
 		if (!selection) {
 			new Notice('Please select a YouTube URL first');
 			return;
@@ -142,6 +198,8 @@ export default class VTS extends Plugin {
 		}
 
 		const videoId = this.extractVideoId(selection);
+		console.log('Extracted video ID:', videoId);
+
 		if (!videoId) {
 			new Notice('Could not extract video ID from the URL');
 			return;
@@ -149,9 +207,23 @@ export default class VTS extends Plugin {
 
 		new Notice('Fetching transcript...');
 		try {
-			const transcript = await this.getYouTubeTranscript(videoId);
+			// console.log('1111111111111111');
+			// const youtubeTranscript = require('youtube-transcript');
+			// youtubeTranscript.default.fetchTranscript('_cY5ZD9yh2I').then(console.log);
+			// console.log('2222222222222222');
+
+			// const transcript = await this.getYouTubeTranscript(videoId);
+			// console.log('Transcript:', transcript);
+
+			var yt = require("youtube-transcript");
+			var transcript_obj = await yt.YoutubeTranscript.fetchTranscript('_cY5ZD9yh2I');
+			console.log('Transcript1:', transcript_obj);
+			const text = transcript_obj.map((t: any) => t.text).join(' ');
+			console.log('Transcript2:', text);
+
+			
 			const view = await this.activateView();
-			view.setContent(transcript);
+			// view.setContent(transcript);
 			new Notice('Transcript loaded successfully');
 		} catch (error) {
 			new Notice('Failed to fetch transcript. Check console for details');
