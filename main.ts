@@ -207,11 +207,6 @@ export default class VTS extends Plugin {
 
 		new Notice('Fetching transcript...');
 		try {
-			// console.log('1111111111111111');
-			// const youtubeTranscript = require('youtube-transcript');
-			// youtubeTranscript.default.fetchTranscript('_cY5ZD9yh2I').then(console.log);
-			// console.log('2222222222222222');
-
 			// const transcript = await this.getYouTubeTranscript(videoId);
 			// console.log('Transcript:', transcript);
 

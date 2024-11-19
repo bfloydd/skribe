@@ -1,7 +1,7 @@
 {
-	"name": "obsidian-vts",
+	"name": "skribe",
 	"version": "1.0.0",
-	"description": "Video Transcriber & Summarizer",
+	"description": "Video Transkriber & Summarizer",
 	"main": "main.js",
 	"scripts": {
 		"dev": "node esbuild.config.mjs",
