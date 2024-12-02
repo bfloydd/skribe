@@ -86,18 +86,35 @@ export class TranscriptionView extends ItemView {
     private async saveTranscript() {
         try {
             const folder = this.plugin.settings.transcriptFolder;
-            const folderPath = folder.replace(/^\/+|\/+$/g, ''); // Remove leading/trailing slashes
+            const folderPath = folder.replace(/^\/+|\/+$/g, '');
             
-            // Create folder if it doesn't exist
             if (!(await this.app.vault.adapter.exists(folderPath))) {
                 await this.app.vault.createFolder(folderPath);
             }
 
-            // Generate filename based on current date/time
+            // Format content into paragraphs
+            const formattedContent = this.content
+                .split('. ')
+                .filter(p => p.trim())
+                .map(p => p.trim() + '.')
+                .join('\n\n');
+
             const timestamp = new Date().toISOString().replace(/[:.]/g, '-');
             const filename = `${folderPath}/transcript-${timestamp}.md`;
 
-            await this.app.vault.create(filename, this.content);
+            // Add metadata at the top of the file
+            const fileContent = [
+                '---',
+                'type: transcript',
+                `created: ${new Date().toISOString()}`,
+                '---',
+                '',
+                '# Video Transcript',
+                '',
+                formattedContent
+            ].join('\n');
+
+            await this.app.vault.create(filename, fileContent);
             new Notice(`Transcript saved to ${filename}`);
         } catch (error) {
             new Notice('Failed to save transcript: ' + error.message);
