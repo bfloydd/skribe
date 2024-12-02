@@ -50,7 +50,7 @@ export class TranscriptionView extends ItemView {
         });
         setIcon(copyButton, 'copy');
         copyButton.addEventListener('click', async () => {
-            await navigator.clipboard.writeText(this.content);
+            await navigator.clipboard.writeText(this.formatTranscript());
             new Notice('Transcript copied to clipboard');
         });
 
@@ -67,11 +67,12 @@ export class TranscriptionView extends ItemView {
             cls: 'nav-folder-content'
         });
 
-        // Rest of your existing content rendering code...
+        // Add a styled container for the transcript
         const transcriptContainer = contentContainer.createDiv({
             cls: 'markdown-preview-view markdown-rendered'
         });
 
+        // Split the content into paragraphs and create styled elements
         const paragraphs = this.content.split('. ');
         paragraphs.forEach(paragraph => {
             if (paragraph.trim()) {
@@ -83,6 +84,25 @@ export class TranscriptionView extends ItemView {
         });
     }
 
+    private formatTranscript(): string {
+        const formattedContent = this.content
+            .split('. ')
+            .filter(p => p.trim())
+            .map(p => p.trim() + '.')
+            .join('\n\n');
+
+        return [
+            '---',
+            'type: transcript',
+            `created: ${new Date().toISOString()}`,
+            '---',
+            '',
+            '# Video Transcript',
+            '',
+            formattedContent
+        ].join('\n');
+    }
+
     private async saveTranscript() {
         try {
             const folder = this.plugin.settings.transcriptFolder;
@@ -92,29 +112,10 @@ export class TranscriptionView extends ItemView {
                 await this.app.vault.createFolder(folderPath);
             }
 
-            // Format content into paragraphs
-            const formattedContent = this.content
-                .split('. ')
-                .filter(p => p.trim())
-                .map(p => p.trim() + '.')
-                .join('\n\n');
-
             const timestamp = new Date().toISOString().replace(/[:.]/g, '-');
             const filename = `${folderPath}/transcript-${timestamp}.md`;
 
-            // Add metadata at the top of the file
-            const fileContent = [
-                '---',
-                'type: transcript',
-                `created: ${new Date().toISOString()}`,
-                '---',
-                '',
-                '# Video Transcript',
-                '',
-                formattedContent
-            ].join('\n');
-
-            await this.app.vault.create(filename, fileContent);
+            await this.app.vault.create(filename, this.formatTranscript());
             new Notice(`Transcript saved to ${filename}`);
         } catch (error) {
             new Notice('Failed to save transcript: ' + error.message);
