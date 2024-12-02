@@ -1,4 +1,4 @@
-import { App, Editor, MarkdownView, Modal, Notice, Plugin, PluginSettingTab, Setting, ItemView, WorkspaceLeaf, Command } from 'obsidian';
+import { App, Editor, MarkdownView, Modal, Notice, Plugin, PluginSettingTab, Setting, ItemView, WorkspaceLeaf, Command, requestUrl } from 'obsidian';
 
 // Remember to rename these classes and interfaces!
 
@@ -177,103 +177,64 @@ export default class VTS extends Plugin {
 	}
 
 	async getYouTubeTranscript(videoId: string): Promise<string> {
-		// Stub implementation
-		console.log('Stub getYouTubeTranscript called with videoId:', videoId);
-		
-		// Return some mock transcript data
-// 		return `This is a stubbed transcript for video ${videoId}.
-		
-// Line 1 of the mock transcript.
-// Line 2 of the mock transcript.
-// Line 3 includes some technical terms.
-// Line 4 has more sample content.
-// Line 5 concludes this stub transcript.`;
+		try {
+			// First, fetch the video page
+			const response = await requestUrl({
+				url: `https://www.youtube.com/watch?v=${videoId}`,
+				method: 'GET'
+			});
 
-
-
-			// const videoId = new URLSearchParams(window.location.search).get('v');
-			const YT_INITIAL_PLAYER_RESPONSE_RE =
-				/ytInitialPlayerResponse\s*=\s*({.+?})\s*;\s*(?:var\s+(?:meta|head)|<\/script|\n)/;
-			let player = window.ytInitialPlayerResponse;
-			if (!player || videoId !== player.videoDetails.videoId) {
-				fetch('https://www.youtube.com/watch?v=' + videoId)
-					.then(function (response) {
-						return response.text();
-					})
-					.then(function (body) {
-						const playerResponse = body.match(YT_INITIAL_PLAYER_RESPONSE_RE);
-						if (!playerResponse) {
-							console.warn('Unable to parse playerResponse');
-							return;
-						}
-						player = JSON.parse(playerResponse[1]);
-						const metadata = {
-							title: player.videoDetails.title,
-							duration: player.videoDetails.lengthSeconds,
-							author: player.videoDetails.author,
-							views: player.videoDetails.viewCount,
-						};
-						// Get the tracks and sort them by priority
-						const tracks = player.captions.playerCaptionsTracklistRenderer.captionTracks;
-						tracks.sort(compareTracks);
-
-						// Get the transcript
-						fetch(tracks[0].baseUrl + '&fmt=json3')
-							.then(function (response) {
-								return response.json();
-							})
-							.then(function (transcript) {
-								const result = { transcript: transcript, metadata: metadata };
-
-								const parsedTranscript = transcript.events
-									// Remove invalid segments
-									.filter(function (x: TranscriptEvent) {
-										return x.segs;
-									})
-
-									// Concatenate into single long string
-									.map(function (x: TranscriptEvent) {
-										return x.segs
-											.map(function (y: TranscriptSegment) {
-												return y.utf8;
-											})
-											.join(' ');
-									})
-									.join(' ')
-
-									// Remove invalid characters
-									.replace(/[\u200B-\u200D\uFEFF]/g, '')
-
-									// Replace any whitespace with a single space
-									.replace(/\s+/g, ' ');
-
-								// Use 'result' here as needed
-								console.log('EXTRACTED_TRANSCRIPT', parsedTranscript);
-							});
-					});
-
-		}
-
-		function compareTracks(track1: CaptionTrack, track2: CaptionTrack) {
-			const langCode1 = track1.languageCode;
-			const langCode2 = track2.languageCode;
-
-			if (langCode1 === 'en' && langCode2 !== 'en') {
-				return -1; // English comes first
-			} else if (langCode1 !== 'en' && langCode2 === 'en') {
-				return 1; // English comes first
-			} else if (track1.kind !== 'asr' && track2.kind === 'asr') {
-				return -1; // Non-ASR comes first
-			} else if (track1.kind === 'asr' && track2.kind !== 'asr') {
-				return 1; // Non-ASR comes first
+			// Extract player response
+			const playerResponseMatch = response.text.match(/ytInitialPlayerResponse\s*=\s*({.+?})\s*;\s*(?:var\s+(?:meta|head)|<\/script|\n)/);
+			if (!playerResponseMatch) {
+				throw new Error('Unable to parse player response');
 			}
 
-			return 0; // Preserve order if both have same priority
+			const player = JSON.parse(playerResponseMatch[1]);
+			const metadata = {
+				title: player.videoDetails.title,
+				duration: player.videoDetails.lengthSeconds,
+				author: player.videoDetails.author,
+				views: player.videoDetails.viewCount,
+			};
+
+			// Get the tracks and sort them
+			const tracks = player.captions?.playerCaptionsTracklistRenderer?.captionTracks;
+			if (!tracks || tracks.length === 0) {
+				throw new Error('No captions available for this video');
+			}
+
+			tracks.sort(this.compareTracks);
+
+			// Fetch the transcript
+			const transcriptResponse = await requestUrl({
+				url: `${tracks[0].baseUrl}&fmt=json3`,
+				method: 'GET'
+			});
+
+			const transcript = JSON.parse(transcriptResponse.text);
+
+			const parsedTranscript = transcript.events
+				// Remove invalid segments
+				.filter((x: TranscriptEvent) => x.segs)
+				// Concatenate into single long string
+				.map((x: TranscriptEvent) => {
+					return x.segs
+						.map((y: TranscriptSegment) => y.utf8)
+						.join(' ');
+				})
+				.join(' ')
+				// Remove invalid characters
+				.replace(/[\u200B-\u200D\uFEFF]/g, '')
+				// Replace any whitespace with a single space
+				.replace(/\s+/g, ' ');
+
+			return parsedTranscript;
+
+		} catch (error) {
+			console.error('Error fetching transcript:', error);
+			throw error;
 		}
-
-
-		return "";
-
 	}
 
 	isYouTubeUrl(url: string): boolean {
@@ -316,6 +277,23 @@ export default class VTS extends Plugin {
 			new Notice('Failed to fetch transcript. Check console for details');
 			console.error('VTS Transcript Error:', error);
 		}
+	}
+
+	private compareTracks(track1: CaptionTrack, track2: CaptionTrack) {
+		const langCode1 = track1.languageCode;
+		const langCode2 = track2.languageCode;
+
+		if (langCode1 === 'en' && langCode2 !== 'en') {
+			return -1;
+		} else if (langCode1 !== 'en' && langCode2 === 'en') {
+			return 1;
+		} else if (track1.kind !== 'asr' && track2.kind === 'asr') {
+			return -1;
+		} else if (track1.kind === 'asr' && track2.kind !== 'asr') {
+			return 1;
+		}
+
+		return 0;
 	}
 }
 
