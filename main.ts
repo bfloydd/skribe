@@ -116,7 +116,7 @@ export default class SkribePlugin extends Plugin {
             view.setContent(transcript);
             new Notice('Transcript loaded successfully');
         } catch (error) {
-            new Notice('Failed to fetch transcript. Check console for details');
+            new Notice(error instanceof Error ? error.message : 'Unknown error occurred');
             console.error('Skribe Transcript Error:', error);
         }
     }
