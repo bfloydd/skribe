@@ -99,7 +99,7 @@ export default class VTS extends Plugin {
 		// Simplified command registration for testing
 		this.addCommand({
 			id: 'get-selected-transcript',
-			name: 'Get Selected Video Transcript',
+			name: 'Get Video Transcript by Selection',
 				callback: () => {
 					console.log('Command executed - simple callback');
 					const markdownView = this.app.workspace.getActiveViewOfType(MarkdownView);
@@ -129,7 +129,7 @@ export default class VTS extends Plugin {
 		// Add this new command after the existing command registration
 		this.addCommand({
 			id: 'prompt-youtube-url',
-			name: 'Skribe: Prompt for URL',
+			name: 'Get Video Transcript by Prompt',
 			callback: () => {
 				new URLInputModal(this.app, (url) => {
 					if (this.isYouTubeUrl(url)) {
