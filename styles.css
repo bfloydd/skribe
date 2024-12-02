@@ -6,3 +6,16 @@ available in the app when your plugin is enabled.
 If your plugin does not need CSS, delete this file.
 
 */
+
+.transcript-paragraph {
+    margin-bottom: 1em;
+    line-height: 1.6;
+    font-size: 1.1em;
+}
+
+.transcript-paragraph:hover {
+    background-color: var(--background-secondary);
+    /* border-radius: 4px;
+    padding: 0.5em; */
+    transition: background-color 0.2s ease;
+}

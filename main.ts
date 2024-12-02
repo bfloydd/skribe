@@ -38,7 +38,7 @@ export default class SkribePlugin extends Plugin {
     private initializeView() {
         this.registerView(
             VIEW_TYPE_TRANSCRIPTION,
-            (leaf: WorkspaceLeaf) => new TranscriptionView(leaf)
+            (leaf: WorkspaceLeaf) => new TranscriptionView(leaf, this)
         );
     }
 

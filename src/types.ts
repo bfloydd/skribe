@@ -1,9 +1,11 @@
 export interface SkribeSettings {
     youtubeApiKey: string;
+    transcriptFolder: string;
 }
 
 export const DEFAULT_SETTINGS: SkribeSettings = {
-    youtubeApiKey: ''
+    youtubeApiKey: '',
+    transcriptFolder: 'Transcripts'
 }
 
 export interface TranscriptSegment {

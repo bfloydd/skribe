@@ -23,5 +23,16 @@ export class SettingsTab extends PluginSettingTab {
                     this.plugin.settings.youtubeApiKey = value;
                     await this.plugin.saveSettings();
                 }));
+
+        new Setting(containerEl)
+            .setName('Transcript Folder')
+            .setDesc('Folder to save transcripts (will be created if it doesn\'t exist)')
+            .addText(text => text
+                .setPlaceholder('Transcripts')
+                .setValue(this.plugin.settings.transcriptFolder)
+                .onChange(async (value) => {
+                    this.plugin.settings.transcriptFolder = value;
+                    await this.plugin.saveSettings();
+                }));
     }
 } 
