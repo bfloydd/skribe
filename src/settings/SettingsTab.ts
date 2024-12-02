@@ -14,17 +14,6 @@ export class SettingsTab extends PluginSettingTab {
         containerEl.empty();
 
         new Setting(containerEl)
-            .setName('YouTube API Key')
-            .setDesc('Enter your YouTube Data API key')
-            .addText(text => text
-                .setPlaceholder('Enter API key')
-                .setValue(this.plugin.settings.youtubeApiKey)
-                .onChange(async (value) => {
-                    this.plugin.settings.youtubeApiKey = value;
-                    await this.plugin.saveSettings();
-                }));
-
-        new Setting(containerEl)
             .setName('Transcript Folder')
             .setDesc('Folder to save transcripts (will be created if it doesn\'t exist)')
             .addText(text => text
