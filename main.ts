@@ -1,5 +1,4 @@
 import { App, Editor, MarkdownView, Modal, Notice, Plugin, PluginSettingTab, Setting, ItemView, WorkspaceLeaf, Command } from 'obsidian';
-import { YoutubeTranscript } from 'youtube-transcript';
 
 // Remember to rename these classes and interfaces!
 
@@ -45,6 +44,49 @@ export class TranscriptionView extends ItemView {
 	}
 }
 
+export class URLInputModal extends Modal {
+	result: string;
+	onSubmit: (result: string) => void;
+
+	constructor(app: App, onSubmit: (result: string) => void) {
+		super(app);
+		this.onSubmit = onSubmit;
+	}
+
+	onOpen() {
+		const {contentEl} = this;
+		contentEl.createEl("h2", { text: "Enter YouTube URL" });
+
+		const inputEl = contentEl.createEl("input", {
+			type: "text",
+			placeholder: "https://www.youtube.com/watch?v=..."
+		});
+		inputEl.style.width = "100%";
+		inputEl.style.marginBottom = "1em";
+
+		const buttonEl = contentEl.createEl("button", {
+			text: "Get Transcript"
+		});
+		buttonEl.addEventListener("click", () => {
+			this.onSubmit(inputEl.value);
+			this.close();
+		});
+
+		// Allow Enter key to submit
+		inputEl.addEventListener("keypress", (e) => {
+			if (e.key === "Enter") {
+				this.onSubmit(inputEl.value);
+				this.close();
+			}
+		});
+	}
+
+	onClose() {
+		const {contentEl} = this;
+		contentEl.empty();
+	}
+}
+
 export default class VTS extends Plugin {
 	settings: VTSSettings;
 	view: TranscriptionView;
@@ -62,7 +104,12 @@ export default class VTS extends Plugin {
 					console.log('Command executed - simple callback');
 					const markdownView = this.app.workspace.getActiveViewOfType(MarkdownView);
 					if (markdownView) {
-						this.handleTranscriptRequest(markdownView);
+						const selection = markdownView.editor.getSelection();
+						if (selection) {
+							this.handleTranscriptRequest(selection);
+						} else {
+							new Notice('Please select a YouTube URL first');
+						}
 					} else {
 						new Notice('Please open a markdown file first');
 					}
@@ -78,6 +125,26 @@ export default class VTS extends Plugin {
 		);
 
 		this.addSettingTab(new VTSSettingTab(this.app, this));
+
+		// Add this new command after the existing command registration
+		this.addCommand({
+			id: 'prompt-youtube-url',
+			name: 'Skribe: Prompt for URL',
+			callback: () => {
+				new URLInputModal(this.app, (url) => {
+					if (this.isYouTubeUrl(url)) {
+						const videoId = this.extractVideoId(url);
+						if (videoId) {
+							this.handleTranscriptRequest(url);
+						} else {
+							new Notice('Could not extract video ID from the URL');
+						}
+					} else {
+						new Notice('Invalid YouTube URL');
+					}
+				}).open();
+			}
+		});
 	}
 
 	onunload() {
@@ -110,64 +177,103 @@ export default class VTS extends Plugin {
 	}
 
 	async getYouTubeTranscript(videoId: string): Promise<string> {
-		try {
-			console.log('→ Starting API request for video:', videoId);
+		// Stub implementation
+		console.log('Stub getYouTubeTranscript called with videoId:', videoId);
+		
+		// Return some mock transcript data
+// 		return `This is a stubbed transcript for video ${videoId}.
+		
+// Line 1 of the mock transcript.
+// Line 2 of the mock transcript.
+// Line 3 includes some technical terms.
+// Line 4 has more sample content.
+// Line 5 concludes this stub transcript.`;
 
 
 
+			// const videoId = new URLSearchParams(window.location.search).get('v');
+			const YT_INITIAL_PLAYER_RESPONSE_RE =
+				/ytInitialPlayerResponse\s*=\s*({.+?})\s*;\s*(?:var\s+(?:meta|head)|<\/script|\n)/;
+			let player = window.ytInitialPlayerResponse;
+			if (!player || videoId !== player.videoDetails.videoId) {
+				fetch('https://www.youtube.com/watch?v=' + videoId)
+					.then(function (response) {
+						return response.text();
+					})
+					.then(function (body) {
+						const playerResponse = body.match(YT_INITIAL_PLAYER_RESPONSE_RE);
+						if (!playerResponse) {
+							console.warn('Unable to parse playerResponse');
+							return;
+						}
+						player = JSON.parse(playerResponse[1]);
+						const metadata = {
+							title: player.videoDetails.title,
+							duration: player.videoDetails.lengthSeconds,
+							author: player.videoDetails.author,
+							views: player.videoDetails.viewCount,
+						};
+						// Get the tracks and sort them by priority
+						const tracks = player.captions.playerCaptionsTracklistRenderer.captionTracks;
+						tracks.sort(compareTracks);
 
+						// Get the transcript
+						fetch(tracks[0].baseUrl + '&fmt=json3')
+							.then(function (response) {
+								return response.json();
+							})
+							.then(function (transcript) {
+								const result = { transcript: transcript, metadata: metadata };
 
+								const parsedTranscript = transcript.events
+									// Remove invalid segments
+									.filter(function (x: TranscriptEvent) {
+										return x.segs;
+									})
 
+									// Concatenate into single long string
+									.map(function (x: TranscriptEvent) {
+										return x.segs
+											.map(function (y: TranscriptSegment) {
+												return y.utf8;
+											})
+											.join(' ');
+									})
+									.join(' ')
 
-			
-			if (!this.settings.youtubeApiKey) {
-				throw new Error('YouTube API key not configured');
-			}
+									// Remove invalid characters
+									.replace(/[\u200B-\u200D\uFEFF]/g, '')
 
-			// First, get the caption tracks list
-			const captions_url = `https://www.googleapis.com/youtube/v3/captions?part=snippet&videoId=${videoId}&key=${this.settings.youtubeApiKey}`;
-			const response = await fetch(captions_url);
-			console.log('→ Captions list response status:', response.status);
-			
-			const data = await response.json();
-			console.log('→ Captions list data:', data);
+									// Replace any whitespace with a single space
+									.replace(/\s+/g, ' ');
 
-			if (!data.items || data.items.length === 0) {
-				throw new Error('No captions found for this video');
-			}
+								// Use 'result' here as needed
+								console.log('EXTRACTED_TRANSCRIPT', parsedTranscript);
+							});
+					});
 
-			// Find English captions (or the first available)
-			const captionTrack = data.items.find((item: any) => 
-				item.snippet.language === 'en'
-			) || data.items[0];
-
-			console.log('→ Selected caption track:', captionTrack);
-
-			// Get the actual transcript using timedtext API
-			const transcriptUrl = `https://www.youtube.com/api/timedtext?lang=${captionTrack.snippet.language}&v=${videoId}&fmt=srv3`;
-			const transcriptResponse = await fetch(transcriptUrl);
-			const transcriptText = await transcriptResponse.text();
-			
-			console.log('→ Transcript response:', transcriptText);
-
-			// Parse the XML response
-			const parser = new DOMParser();
-			const xmlDoc = parser.parseFromString(transcriptText, "text/xml");
-			const textElements = xmlDoc.getElementsByTagName('text');
-			
-			// Combine all text elements
-			let fullTranscript = '';
-			for (let i = 0; i < textElements.length; i++) {
-				fullTranscript += textElements[i].textContent + ' ';
-			}
-
-			console.log('→ Processed transcript:', fullTranscript);
-			return fullTranscript.trim();
-
-		} catch (error) {
-			console.error('Error fetching transcript:', error);
-			throw error;
 		}
+
+		function compareTracks(track1: CaptionTrack, track2: CaptionTrack) {
+			const langCode1 = track1.languageCode;
+			const langCode2 = track2.languageCode;
+
+			if (langCode1 === 'en' && langCode2 !== 'en') {
+				return -1; // English comes first
+			} else if (langCode1 !== 'en' && langCode2 === 'en') {
+				return 1; // English comes first
+			} else if (track1.kind !== 'asr' && track2.kind === 'asr') {
+				return -1; // Non-ASR comes first
+			} else if (track1.kind === 'asr' && track2.kind !== 'asr') {
+				return 1; // Non-ASR comes first
+			}
+
+			return 0; // Preserve order if both have same priority
+		}
+
+
+		return "";
+
 	}
 
 	isYouTubeUrl(url: string): boolean {
@@ -181,23 +287,16 @@ export default class VTS extends Plugin {
 		return (match && match[2].length === 11) ? match[2] : null;
 	}
 
-	private async handleTranscriptRequest(activeView: MarkdownView) {
+	private async handleTranscriptRequest(url: string) {
 		console.log('handleTranscriptRequest called');
-		const editor = activeView.editor;
-		const selection = editor.getSelection();
-		console.log('Selected text:', selection);
+		console.log('URL:', url);
 
-		if (!selection) {
-			new Notice('Please select a YouTube URL first');
+		if (!this.isYouTubeUrl(url)) {
+			new Notice('Invalid YouTube URL');
 			return;
 		}
 
-		if (!this.isYouTubeUrl(selection)) {
-			new Notice('Invalid YouTube URL. Please select a valid YouTube URL');
-			return;
-		}
-
-		const videoId = this.extractVideoId(selection);
+		const videoId = this.extractVideoId(url);
 		console.log('Extracted video ID:', videoId);
 
 		if (!videoId) {
@@ -207,18 +306,11 @@ export default class VTS extends Plugin {
 
 		new Notice('Fetching transcript...');
 		try {
-			// const transcript = await this.getYouTubeTranscript(videoId);
-			// console.log('Transcript:', transcript);
-
-			var yt = require("youtube-transcript");
-			var transcript_obj = await yt.YoutubeTranscript.fetchTranscript('_cY5ZD9yh2I');
-			console.log('Transcript1:', transcript_obj);
-			const text = transcript_obj.map((t: any) => t.text).join(' ');
-			console.log('Transcript2:', text);
-
+			const transcript = await this.getYouTubeTranscript(videoId);
+			console.log('Transcript:', transcript);
 			
 			const view = await this.activateView();
-			// view.setContent(transcript);
+			view.setContent(transcript);
 			new Notice('Transcript loaded successfully');
 		} catch (error) {
 			new Notice('Failed to fetch transcript. Check console for details');
@@ -266,4 +358,25 @@ class VTSSettingTab extends PluginSettingTab {
 					await this.plugin.saveSettings();
 				}));
 	}
+}
+
+// Add this near the top of the file, after the imports
+declare global {
+    interface Window {
+        ytInitialPlayerResponse: any;  // You can replace 'any' with a more specific type if needed
+    }
+}
+
+// Add these interfaces near the top of the file
+interface TranscriptSegment {
+    utf8: string;
+}
+
+interface TranscriptEvent {
+    segs: TranscriptSegment[];
+}
+
+interface CaptionTrack {
+    languageCode: string;
+    kind: string;
 }
