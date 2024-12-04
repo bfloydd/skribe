@@ -95,9 +95,17 @@ export default class SkribePlugin extends Plugin {
 
     private async activateView() {
         const { workspace } = this.app;
-        let leaf = workspace.getRightLeaf(false);
-        if (!leaf) {
-            leaf = workspace.getLeaf('split', 'vertical');
+        
+        // Try to find existing TranscriptionView
+        let existingView = workspace.getLeavesOfType(VIEW_TYPE_TRANSCRIPTION)[0];
+        let leaf: WorkspaceLeaf;
+
+        if (existingView) {
+            // Use existing leaf if view already exists
+            leaf = existingView;
+        } else {
+            // Create new leaf if no view exists
+            leaf = workspace.getRightLeaf(false) || workspace.getLeaf();
         }
         
         await leaf.setViewState({
