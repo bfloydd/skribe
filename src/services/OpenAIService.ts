@@ -22,14 +22,18 @@ export class OpenAIService {
             throw new Error('OpenAI API key not set');
         }
 
-        const prompt = `Please reformat the following transcript to be more readable. 
-        - Fix any formatting issues
-        - Add proper punctuation
-        - Break into logical paragraphs
-        - Maintain the original meaning and content
-        - Remove any unnecessary spaces or line breaks
+        // const prompt = `Please reformat the following transcript to be more readable. 
+        // - Fix any formatting issues
+        // - Add proper punctuation
+        // - Break into logical paragraphs
+        // - Maintain the original meaning and content
+        // - Remove any unnecessary spaces or line breaks
         
-        Transcript: ${text}`;
+        // Transcript: ${text}`;
+
+        const prompt = `Act like a grammar expert and fix for punctuation. Intuit where sentences are missing periods and add them, then correcting the punctuation. Look for run-on sentences and them them more readable, while keeping the original meaning. Never change the meaning or the general length of the input, just fix the punctuation to make it more readable.
+        
+        ${text}`;
 
         try {
             console.log('Making OpenAI API request...');

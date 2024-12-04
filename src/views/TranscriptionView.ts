@@ -157,13 +157,18 @@ export class TranscriptionView extends ItemView {
                 return;
             }
 
-            new Notice('Reformatting transcript...');
-            const openai = OpenAIService.getInstance();
-            const reformattedText = await openai.reformatText(this.content);
-            this.setContent(reformattedText);
-            new Notice('Transcript reformatted successfully');
+            const loadingNotice = new Notice('Reformatting transcript...', 0);
+            try {
+                const openai = OpenAIService.getInstance();
+                const reformattedText = await openai.reformatText(this.content);
+                this.setContent(reformattedText);
+                loadingNotice.hide();
+                new Notice('Transcript reformatted successfully');
+            } catch (error) {
+                loadingNotice.hide();
+                throw error;
+            }
         } catch (error) {
-            console.error('Error reformatting transcript:', error);
             new Notice('Failed to reformat transcript: ' + error.message);
         }
     }
