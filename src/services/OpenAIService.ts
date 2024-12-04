@@ -31,9 +31,21 @@ export class OpenAIService {
         
         // Transcript: ${text}`;
 
-        const prompt = `Act like a grammar expert and fix for punctuation. Intuit where sentences are missing periods and add them, then correcting the punctuation. Look for run-on sentences and them them more readable, while keeping the original meaning. Never change the meaning or the general length of the input, just fix the punctuation to make it more readable.
+
+        const prompt = `- Act like a grammar expert and reformat the following to be more readable. 
+        - Group related ideas into longer paragraphs while fixing run-on sentences without changing the meaning.
+        - Add proper punctuation. 
         
         ${text}`;
+
+        //- Fix run-on sentences without changing the meaning, grouping related ideas into logical paragraphs.
+        // - Remove any unnecessary spaces or line breaks. 
+        // - Maintain the original meaning and content. 
+        // - Fix run - on sentences without changing the meaning.
+        // 
+        // const prompt = `Act like a grammar expert and fix for punctuation. Intuit where sentences are missing periods and add them, then correcting the punctuation. Look for run-on sentences and them them more readable, while keeping the original meaning. Never change the meaning or the general length of the input, just fix the punctuation to make it more readable. 
+        
+        // ${text}`;
 
         try {
             console.log('Making OpenAI API request...');
@@ -45,14 +57,14 @@ export class OpenAIService {
                     'Content-Type': 'application/json'
                 },
                 body: JSON.stringify({
-                    model: "gpt-3.5-turbo",
+                    model: "gpt-4o",
                     messages: [
                         {
                             role: "user",
                             content: prompt
                         }
                     ],
-                    temperature: 0.3
+                    temperature: 1
                 })
             });
 
