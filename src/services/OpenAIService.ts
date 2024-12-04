@@ -22,30 +22,31 @@ export class OpenAIService {
             throw new Error('OpenAI API key not set');
         }
 
-        // const prompt = `Please reformat the following transcript to be more readable. 
-        // - Fix any formatting issues
-        // - Add proper punctuation
-        // - Break into logical paragraphs
-        // - Maintain the original meaning and content
-        // - Remove any unnecessary spaces or line breaks
-        
-        // Transcript: ${text}`;
+        const prompt = `Please analyze and reformat this transcript into a well-structured markdown document. Include:
 
+1. A brief summary (2-3 sentences) at the top
+2. Key points or takeaways as bullet points
+3. The main transcript content below, reformatted with:
+   - Proper paragraphs
+   - Correct punctuation
+   - Logical flow
+   - Clear speaker transitions (if any)
+   - Don't lose any information, especially including examples, quotes, or specific details.
 
-        const prompt = `- Act like a grammar expert and reformat the following to be more readable. 
-        - Group related ideas into longer paragraphs while fixing run-on sentences without changing the meaning.
-        - Add proper punctuation. 
-        
-        ${text}`;
+Format the output as follows:
 
-        //- Fix run-on sentences without changing the meaning, grouping related ideas into logical paragraphs.
-        // - Remove any unnecessary spaces or line breaks. 
-        // - Maintain the original meaning and content. 
-        // - Fix run - on sentences without changing the meaning.
-        // 
-        // const prompt = `Act like a grammar expert and fix for punctuation. Intuit where sentences are missing periods and add them, then correcting the punctuation. Look for run-on sentences and them them more readable, while keeping the original meaning. Never change the meaning or the general length of the input, just fix the punctuation to make it more readable. 
-        
-        // ${text}`;
+# Summary
+[2-3 sentence summary]
+
+## Key Points
+- [key point 1]
+- [key point 2]
+etc.
+
+## Transcript
+[reformatted transcript content]
+
+Here's the transcript to process: ${text}`;
 
         try {
             console.log('Making OpenAI API request...');

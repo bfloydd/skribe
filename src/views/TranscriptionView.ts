@@ -1,4 +1,4 @@
-import { ItemView, WorkspaceLeaf, setIcon, Notice } from 'obsidian';
+import { ItemView, WorkspaceLeaf, setIcon, Notice, MarkdownRenderer } from 'obsidian';
 import type SkribePlugin from '../../main';
 import { OpenAIService } from '../services/OpenAIService';
 
@@ -7,6 +7,7 @@ export const VIEW_TYPE_TRANSCRIPTION = "transcription-view";
 export class TranscriptionView extends ItemView {
     content: string;
     plugin: SkribePlugin;
+    contentEl: HTMLElement;
 
     constructor(leaf: WorkspaceLeaf, plugin: SkribePlugin) {
         super(leaf);
@@ -70,7 +71,7 @@ export class TranscriptionView extends ItemView {
         });
         setIcon(copyButton, 'copy');
         copyButton.addEventListener('click', async () => {
-            await navigator.clipboard.writeText(this.formatTranscript());
+            await navigator.clipboard.writeText(this.content);
             new Notice('Transcript copied to clipboard');
         });
 
@@ -85,49 +86,40 @@ export class TranscriptionView extends ItemView {
         // Format button
         const formatButton = buttonContainer.createEl('button', {
             cls: 'clickable-icon',
-            attr: { 'aria-label': 'Fix formatting with AI' }
+            attr: { 
+                'aria-label': 'Enhance with AI (Format + Summary)',
+                'title': 'Format transcript and add summary with key points'
+            }
         });
         setIcon(formatButton, 'wand');
         formatButton.addEventListener('click', () => this.reformatWithAI());
 
         // Create content container with padding
         const contentContainer = container.createDiv({
-            cls: 'nav-folder-content'
+            cls: 'nav-folder-content markdown-preview-view'
         });
 
-        // Add a styled container for the transcript
-        const transcriptContainer = contentContainer.createDiv({
-            cls: 'markdown-preview-view markdown-rendered'
-        });
-
-        // Split the content into paragraphs and create styled elements
-        const paragraphs = this.content.split('. ');
-        paragraphs.forEach(paragraph => {
-            if (paragraph.trim()) {
-                transcriptContainer.createEl('p', {
-                    text: paragraph.trim() + '.',
-                    cls: 'transcript-paragraph'
-                });
-            }
-        });
+        // Create markdown content container
+        const markdownContainer = contentContainer.createDiv();
+        
+        if (this.content) {
+            await MarkdownRenderer.renderMarkdown(
+                this.content,
+                markdownContainer,
+                this.app.workspace.getActiveFile()?.path || '',
+                this
+            );
+        }
     }
 
     private formatTranscript(): string {
-        const formattedContent = this.content
-            .split('. ')
-            .filter(p => p.trim())
-            .map(p => p.trim() + '.')
-            .join('\n\n');
-
         return [
             '---',
             'type: transcript',
             `created: ${new Date().toISOString()}`,
             '---',
             '',
-            '# Video Transcript',
-            '',
-            formattedContent
+            this.content
         ].join('\n');
     }
 
