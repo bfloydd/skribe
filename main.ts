@@ -1,9 +1,10 @@
-import { Plugin, Notice, MarkdownView, WorkspaceLeaf } from 'obsidian';
+import { Plugin, Notice, MarkdownView, WorkspaceLeaf, Menu, Editor, setIcon } from 'obsidian';
 import { SkribeSettings, DEFAULT_SETTINGS } from './src/types';
 import { YouTubeService } from './src/services/YouTubeService';
 import { TranscriptionView, VIEW_TYPE_TRANSCRIPTION } from './src/views/TranscriptionView';
 import { URLInputModal } from './src/ui/URLInputModal';
 import { SettingsTab } from './src/settings/SettingsTab';
+import { SkribeMenu } from './src/ui/SkribeMenu';
 
 export default class SkribePlugin extends Plugin {
     settings: SkribeSettings;
@@ -18,15 +19,8 @@ export default class SkribePlugin extends Plugin {
 
         this.registerCommands();
         this.initializeView();
+        this.initializeMenu();
         this.addSettingTab(new SettingsTab(this.app, this));
-
-        this.addRibbonIcon(
-            'feather', // or 'pen' if you prefer
-            'Skribe',
-            () => {
-                this.handlePromptCommand();
-            }
-        );
     }
 
     private registerCommands() {
@@ -56,7 +50,7 @@ export default class SkribePlugin extends Plugin {
         );
     }
 
-    private handleSelectionCommand() {
+    public handleSelectionCommand() {
         const markdownView = this.app.workspace.getActiveViewOfType(MarkdownView);
         if (!markdownView) {
             new Notice('Please open a markdown file first');
@@ -72,7 +66,7 @@ export default class SkribePlugin extends Plugin {
         this.handleTranscriptRequest(selection);
     }
 
-    private handlePromptCommand() {
+    public handlePromptCommand() {
         new URLInputModal(this.app, (url) => {
             if (this.youtubeService.isYouTubeUrl(url)) {
                 const videoId = this.youtubeService.extractVideoId(url);
@@ -135,7 +129,7 @@ export default class SkribePlugin extends Plugin {
         }
     }
 
-    private async handleReplaceCommand() {
+    public async handleReplaceCommand() {
         const markdownView = this.app.workspace.getActiveViewOfType(MarkdownView);
         if (!markdownView) {
             new Notice('Please open a markdown file first');
@@ -208,5 +202,14 @@ export default class SkribePlugin extends Plugin {
 
         await this.app.vault.create(filename, fileContent);
         return filename;
+    }
+
+    private initializeMenu() {
+        const menu = new SkribeMenu(this);
+        this.addRibbonIcon('feather', 'Skribe', (evt: MouseEvent) => {
+            evt.preventDefault();
+            evt.stopPropagation();
+            menu.toggle();
+        });
     }
 } 
