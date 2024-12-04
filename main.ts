@@ -1,6 +1,7 @@
 import { Plugin, Notice, MarkdownView, WorkspaceLeaf, Menu, Editor, setIcon } from 'obsidian';
 import { SkribeSettings, DEFAULT_SETTINGS } from './src/types';
 import { YouTubeService } from './src/services/YouTubeService';
+import { OpenAIService } from './src/services/OpenAIService';
 import { TranscriptionView, VIEW_TYPE_TRANSCRIPTION } from './src/views/TranscriptionView';
 import { URLInputModal } from './src/ui/URLInputModal';
 import { SettingsTab } from './src/settings/SettingsTab';
@@ -10,12 +11,15 @@ export default class SkribePlugin extends Plugin {
     settings: SkribeSettings;
     view: TranscriptionView;
     youtubeService: YouTubeService;
+    openaiService: OpenAIService;
 
     async onload() {
         console.log('Loading Skribe plugin...');
         
         await this.loadSettings();
         this.youtubeService = YouTubeService.getInstance();
+        this.openaiService = OpenAIService.getInstance();
+        this.openaiService.setApiKey(this.settings.openaiApiKey);
 
         this.registerCommands();
         this.initializeView();

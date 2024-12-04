@@ -163,6 +163,7 @@ export class TranscriptionView extends ItemView {
             this.setContent(reformattedText);
             new Notice('Transcript reformatted successfully');
         } catch (error) {
+            console.error('Error reformatting transcript:', error);
             new Notice('Failed to reformat transcript: ' + error.message);
         }
     }
