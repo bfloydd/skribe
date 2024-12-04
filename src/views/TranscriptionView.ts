@@ -1,5 +1,6 @@
 import { ItemView, WorkspaceLeaf, setIcon, Notice } from 'obsidian';
 import type SkribePlugin from '../../main';
+import { OpenAIService } from '../services/OpenAIService';
 
 export const VIEW_TYPE_TRANSCRIPTION = "transcription-view";
 
@@ -81,6 +82,14 @@ export class TranscriptionView extends ItemView {
         setIcon(saveButton, 'save');
         saveButton.addEventListener('click', () => this.saveTranscript());
 
+        // Format button
+        const formatButton = buttonContainer.createEl('button', {
+            cls: 'clickable-icon',
+            attr: { 'aria-label': 'Fix formatting with AI' }
+        });
+        setIcon(formatButton, 'wand');
+        formatButton.addEventListener('click', () => this.reformatWithAI());
+
         // Create content container with padding
         const contentContainer = container.createDiv({
             cls: 'nav-folder-content'
@@ -138,6 +147,23 @@ export class TranscriptionView extends ItemView {
             new Notice(`Transcript saved to ${filename}`);
         } catch (error) {
             new Notice('Failed to save transcript: ' + error.message);
+        }
+    }
+
+    private async reformatWithAI() {
+        try {
+            if (!this.plugin.settings.openaiApiKey) {
+                new Notice('Please set your OpenAI API key in settings');
+                return;
+            }
+
+            new Notice('Reformatting transcript...');
+            const openai = OpenAIService.getInstance();
+            const reformattedText = await openai.reformatText(this.content);
+            this.setContent(reformattedText);
+            new Notice('Transcript reformatted successfully');
+        } catch (error) {
+            new Notice('Failed to reformat transcript: ' + error.message);
         }
     }
 } 

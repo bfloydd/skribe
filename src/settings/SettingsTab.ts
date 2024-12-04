@@ -1,5 +1,6 @@
 import { App, PluginSettingTab, Setting } from 'obsidian';
 import type SkribePlugin from '../../main';
+import { OpenAIService } from '../services/OpenAIService';
 
 export class SettingsTab extends PluginSettingTab {
     plugin: SkribePlugin;
@@ -21,6 +22,18 @@ export class SettingsTab extends PluginSettingTab {
                 .setValue(this.plugin.settings.transcriptFolder)
                 .onChange(async (value) => {
                     this.plugin.settings.transcriptFolder = value;
+                    await this.plugin.saveSettings();
+                }));
+
+        new Setting(containerEl)
+            .setName('OpenAI API Key')
+            .setDesc('API key for OpenAI services (required for text reformatting)')
+            .addText(text => text
+                .setPlaceholder('sk-...')
+                .setValue(this.plugin.settings.openaiApiKey)
+                .onChange(async (value) => {
+                    this.plugin.settings.openaiApiKey = value;
+                    OpenAIService.getInstance().setApiKey(value);
                     await this.plugin.saveSettings();
                 }));
     }
