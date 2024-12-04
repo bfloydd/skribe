@@ -19,6 +19,14 @@ export default class SkribePlugin extends Plugin {
         this.registerCommands();
         this.initializeView();
         this.addSettingTab(new SettingsTab(this.app, this));
+
+        this.addRibbonIcon(
+            'feather', // or 'pen' if you prefer
+            'Skribe',
+            () => {
+                this.handlePromptCommand();
+            }
+        );
     }
 
     private registerCommands() {

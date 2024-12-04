@@ -12,6 +12,10 @@ export class TranscriptionView extends ItemView {
         this.plugin = plugin;
         this.content = '';
     }
+    
+    getIcon() {
+        return "feather";
+    }
 
     getViewType() {
         return VIEW_TYPE_TRANSCRIPTION;
