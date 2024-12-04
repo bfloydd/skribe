@@ -7,6 +7,8 @@ If your plugin does not need CSS, delete this file.
 
 */
 
+@import url('https://fonts.googleapis.com/css2?family=Roboto:wght@400;700&display=swap');
+
 .transcript-paragraph {
     margin-bottom: 1em;
     line-height: 1.6;
@@ -18,4 +20,39 @@ If your plugin does not need CSS, delete this file.
     /* border-radius: 4px;
     padding: 0.5em; */
     transition: background-color 0.2s ease;
+}
+
+.view-header-title-container {
+    position: absolute;
+    left: 0;
+    right: 0;
+    text-align: center;
+    pointer-events: none;
+    top: 0;
+}
+
+.nav-header {
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    position: relative;
+    padding-top: 10px;
+}
+
+.nav-buttons-container {
+    display: flex;
+    justify-content: center;
+    gap: 8px;
+    margin-top: 10px;
+}
+
+.skribe-plugin .view-header-title {
+    font-family: 'Roboto', sans-serif;
+    font-weight: 700;
+    font-size: 1.2em;
+    color: var(--text-accent);
+    text-shadow: 1px 1px 2px rgba(0, 0, 0, 0.2);
+    background: linear-gradient(90deg, #ff7e5f, #feb47b);
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
 }

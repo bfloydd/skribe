@@ -38,11 +38,26 @@ export class TranscriptionView extends ItemView {
         const container = this.containerEl.children[1];
         container.empty();
         
+        // Add a class to scope styles
+        container.addClass('skribe-plugin');
+
         // Create header with buttons
         const header = container.createDiv({
             cls: 'nav-header'
         });
 
+        // Add title container for centering
+        const titleContainer = header.createDiv({
+            cls: 'view-header-title-container'
+        });
+
+        // Add title
+        const titleEl = titleContainer.createEl('span', {
+            cls: 'view-header-title'
+        });
+        titleEl.setText('Skribe');
+
+        // Center container for buttons
         const buttonContainer = header.createDiv({
             cls: 'nav-buttons-container'
         });
