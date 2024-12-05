@@ -1,15 +1,14 @@
 @import url('https://fonts.googleapis.com/css2?family=Roboto:wght@400;700&display=swap');
 
 .transcript-paragraph {
-    margin-bottom: 1em;
-    line-height: 1.6;
+    margin-bottom: 0.5em;
+    line-height: 1.4;
     font-size: 1.1em;
+    padding: 0 0 0.2em 0;
 }
 
 .transcript-paragraph:hover {
-    background-color: var(--background-secondary);
-    /* border-radius: 4px;
-    padding: 0.5em; */
+    background-color: var(--background-secondary-alt);
     transition: background-color 0.2s ease;
 }
 
@@ -27,14 +26,16 @@
     justify-content: center;
     align-items: center;
     position: relative;
-    padding-top: 10px;
+    padding-top: 0px;
+    padding-bottom: 2px;
+    min-height: 80px;
 }
 
 .nav-buttons-container {
     display: flex;
     justify-content: center;
-    gap: 8px;
-    margin-top: 10px;
+    gap: 6px;
+    margin-top: 4px;
 }
 
 .skribe-plugin .view-header-title {
@@ -110,4 +111,47 @@
     display: flex;
     align-items: center;
     justify-content: center;
+}
+
+.audio-controls {
+    border-top: 0;
+    padding: 0;
+    margin-top: -2px;
+    position: absolute;
+    width: 100%;
+    top: 70px;
+    left: 0;
+    height: calc(100% - 22px);
+    display: flex;
+    align-items: flex-start;
+    justify-content: center;
+}
+
+.audio-controls .nav-buttons-container {
+    justify-content: center;
+    margin-top: 0;
+}
+
+.markdown-preview-view .nav-header {
+    padding-top: 0;
+    padding-bottom: 0;
+    min-height: 60px;
+}
+
+.nav-folder-content {
+    margin-top: 4px;
+}
+
+.markdown-preview-view :first-child.transcript-paragraph {
+    margin-top: 0;
+}
+
+.markdown-preview-view {
+    padding-top: 0;
+}
+
+/* If needed, also target the container directly */
+div.nav-folder-content.markdown-preview-view {
+    padding-top: 0;
+    margin-top: 0;
 }

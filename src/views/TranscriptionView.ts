@@ -91,6 +91,32 @@ export class TranscriptionView extends ItemView {
         setIcon(formatButton, 'wand');
         formatButton.addEventListener('click', () => this.reformatWithAI());
 
+        // Add new audio controls row after the main header
+        const audioControls = container.createDiv({
+            cls: 'nav-header audio-controls'
+        });
+        audioControls.style.display = 'none'; // Hide by default
+
+        const audioButtonContainer = audioControls.createDiv({
+            cls: 'nav-buttons-container'
+        });
+
+        // Stop button
+        const stopButton = audioButtonContainer.createEl('button', {
+            cls: 'clickable-icon',
+            attr: { 
+                'aria-label': 'Stop playback',
+                'title': 'Stop playback'
+            }
+        });
+        setIcon(stopButton, 'square');
+        stopButton.addEventListener('click', () => {
+            if (this.audioPlayer) {
+                this.audioPlayer.stop();
+                audioControls.style.display = 'none';
+            }
+        });
+
         // Play button (OpenAI TTS)
         const playButton = buttonContainer.createEl('button', {
             cls: 'clickable-icon',
@@ -110,7 +136,10 @@ export class TranscriptionView extends ItemView {
                 if (!this.audioPlayer) {
                     this.audioPlayer = new AudioPlayer(
                         this.plugin.settings.openaiApiKey,
-                        (isPlaying) => setIcon(playButton, isPlaying ? 'pause-circle' : 'play-circle'),
+                        (isPlaying) => {
+                            setIcon(playButton, isPlaying ? 'pause-circle' : 'play-circle');
+                            audioControls.style.display = isPlaying ? 'flex' : 'none';
+                        },
                         OpenAIService.getInstance()
                     );
                     await this.audioPlayer.playText(this.content);
@@ -121,6 +150,7 @@ export class TranscriptionView extends ItemView {
                 console.error('Error:', error);
                 new Notice('Failed to play audio');
                 setIcon(playButton, 'play-circle');
+                audioControls.style.display = 'none';
                 this.audioPlayer = null;
             }
         });
