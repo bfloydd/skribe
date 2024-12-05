@@ -1,40 +1,108 @@
-import { Notice, requestUrl } from 'obsidian';
+import { Notice } from 'obsidian';
 import { OpenAIService } from './OpenAIService';
 
 export class AudioPlayer {
-    private audioElement: HTMLAudioElement | null = null;
-    private audioQueue: HTMLAudioElement[] = [];
-    private pendingChunks: string[] = [];
-    private currentChunkIndex: number = 0;
-    private isGenerating: boolean = false;
-    private openAIKey: string;
-    private onStateChange: (isPlaying: boolean) => void;
-    private abortController: AbortController | null = null;
-    private speechSynth: SpeechSynthesis;
-    private utterance = new SpeechSynthesisUtterance();
+    private utterance: SpeechSynthesisUtterance;
     private openAIService: OpenAIService;
     private isPlaying: boolean = false;
-    private startTime: number = 0;
-    private readonly SWITCH_TIME = 15000; // 15 seconds in milliseconds
+    private audioElement: HTMLAudioElement | null = null;
+    private switchTimeout: NodeJS.Timeout | null = null;
+    private readonly SWITCH_TIME = 15000; // 15 seconds
+    private readonly WORDS_PER_MINUTE = 150;
+    private readonly MAX_CHUNK_LENGTH = 1000;
 
-    constructor(openAIKey: string, onStateChange: (isPlaying: boolean) => void, openAIService: OpenAIService) {
-        this.openAIKey = openAIKey;
-        this.onStateChange = onStateChange;
-        this.speechSynth = window.speechSynthesis;
+    constructor(openAIKey: string, private onStateChange: (isPlaying: boolean) => void, openAIService: OpenAIService) {
         this.openAIService = openAIService;
+        this.utterance = new SpeechSynthesisUtterance();
     }
 
-    private playWithBrowserTTS(text: string) {
-        if (this.utterance) {
-            this.speechSynth.cancel();
+    private splitTextAtTime(text: string, seconds: number): { initial: string, remaining: string } {
+        const wordsForTime = Math.floor((this.WORDS_PER_MINUTE / 60) * seconds);
+        const words = text.split(' ');
+        return {
+            initial: words.slice(0, wordsForTime).join(' '),
+            remaining: words.slice(wordsForTime).join(' ')
+        };
+    }
+
+    private chunkText(text: string): string[] {
+        const chunks: string[] = [];
+        // Split into sentences first
+        const sentences = text.match(/[^.!?]+[.!?]+/g) || [text];
+        
+        let currentChunk = '';
+        for (const sentence of sentences) {
+            // If sentence itself is too long, split it further
+            if (sentence.length > this.MAX_CHUNK_LENGTH) {
+                if (currentChunk) {
+                    chunks.push(currentChunk.trim());
+                    currentChunk = '';
+                }
+                // Split long sentence by commas or natural breaks
+                const subParts = sentence.split(/([,;])/);
+                for (const part of subParts) {
+                    if ((currentChunk + part).length > this.MAX_CHUNK_LENGTH) {
+                        if (currentChunk) chunks.push(currentChunk.trim());
+                        currentChunk = part;
+                    } else {
+                        currentChunk += part;
+                    }
+                }
+            } else if ((currentChunk + sentence).length > this.MAX_CHUNK_LENGTH) {
+                chunks.push(currentChunk.trim());
+                currentChunk = sentence;
+            } else {
+                currentChunk += sentence;
+            }
+        }
+        
+        if (currentChunk) chunks.push(currentChunk.trim());
+        return chunks.filter(chunk => chunk.length > 0);
+    }
+
+    private async playChunks(chunks: string[]): Promise<void> {
+        for (const chunk of chunks) {
+            if (!this.isPlaying) break;
+            
+            try {
+                const audioBuffer = await this.openAIService.textToSpeech(chunk);
+                const blob = new Blob([audioBuffer], { type: 'audio/mp3' });
+                const url = URL.createObjectURL(blob);
+                
+                this.audioElement = new Audio(url);
+                this.audioElement.onended = () => {
+                    URL.revokeObjectURL(url);
+                };
+                
+                await this.audioElement.play();
+                // Wait for chunk to finish playing
+                await new Promise(resolve => {
+                    this.audioElement!.onended = () => {
+                        URL.revokeObjectURL(url);
+                        resolve(null);
+                    };
+                });
+            } catch (error) {
+                console.error('Error playing chunk:', error);
+                throw error;
+            }
+        }
+    }
+
+    public async playText(text: string) {
+        if (this.isPlaying) {
+            this.stop();
+            return;
         }
 
-        this.utterance = new SpeechSynthesisUtterance(text);
+        this.isPlaying = true;
+        const { initial, remaining } = this.splitTextAtTime(text, 10);
+
+        // Start with browser speech
+        this.utterance = new SpeechSynthesisUtterance(initial);
         this.utterance.rate = 1.2;
-        this.utterance.pitch = 1;
         
-        // Use a voice similar to OpenAI's alloy if available
-        const voices = this.speechSynth.getVoices();
+        const voices = window.speechSynthesis.getVoices();
         const preferredVoice = voices.find(voice => 
             voice.name.toLowerCase().includes('microsoft') || 
             voice.name.toLowerCase().includes('google')
@@ -43,268 +111,56 @@ export class AudioPlayer {
             this.utterance.voice = preferredVoice;
         }
 
-        this.onStateChange(true);
-
-        this.utterance.onend = () => {
-            this.utterance = new SpeechSynthesisUtterance();
-            if (this.audioQueue.length > 0) {
-                this.startPlayback();
-            }
-        };
-
-        this.speechSynth.speak(this.utterance);
-    }
-
-    private getApproximateTextFor30Seconds(text: string): { firstPart: string, rest: string } {
-        // Average reading speed is about 150 words per minute
-        // So 30 seconds would be about 75 words
-        // Assuming average word length of 5 characters + 1 space = 6 characters
-        // 75 words * 6 chars = ~450 characters for 30 seconds
-        const estimatedChars = 450;
-        
-        // Find the end of the sentence closest to our target length
-        const textUpToEstimate = text.slice(0, estimatedChars + 100); // Add buffer for finding sentence end
-        const sentences = textUpToEstimate.match(/[^.!?]+[.!?]+/g) || [];
-        
-        let firstPart = '';
-        let currentLength = 0;
-        
-        for (const sentence of sentences) {
-            if (currentLength + sentence.length > estimatedChars) {
-                break;
-            }
-            firstPart += sentence;
-            currentLength += sentence.length;
-        }
-
-        // If no sentence breaks found or text is shorter than estimate
-        if (!firstPart) {
-            firstPart = text.slice(0, estimatedChars);
-        }
-
-        return {
-            firstPart: firstPart,
-            rest: text.slice(firstPart.length)
-        };
-    }
-
-    public async playText(text: string) {
-        if (this.isGenerating) {
-            new Notice('Already generating audio, please wait...');
-            return;
-        }
-
-        try {
-            this.isGenerating = true;
-            
-            // Get approximately 30 seconds worth of text
-            const { firstPart, rest } = this.getApproximateTextFor30Seconds(text);
-            
-            // Start browser TTS immediately with the first 30 seconds
-            this.playWithBrowserTTS(firstPart);
-            new Notice('Starting playback...');
-            
-            // Generate OpenAI audio in background
-            this.pendingChunks = this.splitIntoChunks(rest, 500);
-            this.generateNextChunks(3);
-        } catch (error) {
-            console.error('Error:', error);
-            new Notice('Failed to generate audio');
-            this.reset();
-        }
-    }
-
-    public togglePlayPause() {
-        if (this.utterance) {
-            if (this.speechSynth.paused) {
-                this.speechSynth.resume();
-                this.onStateChange(true);
-            } else {
-                this.speechSynth.pause();
-                this.onStateChange(false);
-            }
-        } else if (this.audioElement) {
-            if (this.audioElement.paused) {
-                this.audioElement.play();
-                this.onStateChange(true);
-            } else {
-                this.audioElement.pause();
-                this.onStateChange(false);
-            }
-        }
-    }
-
-    public stop() {
-        if (this.utterance) {
-            this.speechSynth.cancel();
-            this.utterance = new SpeechSynthesisUtterance();
-        }
-        if (this.abortController) {
-            this.abortController.abort();
-        }
-        this.reset();
-    }
-
-    private reset() {
-        if (this.utterance) {
-            this.speechSynth.cancel();
-            this.utterance = new SpeechSynthesisUtterance();
-        }
-        if (this.abortController) {
-            this.abortController.abort();
-            this.abortController = null;
-        }
-        this.audioElement?.pause();
-        this.audioElement = null;
-        this.audioQueue.forEach(audio => {
-            audio.pause();
-            const src = audio.src;
-            if (src) {
-                URL.revokeObjectURL(src);
-            }
-        });
-        this.audioQueue = [];
-        this.pendingChunks = [];
-        this.currentChunkIndex = 0;
-        this.isGenerating = false;
-        this.onStateChange(false);
-    }
-
-    private async generateNextChunks(count: number = 3) {
-        if (this.pendingChunks.length === 0) {
-            this.isGenerating = false;
-            return;
-        }
-
-        const chunksToGenerate = this.pendingChunks.slice(0, count);
-        this.pendingChunks = this.pendingChunks.slice(count);
-
-        try {
-            // Generate multiple chunks in parallel
-            const newAudios = await Promise.all(
-                chunksToGenerate.map(chunk => this.generateAudioForChunk(chunk))
-            );
-            this.audioQueue.push(...newAudios);
-
-            // Continue generating next chunks if needed
-            if (this.pendingChunks.length > 0) {
-                setTimeout(() => this.generateNextChunks(3), 100); // Add small delay between batches
-            } else {
-                this.isGenerating = false;
-            }
-        } catch (error) {
-            console.error('Error generating chunks:', error);
-            this.isGenerating = false;
-        }
-    }
-
-    private splitIntoChunks(text: string, chunkSize: number = 400): string[] {
-        // First, split by periods to maintain sentence integrity
-        const sentences = text.split(/(?<=[.!?])\s+/);
-        const chunks: string[] = [];
-        let currentChunk = '';
-
-        for (const sentence of sentences) {
-            if (currentChunk.length + sentence.length > chunkSize && currentChunk.length > 0) {
-                chunks.push(currentChunk.trim());
-                currentChunk = sentence;
-            } else {
-                currentChunk += (currentChunk ? ' ' : '') + sentence;
-            }
-        }
-        if (currentChunk.length > 0) {
-            chunks.push(currentChunk.trim());
-        }
-        return chunks;
-    }
-
-    private async generateAudioForChunk(text: string): Promise<HTMLAudioElement> {
-        this.abortController = new AbortController();
-
-        const response = await requestUrl({
-            url: 'https://api.openai.com/v1/audio/speech',
-            method: 'POST',
-            headers: {
-                'Authorization': `Bearer ${this.openAIKey}`,
-                'Content-Type': 'application/json'
-            },
-            body: JSON.stringify({
-                model: 'tts-1-hd', // Try HD model for better quality
-                input: text,
-                voice: 'alloy',
-                speed: 1.4 // Even faster playback
-            }),
-            throw: false
-        });
-
-        if (response.status !== 200) {
-            throw new Error(`API Error: ${response.text}`);
-        }
-
-        const audioBlob = new Blob([response.arrayBuffer], { type: 'audio/mpeg' });
-        const audioUrl = URL.createObjectURL(audioBlob);
-        const audio = new Audio(audioUrl);
-        
-        // Preload the audio
-        audio.preload = 'auto';
-        await new Promise((resolve) => {
-            audio.addEventListener('canplaythrough', resolve, { once: true });
-            audio.load();
-        });
-
-        audio.addEventListener('ended', () => {
-            URL.revokeObjectURL(audioUrl);
-        });
-
-        return audio;
-    }
-
-    private async startPlayback() {
-        if (this.audioQueue.length === 0) return;
-        
-        this.audioElement = this.audioQueue[this.currentChunkIndex];
-        await this.audioElement.play();
-        this.onStateChange(true);
-
-        this.audioElement.addEventListener('ended', async () => {
-            this.currentChunkIndex++;
-            if (this.currentChunkIndex < this.audioQueue.length) {
-                await this.startPlayback();
-            } else if (this.pendingChunks.length === 0 && !this.isGenerating) {
-                this.reset();
-            }
-        });
-    }
-
-    public async play(text: string) {
-        if (this.isPlaying) {
-            this.stop();
-            return;
-        }
-
-        this.isPlaying = true;
-        this.startTime = Date.now();
-
-        // Start with browser speech
-        this.utterance.text = text;
         window.speechSynthesis.speak(this.utterance);
+        this.onStateChange(true);
 
-        // Switch to OpenAI after 15 seconds
-        setTimeout(async () => {
+        // Switch to OpenAI after 10 seconds
+        this.switchTimeout = setTimeout(async () => {
             if (this.isPlaying) {
                 window.speechSynthesis.cancel();
                 try {
-                    const audioBuffer = await this.openAIService.textToSpeech(text);
-                    const audioContext = new AudioContext();
-                    const source = audioContext.createBufferSource();
-                    const audioData = await audioContext.decodeAudioData(audioBuffer);
-                    source.buffer = audioData;
-                    source.connect(audioContext.destination);
-                    source.start();
+                    const chunks = this.chunkText(remaining);
+                    await this.playChunks(chunks);
+                    this.stop();
                 } catch (error) {
                     console.error('Error switching to OpenAI voice:', error);
+                    new Notice('Error switching to OpenAI voice');
+                    this.stop();
                 }
             }
         }, this.SWITCH_TIME);
+    }
+
+    public togglePlayPause() {
+        if (!this.isPlaying) {
+            if (this.audioElement) {
+                this.audioElement.play();
+            } else {
+                window.speechSynthesis.resume();
+            }
+            this.onStateChange(true);
+        } else {
+            if (this.audioElement) {
+                this.audioElement.pause();
+            } else {
+                window.speechSynthesis.pause();
+            }
+            this.onStateChange(false);
+        }
+        this.isPlaying = !this.isPlaying;
+    }
+
+    public stop() {
+        if (this.switchTimeout) {
+            clearTimeout(this.switchTimeout);
+            this.switchTimeout = null;
+        }
+        window.speechSynthesis.cancel();
+        if (this.audioElement) {
+            this.audioElement.pause();
+            this.audioElement = null;
+        }
+        this.isPlaying = false;
+        this.onStateChange(false);
     }
 } 
