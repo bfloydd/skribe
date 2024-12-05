@@ -20,6 +20,7 @@ export default class SkribePlugin extends Plugin {
         this.youtubeService = YouTubeService.getInstance();
         this.openaiService = OpenAIService.getInstance();
         this.openaiService.setApiKey(this.settings.openaiApiKey);
+        this.openaiService.setPlugin(this);
 
         this.registerCommands();
         this.initializeView();

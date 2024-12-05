@@ -2,12 +2,16 @@ export interface SkribeSettings {
     youtubeApiKey: string;
     transcriptFolder: string;
     openaiApiKey: string;
+    model: string;
+    voice: string;
 }
 
 export const DEFAULT_SETTINGS: SkribeSettings = {
     youtubeApiKey: '',
     transcriptFolder: 'Transcripts',
-    openaiApiKey: ''
+    openaiApiKey: '',
+    model: 'gpt-4o',
+    voice: 'alloy'
 }
 
 export interface TranscriptSegment {

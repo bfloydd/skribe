@@ -1,8 +1,10 @@
 import { requestUrl } from 'obsidian';
+import type SkribePlugin from '../../main';
 
 export class OpenAIService {
     private static instance: OpenAIService;
     private apiKey: string;
+    private plugin: SkribePlugin;
 
     private constructor() {}
 
@@ -15,6 +17,10 @@ export class OpenAIService {
 
     public setApiKey(apiKey: string) {
         this.apiKey = apiKey?.trim() || '';
+    }
+
+    public setPlugin(plugin: SkribePlugin) {
+        this.plugin = plugin;
     }
 
     public async reformatText(text: string): Promise<string> {
@@ -58,7 +64,7 @@ Here's the transcript to process: ${text}`;
                     'Content-Type': 'application/json'
                 },
                 body: JSON.stringify({
-                    model: "gpt-4o",
+                    model: this.plugin.settings.model,
                     messages: [
                         {
                             role: "user",

@@ -36,5 +36,24 @@ export class SettingsTab extends PluginSettingTab {
                     OpenAIService.getInstance().setApiKey(value);
                     await this.plugin.saveSettings();
                 }));
+
+        new Setting(containerEl)
+            .setName('OpenAI Voice')
+            .setDesc('Select the voice to use for text-to-speech')
+            .addDropdown(dropdown => dropdown
+                .addOptions({
+                    'alloy': 'Alloy',
+                    'echo': 'Echo',
+                    'fable': 'Fable',
+                    'onyx': 'Onyx',
+                    'nova': 'Nova',
+                    'shimmer': 'Shimmer'
+                })
+                .setValue(this.plugin.settings.voice)
+                .onChange(async (value) => {
+                    this.plugin.settings.voice = value;
+                    await this.plugin.saveSettings();
+                })
+            );
     }
 } 
