@@ -8,11 +8,13 @@ export class TranscriptionView extends ItemView {
     content: string;
     plugin: SkribePlugin;
     contentEl: HTMLElement;
+    private audioElement: HTMLAudioElement | null = null;
 
     constructor(leaf: WorkspaceLeaf, plugin: SkribePlugin) {
         super(leaf);
         this.plugin = plugin;
         this.content = '';
+        this.audioElement = null;
     }
     
     getIcon() {
@@ -98,13 +100,25 @@ export class TranscriptionView extends ItemView {
         const playButton = buttonContainer.createEl('button', {
             cls: 'clickable-icon',
             attr: { 
-                'aria-label': 'Play transcript with TTS',
-                'title': 'Play transcript using Text-to-Speech'
+                'aria-label': 'Play/Pause transcript with TTS',
+                'title': 'Play/Pause transcript using Text-to-Speech'
             }
         });
-        setIcon(playButton, 'circle-play');
+        setIcon(playButton, 'play-circle');
         playButton.addEventListener('click', async () => {
             try {
+                // If audio exists, handle play/pause
+                if (this.audioElement) {
+                    if (this.audioElement.paused) {
+                        await this.audioElement.play();
+                        setIcon(playButton, 'pause-circle');
+                    } else {
+                        this.audioElement.pause();
+                        setIcon(playButton, 'play-circle');
+                    }
+                    return;
+                }
+
                 if (!this.plugin.settings.openaiApiKey) {
                     new Notice('Please set your OpenAI API key in settings');
                     return;
@@ -133,12 +147,23 @@ export class TranscriptionView extends ItemView {
 
                 const audioBlob = new Blob([response.arrayBuffer], { type: 'audio/mpeg' });
                 const audioUrl = URL.createObjectURL(audioBlob);
-                const audio = new Audio(audioUrl);
-                audio.play();
+                this.audioElement = new Audio(audioUrl);
+                
+                // Add ended event listener to reset button
+                this.audioElement.addEventListener('ended', () => {
+                    setIcon(playButton, 'play-circle');
+                    this.audioElement = null;
+                    URL.revokeObjectURL(audioUrl);
+                });
+
+                await this.audioElement.play();
+                setIcon(playButton, 'pause-circle');
                 new Notice('Playing audio...');
             } catch (error) {
                 console.error('Error:', error);
                 new Notice('Failed to generate audio');
+                setIcon(playButton, 'play-circle');
+                this.audioElement = null;
             }
         });
 
