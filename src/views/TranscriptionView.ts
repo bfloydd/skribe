@@ -9,12 +9,18 @@ export class TranscriptionView extends ItemView {
     plugin: SkribePlugin;
     contentEl: HTMLElement;
     private audioElement: HTMLAudioElement | null = null;
+    private audioQueue: HTMLAudioElement[] = [];
+    private currentChunkIndex: number = 0;
+    private isGenerating: boolean = false;
 
     constructor(leaf: WorkspaceLeaf, plugin: SkribePlugin) {
         super(leaf);
         this.plugin = plugin;
         this.content = '';
         this.audioElement = null;
+        this.audioQueue = [];
+        this.currentChunkIndex = 0;
+        this.isGenerating = false;
     }
     
     getIcon() {
@@ -107,63 +113,58 @@ export class TranscriptionView extends ItemView {
         setIcon(playButton, 'play-circle');
         playButton.addEventListener('click', async () => {
             try {
-                // If audio exists, handle play/pause
-                if (this.audioElement) {
-                    if (this.audioElement.paused) {
-                        await this.audioElement.play();
-                        setIcon(playButton, 'pause-circle');
-                    } else {
-                        this.audioElement.pause();
-                        setIcon(playButton, 'play-circle');
-                    }
+                // Handle pause if already playing
+                if (this.audioElement && !this.audioElement.paused) {
+                    this.audioElement.pause();
+                    setIcon(playButton, 'play-circle');
+                    return;
+                }
+                
+                // Handle resume if paused
+                if (this.audioElement && this.audioElement.paused) {
+                    await this.audioElement.play();
+                    setIcon(playButton, 'pause-circle');
                     return;
                 }
 
+                // Start new playback
                 if (!this.plugin.settings.openaiApiKey) {
                     new Notice('Please set your OpenAI API key in settings');
                     return;
                 }
 
-                new Notice('Generating audio...');
-                const response = await requestUrl({
-                    url: 'https://api.openai.com/v1/audio/speech',
-                    method: 'POST',
-                    headers: {
-                        'Authorization': `Bearer ${this.plugin.settings.openaiApiKey}`,
-                        'Content-Type': 'application/json'
-                    },
-                    body: JSON.stringify({
-                        model: 'tts-1',
-                        input: this.content.slice(0, 4096),
-                        voice: 'alloy'
-                    }),
-                    throw: false
-                });
-
-                if (response.status !== 200) {
-                    console.error('OpenAI API Error:', response.text);
-                    throw new Error(`API Error: ${response.text}`);
+                if (this.isGenerating) {
+                    new Notice('Already generating audio, please wait...');
+                    return;
                 }
 
-                const audioBlob = new Blob([response.arrayBuffer], { type: 'audio/mpeg' });
-                const audioUrl = URL.createObjectURL(audioBlob);
-                this.audioElement = new Audio(audioUrl);
+                this.isGenerating = true;
+                const chunks = this.splitIntoChunks(this.content);
                 
-                // Add ended event listener to reset button
-                this.audioElement.addEventListener('ended', () => {
-                    setIcon(playButton, 'play-circle');
-                    this.audioElement = null;
-                    URL.revokeObjectURL(audioUrl);
-                });
+                // Generate first chunk immediately
+                new Notice('Generating audio...');
+                this.audioQueue = [await this.generateAudioForChunk(chunks[0])];
+                await this.startPlayback(playButton);
 
-                await this.audioElement.play();
-                setIcon(playButton, 'pause-circle');
-                new Notice('Playing audio...');
+                // Generate remaining chunks in background
+                for (let i = 1; i < chunks.length; i++) {
+                    try {
+                        const audio = await this.generateAudioForChunk(chunks[i]);
+                        this.audioQueue.push(audio);
+                    } catch (error) {
+                        console.error('Error generating chunk:', error);
+                    }
+                }
+                
+                this.isGenerating = false;
             } catch (error) {
                 console.error('Error:', error);
                 new Notice('Failed to generate audio');
                 setIcon(playButton, 'play-circle');
                 this.audioElement = null;
+                this.audioQueue = [];
+                this.currentChunkIndex = 0;
+                this.isGenerating = false;
             }
         });
 
@@ -236,5 +237,76 @@ export class TranscriptionView extends ItemView {
         } catch (error) {
             new Notice('Failed to reformat transcript: ' + error.message);
         }
+    }
+
+    private splitIntoChunks(text: string, chunkSize: number = 300): string[] {
+        const sentences = text.match(/[^.!?]+[.!?]+/g) || [text];
+        const chunks: string[] = [];
+        let currentChunk = '';
+
+        for (const sentence of sentences) {
+            if ((currentChunk + sentence).length > chunkSize && currentChunk.length > 0) {
+                chunks.push(currentChunk.trim());
+                currentChunk = sentence;
+            } else {
+                currentChunk += sentence;
+            }
+        }
+        if (currentChunk.length > 0) {
+            chunks.push(currentChunk.trim());
+        }
+        return chunks;
+    }
+
+    private async generateAudioForChunk(text: string): Promise<HTMLAudioElement> {
+        const response = await requestUrl({
+            url: 'https://api.openai.com/v1/audio/speech',
+            method: 'POST',
+            headers: {
+                'Authorization': `Bearer ${this.plugin.settings.openaiApiKey}`,
+                'Content-Type': 'application/json'
+            },
+            body: JSON.stringify({
+                model: 'tts-1',
+                input: text,
+                voice: 'alloy'
+            }),
+            throw: false
+        });
+
+        if (response.status !== 200) {
+            throw new Error(`API Error: ${response.text}`);
+        }
+
+        const audioBlob = new Blob([response.arrayBuffer], { type: 'audio/mpeg' });
+        const audioUrl = URL.createObjectURL(audioBlob);
+        const audio = new Audio(audioUrl);
+        
+        audio.addEventListener('ended', () => {
+            URL.revokeObjectURL(audioUrl);
+        });
+
+        return audio;
+    }
+
+    private async startPlayback(playButton: HTMLElement) {
+        if (this.audioQueue.length === 0) return;
+        
+        this.audioElement = this.audioQueue[this.currentChunkIndex];
+        await this.audioElement.play();
+        setIcon(playButton, 'pause-circle');
+
+        this.audioElement.addEventListener('ended', async () => {
+            this.currentChunkIndex++;
+            if (this.currentChunkIndex < this.audioQueue.length) {
+                await this.startPlayback(playButton);
+            } else {
+                // Reset everything when all chunks are played
+                this.audioQueue = [];
+                this.currentChunkIndex = 0;
+                this.audioElement = null;
+                setIcon(playButton, 'play-circle');
+            }
+        });
     }
 } 
