@@ -107,4 +107,30 @@ Here's the transcript to process: ${text}`;
             }
         }
     }
+
+    public async textToSpeech(text: string): Promise<ArrayBuffer> {
+        if (!this.apiKey) {
+            throw new Error('OpenAI API key not set');
+        }
+
+        const response = await requestUrl({
+            url: 'https://api.openai.com/v1/audio/speech',
+            method: 'POST',
+            headers: {
+                'Authorization': `Bearer ${this.apiKey}`,
+                'Content-Type': 'application/json'
+            },
+            body: JSON.stringify({
+                model: 'tts-1',
+                input: text,
+                voice: this.plugin.settings.voice
+            })
+        });
+
+        if (response.status !== 200) {
+            throw new Error(`OpenAI API Error: ${response.status}`);
+        }
+
+        return response.arrayBuffer;
+    }
 } 

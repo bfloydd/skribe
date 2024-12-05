@@ -110,7 +110,8 @@ export class TranscriptionView extends ItemView {
                 if (!this.audioPlayer) {
                     this.audioPlayer = new AudioPlayer(
                         this.plugin.settings.openaiApiKey,
-                        (isPlaying) => setIcon(playButton, isPlaying ? 'pause-circle' : 'play-circle')
+                        (isPlaying) => setIcon(playButton, isPlaying ? 'pause-circle' : 'play-circle'),
+                        OpenAIService.getInstance()
                     );
                     await this.audioPlayer.playText(this.content);
                 } else {

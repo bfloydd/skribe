@@ -1,4 +1,5 @@
 import { Notice, requestUrl } from 'obsidian';
+import { OpenAIService } from './OpenAIService';
 
 export class AudioPlayer {
     private audioElement: HTMLAudioElement | null = null;
@@ -10,12 +11,17 @@ export class AudioPlayer {
     private onStateChange: (isPlaying: boolean) => void;
     private abortController: AbortController | null = null;
     private speechSynth: SpeechSynthesis;
-    private utterance: SpeechSynthesisUtterance | null = null;
+    private utterance = new SpeechSynthesisUtterance();
+    private openAIService: OpenAIService;
+    private isPlaying: boolean = false;
+    private startTime: number = 0;
+    private readonly SWITCH_TIME = 15000; // 15 seconds in milliseconds
 
-    constructor(openAIKey: string, onStateChange: (isPlaying: boolean) => void) {
+    constructor(openAIKey: string, onStateChange: (isPlaying: boolean) => void, openAIService: OpenAIService) {
         this.openAIKey = openAIKey;
         this.onStateChange = onStateChange;
         this.speechSynth = window.speechSynthesis;
+        this.openAIService = openAIService;
     }
 
     private playWithBrowserTTS(text: string) {
@@ -40,7 +46,7 @@ export class AudioPlayer {
         this.onStateChange(true);
 
         this.utterance.onend = () => {
-            this.utterance = null;
+            this.utterance = new SpeechSynthesisUtterance();
             if (this.audioQueue.length > 0) {
                 this.startPlayback();
             }
@@ -131,7 +137,7 @@ export class AudioPlayer {
     public stop() {
         if (this.utterance) {
             this.speechSynth.cancel();
-            this.utterance = null;
+            this.utterance = new SpeechSynthesisUtterance();
         }
         if (this.abortController) {
             this.abortController.abort();
@@ -142,7 +148,7 @@ export class AudioPlayer {
     private reset() {
         if (this.utterance) {
             this.speechSynth.cancel();
-            this.utterance = null;
+            this.utterance = new SpeechSynthesisUtterance();
         }
         if (this.abortController) {
             this.abortController.abort();
@@ -268,5 +274,37 @@ export class AudioPlayer {
                 this.reset();
             }
         });
+    }
+
+    public async play(text: string) {
+        if (this.isPlaying) {
+            this.stop();
+            return;
+        }
+
+        this.isPlaying = true;
+        this.startTime = Date.now();
+
+        // Start with browser speech
+        this.utterance.text = text;
+        window.speechSynthesis.speak(this.utterance);
+
+        // Switch to OpenAI after 15 seconds
+        setTimeout(async () => {
+            if (this.isPlaying) {
+                window.speechSynthesis.cancel();
+                try {
+                    const audioBuffer = await this.openAIService.textToSpeech(text);
+                    const audioContext = new AudioContext();
+                    const source = audioContext.createBufferSource();
+                    const audioData = await audioContext.decodeAudioData(audioBuffer);
+                    source.buffer = audioData;
+                    source.connect(audioContext.destination);
+                    source.start();
+                } catch (error) {
+                    console.error('Error switching to OpenAI voice:', error);
+                }
+            }
+        }, this.SWITCH_TIME);
     }
 } 
