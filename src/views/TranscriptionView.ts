@@ -1,4 +1,4 @@
-import { ItemView, WorkspaceLeaf, setIcon, Notice, MarkdownRenderer } from 'obsidian';
+import { ItemView, WorkspaceLeaf, setIcon, Notice, MarkdownRenderer, requestUrl } from 'obsidian';
 import type SkribePlugin from '../../main';
 import { OpenAIService } from '../services/OpenAIService';
 
@@ -93,6 +93,54 @@ export class TranscriptionView extends ItemView {
         });
         setIcon(formatButton, 'wand');
         formatButton.addEventListener('click', () => this.reformatWithAI());
+
+        // Play button (OpenAI TTS)
+        const playButton = buttonContainer.createEl('button', {
+            cls: 'clickable-icon',
+            attr: { 
+                'aria-label': 'Play transcript with TTS',
+                'title': 'Play transcript using Text-to-Speech'
+            }
+        });
+        setIcon(playButton, 'circle-play');
+        playButton.addEventListener('click', async () => {
+            try {
+                if (!this.plugin.settings.openaiApiKey) {
+                    new Notice('Please set your OpenAI API key in settings');
+                    return;
+                }
+
+                new Notice('Generating audio...');
+                const response = await requestUrl({
+                    url: 'https://api.openai.com/v1/audio/speech',
+                    method: 'POST',
+                    headers: {
+                        'Authorization': `Bearer ${this.plugin.settings.openaiApiKey}`,
+                        'Content-Type': 'application/json'
+                    },
+                    body: JSON.stringify({
+                        model: 'tts-1',
+                        input: this.content.slice(0, 4096),
+                        voice: 'alloy'
+                    }),
+                    throw: false
+                });
+
+                if (response.status !== 200) {
+                    console.error('OpenAI API Error:', response.text);
+                    throw new Error(`API Error: ${response.text}`);
+                }
+
+                const audioBlob = new Blob([response.arrayBuffer], { type: 'audio/mpeg' });
+                const audioUrl = URL.createObjectURL(audioBlob);
+                const audio = new Audio(audioUrl);
+                audio.play();
+                new Notice('Playing audio...');
+            } catch (error) {
+                console.error('Error:', error);
+                new Notice('Failed to generate audio');
+            }
+        });
 
         // Create content container with padding
         const contentContainer = container.createDiv({
