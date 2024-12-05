@@ -111,9 +111,21 @@ export class AudioPlayer {
     public stop() {
         if (this.audioElement) {
             this.audioElement.pause();
-            this.audioElement = null;
+            this.audioElement.currentTime = 0;
+            this.isPlaying = false;
+            this.onStateChange(false);
         }
-        this.isPlaying = false;
-        this.onStateChange(false);
+    }
+
+    public play() {
+        if (this.audioElement) {
+            this.audioElement.play().catch(error => {
+                console.error('Error playing audio:', error);
+                this.isPlaying = false;
+                this.onStateChange(false);
+            });
+            this.isPlaying = true;
+            this.onStateChange(true);
+        }
     }
 } 
