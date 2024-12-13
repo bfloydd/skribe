@@ -225,4 +225,15 @@ export class TranscriptionView extends ItemView {
             new Notice('Failed to reformat transcript: ' + error.message);
         }
     }
+
+    private async initializeAudioPlayer() {
+        if (!this.audioPlayer) return;
+        
+        this.audioPlayer.on('play', () => {
+            const loadingEl = this.contentEl.querySelector('.loading-message');
+            if (loadingEl) {
+                loadingEl.remove();
+            }
+        });
+    }
 } 

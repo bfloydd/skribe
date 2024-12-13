@@ -1,13 +1,15 @@
 import { Notice } from 'obsidian';
 import { OpenAIService } from './OpenAIService';
+import { EventEmitter } from 'events';
 
-export class AudioPlayer {
+export class AudioPlayer extends EventEmitter {
     private openAIService: OpenAIService;
     private isPlaying: boolean = false;
     private audioElement: HTMLAudioElement | null = null;
     private readonly MAX_CHUNK_LENGTH = 1000;
 
     constructor(openAIKey: string, private onStateChange: (isPlaying: boolean) => void, openAIService: OpenAIService) {
+        super();
         this.openAIService = openAIService;
     }
 
