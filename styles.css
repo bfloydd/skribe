@@ -271,3 +271,27 @@ div.nav-folder-content.markdown-preview-view {
     color: var(--text-muted);
     padding: 20px;
 }
+
+/* Empty state */
+.empty-state-container {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    height: 200px;
+    padding: 20px;
+    text-align: center;
+}
+
+.empty-state-message {
+    font-size: 1.5em;
+    color: var(--text-muted);
+    margin-bottom: 10px;
+}
+
+/* Disabled buttons */
+.disabled-button {
+    opacity: 0.5;
+    cursor: not-allowed;
+    pointer-events: none;
+}

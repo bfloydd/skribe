@@ -136,10 +136,19 @@ export class TranscriptionView extends ItemView {
         // Copy button
         const copyButton = buttonContainer.createEl('button', {
             cls: 'clickable-icon',
-            attr: { 'aria-label': 'Copy transcript' }
+            attr: { 
+                'aria-label': 'Copy transcript',
+                'disabled': !this.content
+            }
         });
         setIcon(copyButton, 'copy');
+        if (!this.content) {
+            copyButton.addClass('disabled-button');
+            copyButton.style.opacity = '0.5';
+            copyButton.style.cursor = 'not-allowed';
+        }
         copyButton.addEventListener('click', async () => {
+            if (!this.content) return;
             await navigator.clipboard.writeText(this.content);
             new Notice('Transcript copied to clipboard');
         });
@@ -147,32 +156,59 @@ export class TranscriptionView extends ItemView {
         // Save button
         const saveButton = buttonContainer.createEl('button', {
             cls: 'clickable-icon',
-            attr: { 'aria-label': 'Save transcript' }
+            attr: { 
+                'aria-label': 'Save transcript',
+                'disabled': !this.content
+            }
         });
         setIcon(saveButton, 'save');
-        saveButton.addEventListener('click', () => this.saveTranscript());
+        if (!this.content) {
+            saveButton.addClass('disabled-button');
+            saveButton.style.opacity = '0.5';
+            saveButton.style.cursor = 'not-allowed';
+        }
+        saveButton.addEventListener('click', () => {
+            if (!this.content) return;
+            this.saveTranscript();
+        });
 
         // Format button
         const formatButton = buttonContainer.createEl('button', {
             cls: 'clickable-icon',
             attr: { 
                 'aria-label': 'Enhance with AI (Format + Summary)',
-                'title': 'Format transcript and add summary with key points'
+                'title': 'Format transcript and add summary with key points',
+                'disabled': !this.content
             }
         });
         setIcon(formatButton, 'wand');
-        formatButton.addEventListener('click', () => this.reformatWithAI());
+        if (!this.content) {
+            formatButton.addClass('disabled-button');
+            formatButton.style.opacity = '0.5';
+            formatButton.style.cursor = 'not-allowed';
+        }
+        formatButton.addEventListener('click', () => {
+            if (!this.content) return;
+            this.reformatWithAI();
+        });
 
         // Play button (OpenAI TTS)
         const playButton = buttonContainer.createEl('button', {
             cls: 'clickable-icon',
             attr: { 
                 'aria-label': 'Play/Pause transcript with TTS',
-                'title': 'Play/Pause transcript using Text-to-Speech'
+                'title': 'Play/Pause transcript using Text-to-Speech',
+                'disabled': !this.content
             }
         });
         setIcon(playButton, 'play-circle');
+        if (!this.content) {
+            playButton.addClass('disabled-button');
+            playButton.style.opacity = '0.5';
+            playButton.style.cursor = 'not-allowed';
+        }
         playButton.addEventListener('click', async () => {
+            if (!this.content) return;
             try {
                 if (!this.plugin.settings.openaiApiKey) {
                     new Notice('Please set your OpenAI API key in settings');
