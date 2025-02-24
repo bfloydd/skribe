@@ -1,5 +1,27 @@
 @import url('https://fonts.googleapis.com/css2?family=Roboto:wght@400;700&display=swap');
 
+/* Fix for vertical scrolling issue */
+.skribe-plugin {
+    height: 100%;
+    overflow: hidden;
+    display: flex;
+    flex-direction: column;
+}
+
+/* Ensure the container takes full height */
+.workspace-leaf-content[data-type="transcription-view"] {
+    display: flex;
+    flex-direction: column;
+    height: 100%;
+    overflow: hidden;
+}
+
+/* Ensure the container children take full height */
+.workspace-leaf-content[data-type="transcription-view"] > div {
+    height: 100%;
+    overflow: hidden;
+}
+
 .transcript-paragraph {
     margin-bottom: 0.5em;
     line-height: 1.4;
@@ -200,12 +222,14 @@ div.nav-folder-content.markdown-preview-view {
 .skribe-content-wrapper {
     display: flex;
     flex-direction: column;
-    height: calc(100% - 150px);
+    height: calc(100% - 120px); /* Adjusted height calculation */
+    overflow: hidden; /* Prevent wrapper from scrolling */
 }
 
 .transcript-container, .chat-container {
     flex: 1;
     overflow-y: auto;
+    height: 100%; /* Ensure containers take full height */
 }
 
 .chat-messages-container {
@@ -216,7 +240,7 @@ div.nav-folder-content.markdown-preview-view {
     background-color: var(--background-secondary);
     border-radius: 5px;
     margin-bottom: 10px;
-    max-height: 300px;
+    height: calc(100% - 60px); /* Adjusted height to leave room for input */
     overflow-y: auto;
 }
 
@@ -279,6 +303,7 @@ div.nav-folder-content.markdown-preview-view {
     align-items: center;
     height: 100%;
     width: 100%;
+    overflow: hidden; /* Prevent scrolling in empty state */
 }
 
 .empty-state-container {

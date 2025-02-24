@@ -63,30 +63,15 @@ export class TranscriptionView extends ItemView {
             const centerContainer = container.createDiv({
                 cls: 'empty-state-center-container'
             });
-            centerContainer.style.display = 'flex';
-            centerContainer.style.justifyContent = 'center';
-            centerContainer.style.alignItems = 'center';
-            centerContainer.style.height = '100%';
-            centerContainer.style.width = '100%';
             
             const promptContainer = centerContainer.createDiv({
                 cls: 'empty-state-container'
             });
-            promptContainer.style.display = 'flex';
-            promptContainer.style.flexDirection = 'column';
-            promptContainer.style.alignItems = 'center';
-            promptContainer.style.justifyContent = 'center';
-            promptContainer.style.padding = '40px';
-            promptContainer.style.maxWidth = '500px';
-            promptContainer.style.margin = '0 auto';
             
             const promptMessage = promptContainer.createEl('div', {
                 text: 'Skribe a video now',
                 cls: 'empty-state-message'
             });
-            promptMessage.style.fontSize = '1.5em';
-            promptMessage.style.color = 'var(--text-muted)';
-            promptMessage.style.marginBottom = '20px';
             
             // Create URL input container
             const inputContainer = promptContainer.createDiv({
@@ -157,7 +142,6 @@ export class TranscriptionView extends ItemView {
         this.transcriptContainer = contentWrapper.createDiv({
             cls: 'nav-folder-content markdown-preview-view transcript-container'
         });
-        this.transcriptContainer.style.maxHeight = '300px';
         this.transcriptContainer.style.overflowY = 'auto';
         this.transcriptContainer.style.display = this.activeTab === 'transcript' ? 'block' : 'none';
 
@@ -418,7 +402,6 @@ export class TranscriptionView extends ItemView {
         const chatMessagesContainer = this.chatContainer.createDiv({
             cls: 'chat-messages-container'
         });
-        chatMessagesContainer.style.maxHeight = '300px';
         chatMessagesContainer.style.overflowY = 'auto';
         chatMessagesContainer.style.marginBottom = '10px';
         chatMessagesContainer.style.padding = '10px';
