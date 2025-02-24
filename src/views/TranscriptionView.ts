@@ -59,15 +59,26 @@ export class TranscriptionView extends ItemView {
         
         // If no video is selected, show a prompt message and return
         if (!this.content) {
-            const promptContainer = container.createDiv({
+            // Create a centered container for the empty state
+            const centerContainer = container.createDiv({
+                cls: 'empty-state-center-container'
+            });
+            centerContainer.style.display = 'flex';
+            centerContainer.style.justifyContent = 'center';
+            centerContainer.style.alignItems = 'center';
+            centerContainer.style.height = '100%';
+            centerContainer.style.width = '100%';
+            
+            const promptContainer = centerContainer.createDiv({
                 cls: 'empty-state-container'
             });
             promptContainer.style.display = 'flex';
             promptContainer.style.flexDirection = 'column';
             promptContainer.style.alignItems = 'center';
             promptContainer.style.justifyContent = 'center';
-            promptContainer.style.height = '200px';
-            promptContainer.style.padding = '20px';
+            promptContainer.style.padding = '40px';
+            promptContainer.style.maxWidth = '500px';
+            promptContainer.style.margin = '0 auto';
             
             const promptMessage = promptContainer.createEl('div', {
                 text: 'Skribe a video now',
@@ -75,6 +86,56 @@ export class TranscriptionView extends ItemView {
             });
             promptMessage.style.fontSize = '1.5em';
             promptMessage.style.color = 'var(--text-muted)';
+            promptMessage.style.marginBottom = '20px';
+            
+            // Create URL input container
+            const inputContainer = promptContainer.createDiv({
+                cls: 'empty-state-input-container'
+            });
+            inputContainer.style.display = 'flex';
+            inputContainer.style.width = '100%';
+            inputContainer.style.gap = '10px';
+            
+            // Create URL input
+            const urlInput = inputContainer.createEl('input', {
+                cls: 'empty-state-url-input',
+                attr: {
+                    type: 'text',
+                    placeholder: 'Enter YouTube URL...'
+                }
+            });
+            urlInput.style.flexGrow = '1';
+            urlInput.style.padding = '8px 12px';
+            urlInput.style.borderRadius = '4px';
+            urlInput.style.border = '1px solid var(--background-modifier-border)';
+            
+            // Create get transcript button
+            const getButton = inputContainer.createEl('button', {
+                cls: 'empty-state-get-button',
+                text: 'Get Transcript'
+            });
+            getButton.style.padding = '8px 16px';
+            getButton.style.borderRadius = '4px';
+            getButton.style.backgroundColor = 'var(--interactive-accent)';
+            getButton.style.color = 'var(--text-on-accent)';
+            getButton.style.cursor = 'pointer';
+            getButton.style.border = 'none';
+            getButton.style.fontWeight = 'bold';
+            
+            // Handle get transcript button click
+            const handleGetTranscript = () => {
+                const url = urlInput.value.trim();
+                if (!url) return;
+                
+                this.plugin.handlePromptCommand(url);
+            };
+            
+            getButton.addEventListener('click', handleGetTranscript);
+            urlInput.addEventListener('keydown', (e) => {
+                if (e.key === 'Enter') {
+                    handleGetTranscript();
+                }
+            });
             
             return;
         }

@@ -71,7 +71,23 @@ export default class SkribePlugin extends Plugin {
         this.handleTranscriptRequest(selection);
     }
 
-    public handlePromptCommand() {
+    public handlePromptCommand(providedUrl?: string) {
+        if (providedUrl) {
+            // If URL is provided directly, process it
+            if (this.youtubeService.isYouTubeUrl(providedUrl)) {
+                const videoId = this.youtubeService.extractVideoId(providedUrl);
+                if (videoId) {
+                    this.handleTranscriptRequest(providedUrl);
+                } else {
+                    new Notice('Could not extract video ID from the URL');
+                }
+            } else {
+                new Notice('Invalid YouTube URL');
+            }
+            return;
+        }
+
+        // Otherwise, open the modal to get URL from user
         new URLInputModal(this.app, (url) => {
             if (this.youtubeService.isYouTubeUrl(url)) {
                 const videoId = this.youtubeService.extractVideoId(url);
