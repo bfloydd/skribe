@@ -49,13 +49,35 @@ export class TranscriptionView extends ItemView {
     }
 
     async refresh() {
-        const container = this.containerEl.children[1];
+        const container = this.containerEl.children[1] as HTMLElement;
         container.empty();
         
         container.addClass('skribe-plugin');
 
         // Create header
         const header = this.createHeader(container);
+        
+        // If no video is selected, show a prompt message and return
+        if (!this.content) {
+            const promptContainer = container.createDiv({
+                cls: 'empty-state-container'
+            });
+            promptContainer.style.display = 'flex';
+            promptContainer.style.flexDirection = 'column';
+            promptContainer.style.alignItems = 'center';
+            promptContainer.style.justifyContent = 'center';
+            promptContainer.style.height = '200px';
+            promptContainer.style.padding = '20px';
+            
+            const promptMessage = promptContainer.createEl('div', {
+                text: 'Skribe a video now',
+                cls: 'empty-state-message'
+            });
+            promptMessage.style.fontSize = '1.5em';
+            promptMessage.style.color = 'var(--text-muted)';
+            
+            return;
+        }
         
         // Create video URL display
         if (this.videoUrl) {
@@ -236,11 +258,11 @@ export class TranscriptionView extends ItemView {
             cls: 'tabs-container'
         });
 
-        // Chat tab
-        const chatTab = this.createTabItem(tabsContainer, 'Chat', this.activeTab === 'chat');
-        
-        // Transcript tab
+        // Transcript tab (now first)
         const transcriptTab = this.createTabItem(tabsContainer, 'Transcript', this.activeTab === 'transcript');
+        
+        // Chat tab (now second)
+        const chatTab = this.createTabItem(tabsContainer, 'Chat', this.activeTab === 'chat');
         
         // Add click handlers
         chatTab.addEventListener('click', () => {
