@@ -1,5 +1,6 @@
 import { requestUrl } from 'obsidian';
 import type SkribePlugin from '../../main';
+import { ChatMessage } from '../types';
 
 export class OpenAIService {
     private static instance: OpenAIService;
@@ -132,5 +133,69 @@ Here's the transcript to process: ${text}`;
         }
 
         return response.arrayBuffer;
+    }
+
+    public async chatWithTranscript(messages: ChatMessage[], transcript: string): Promise<string> {
+        if (!this.apiKey) {
+            throw new Error('OpenAI API key not set');
+        }
+
+        const systemMessage = {
+            role: "system",
+            content: `You are a helpful assistant analyzing a video transcript. 
+            Use the following transcript as context for answering the user's questions.
+            Transcript: ${transcript}`
+        };
+
+        try {
+            console.log('Making OpenAI API chat request...');
+            const response = await requestUrl({
+                url: 'https://api.openai.com/v1/chat/completions',
+                method: 'POST',
+                headers: {
+                    'Authorization': `Bearer ${this.apiKey}`,
+                    'Content-Type': 'application/json'
+                },
+                body: JSON.stringify({
+                    model: this.plugin.settings.model,
+                    messages: [
+                        systemMessage,
+                        ...messages
+                    ],
+                    temperature: 0.7
+                })
+            });
+
+            if (response.status !== 200) {
+                console.error('OpenAI API Error:', {
+                    status: response.status,
+                    statusText: response.status,
+                    response: response.text
+                });
+                throw new Error(`OpenAI API Error: ${response.status} - ${response.text}`);
+            }
+
+            const result = JSON.parse(response.text);
+            if (!result.choices?.[0]?.message?.content) {
+                console.error('Unexpected API response format:', result);
+                throw new Error('Unexpected API response format');
+            }
+
+            return result.choices[0].message.content.trim();
+        } catch (error) {
+            console.error('Error details:', {
+                message: error.message,
+                status: error.status,
+                response: error.response?.text
+            });
+            
+            if (error.status === 401) {
+                throw new Error('Invalid OpenAI API key. Please check your API key in settings.');
+            } else if (error.status === 429) {
+                throw new Error('OpenAI API rate limit exceeded. Please try again later.');
+            } else {
+                throw new Error(`OpenAI API Error: ${error.message}`);
+            }
+        }
     }
 } 
