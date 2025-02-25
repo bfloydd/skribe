@@ -1,0 +1,4 @@
+This is an obsidian plugin, so you should use built-in functions and methods, styles and components where possible.
+You should also use the latest version of the obsidian api.
+You should also use the latest version of the typescript api.
+Everything must also work on mobile, so be careful with layouts and resizing, as well as don't include NodeJS packages that are desktop only.
