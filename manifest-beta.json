@@ -1,7 +1,7 @@
 {
 	"id": "skribe",
 	"name": "Skribe",
-	"version": "0.0.6",
+	"version": "0.0.7",
 	"minAppVersion": "0.15.0",
 	"description": "Video Transkriber & Summarizer",
 	"author": "Ben Floyd",
