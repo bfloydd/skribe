@@ -38,6 +38,29 @@ export interface ChatState {
     videoUrl?: string;
 }
 
+export interface ToolbarCommand {
+    id: string;
+    icon: string;
+    tooltip: string;
+    isEnabled: (context: CommandContext) => boolean;
+    execute: (context: CommandContext) => void | Promise<void>;
+}
+
+export interface CommandContext {
+    plugin: any;
+    view: any;
+    content?: string;
+    videoUrl?: string;
+    activeTab?: string;
+    [key: string]: any; // Allow for additional context properties
+}
+
+export interface ToolbarConfig {
+    id: string;
+    name: string;
+    commands: ToolbarCommand[];
+}
+
 declare global {
     interface Window {
         ytInitialPlayerResponse: any;

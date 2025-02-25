@@ -5,12 +5,16 @@ import { OpenAIService } from './src/services/OpenAIService';
 import { TranscriptionView, VIEW_TYPE_TRANSCRIPTION } from './src/views/TranscriptionView';
 import { URLInputModal } from './src/ui/URLInputModal';
 import { SettingsTab } from './src/settings/SettingsTab';
+import { ToolbarService } from './src/services/ToolbarService';
+import { CommonCommands } from './src/services/CommonCommands';
+import { ToolbarConfigs } from './src/services/ToolbarConfigs';
 
 export default class SkribePlugin extends Plugin {
     settings: SkribeSettings;
     view: TranscriptionView;
     youtubeService: YouTubeService;
     openaiService: OpenAIService;
+    toolbarService: ToolbarService;
 
     async onload() {
         console.log('Loading Skribe plugin...');
@@ -20,11 +24,25 @@ export default class SkribePlugin extends Plugin {
         this.openaiService = OpenAIService.getInstance();
         this.openaiService.setApiKey(this.settings.openaiApiKey);
         this.openaiService.setPlugin(this);
+        
+        // Initialize toolbar service
+        this.toolbarService = ToolbarService.getInstance();
+        this.initializeToolbars();
 
         this.registerCommands();
         this.initializeView();
         this.initializeRibbonIcon();
         this.addSettingTab(new SettingsTab(this.app, this));
+    }
+
+    private initializeToolbars() {
+        // Register common commands
+        this.toolbarService.registerCommonCommands(CommonCommands);
+        
+        // Register toolbar configurations
+        ToolbarConfigs.forEach(config => {
+            this.toolbarService.registerToolbar(config);
+        });
     }
 
     private registerCommands() {

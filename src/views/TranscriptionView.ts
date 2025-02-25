@@ -174,145 +174,29 @@ export class TranscriptionView extends ItemView {
         });
         titleEl.setText('Skribe');
 
-        const buttonContainer = header.createDiv({
-            cls: 'nav-buttons-container'
-        });
-
-        // Copy button
-        const copyButton = buttonContainer.createEl('button', {
-            cls: 'clickable-icon',
-            attr: { 
-                'aria-label': 'Copy transcript',
-                'disabled': !this.content
+        // Create toolbar based on active tab
+        const context = {
+            plugin: this.plugin,
+            view: this,
+            content: this.content,
+            videoUrl: this.videoUrl,
+            activeTab: this.activeTab,
+            chatMessages: this.chatState.messages,
+            onClearChat: () => {
+                this.chatState.messages = [];
+                this.renderChatMessages(this.chatContainer);
             }
-        });
-        setIcon(copyButton, 'copy');
-        if (!this.content) {
-            copyButton.addClass('disabled-button');
-            copyButton.style.opacity = '0.5';
-            copyButton.style.cursor = 'not-allowed';
+        };
+
+        // Create toolbar based on active tab
+        if (this.activeTab === 'transcript') {
+            this.plugin.toolbarService.createToolbar(header, 'transcript', context);
+        } else if (this.activeTab === 'chat') {
+            this.plugin.toolbarService.createToolbar(header, 'chat', context);
+        } else {
+            // Default to transcript toolbar
+            this.plugin.toolbarService.createToolbar(header, 'transcript', context);
         }
-        copyButton.addEventListener('click', async () => {
-            if (!this.content) return;
-            await navigator.clipboard.writeText(this.content);
-            new Notice('Transcript copied to clipboard');
-        });
-
-        // Save button
-        const saveButton = buttonContainer.createEl('button', {
-            cls: 'clickable-icon',
-            attr: { 
-                'aria-label': 'Save transcript',
-                'disabled': !this.content
-            }
-        });
-        setIcon(saveButton, 'save');
-        if (!this.content) {
-            saveButton.addClass('disabled-button');
-            saveButton.style.opacity = '0.5';
-            saveButton.style.cursor = 'not-allowed';
-        }
-        saveButton.addEventListener('click', () => {
-            if (!this.content) return;
-            this.saveTranscript();
-        });
-
-        // Format button
-        const formatButton = buttonContainer.createEl('button', {
-            cls: 'clickable-icon',
-            attr: { 
-                'aria-label': 'Enhance with AI (Format + Summary)',
-                'title': 'Format transcript and add summary with key points',
-                'disabled': !this.content
-            }
-        });
-        setIcon(formatButton, 'wand');
-        if (!this.content) {
-            formatButton.addClass('disabled-button');
-            formatButton.style.opacity = '0.5';
-            formatButton.style.cursor = 'not-allowed';
-        }
-        formatButton.addEventListener('click', () => {
-            if (!this.content) return;
-            this.reformatWithAI();
-        });
-
-        // Play button (OpenAI TTS)
-        const playButton = buttonContainer.createEl('button', {
-            cls: 'clickable-icon',
-            attr: { 
-                'aria-label': 'Play/Pause transcript with TTS',
-                'title': 'Play/Pause transcript using Text-to-Speech',
-                'disabled': !this.content
-            }
-        });
-        setIcon(playButton, 'play-circle');
-        if (!this.content) {
-            playButton.addClass('disabled-button');
-            playButton.style.opacity = '0.5';
-            playButton.style.cursor = 'not-allowed';
-        }
-        playButton.addEventListener('click', async () => {
-            if (!this.content) return;
-            try {
-                if (!this.plugin.settings.openaiApiKey) {
-                    new Notice('Please set your OpenAI API key in settings');
-                    return;
-                }
-
-                if (!this.audioPlayer) {
-                    this.audioPlayer = new AudioPlayer(
-                        this.plugin.settings.openaiApiKey,
-                        (isPlaying) => {
-                            setIcon(playButton, isPlaying ? 'pause-circle' : 'play-circle');
-                            const audioControls = this.containerEl.querySelector('.audio-controls') as HTMLElement;
-                            if (audioControls) {
-                                audioControls.style.display = isPlaying ? 'flex' : 'none';
-                            }
-                        },
-                        OpenAIService.getInstance()
-                    );
-                    await this.audioPlayer.playText(this.content);
-                } else {
-                    this.audioPlayer.togglePlayPause();
-                }
-            } catch (error) {
-                console.error('Error:', error);
-                new Notice('Failed to play audio');
-                setIcon(playButton, 'play-circle');
-                const audioControls = this.containerEl.querySelector('.audio-controls') as HTMLElement;
-                if (audioControls) {
-                    audioControls.style.display = 'none';
-                }
-                this.audioPlayer = null;
-            }
-        });
-
-        // Add audio controls
-        const audioControls = container.createDiv({
-            cls: 'nav-header audio-controls'
-        });
-        audioControls.style.display = 'none'; // Hide by default
-
-        const audioButtonContainer = audioControls.createDiv({
-            cls: 'nav-buttons-container'
-        });
-
-        // Stop button
-        const stopButton = audioButtonContainer.createEl('button', {
-            cls: 'clickable-icon',
-            attr: { 
-                'aria-label': 'Stop playback',
-                'title': 'Stop playback'
-            }
-        });
-        setIcon(stopButton, 'square');
-        stopButton.addEventListener('click', () => {
-            if (this.audioPlayer) {
-                this.audioPlayer.stop();
-                audioControls.style.display = 'none';
-            }
-        });
 
         return header;
     }
@@ -351,6 +235,9 @@ export class TranscriptionView extends ItemView {
             this.transcriptContainer.style.display = 'none';
             this.chatContainer.style.display = 'block';
             this.updateTabStyles(chatTab, transcriptTab);
+            
+            // Refresh the toolbar with the new active tab
+            this.refresh();
         });
         
         transcriptTab.addEventListener('click', () => {
@@ -358,6 +245,9 @@ export class TranscriptionView extends ItemView {
             this.transcriptContainer.style.display = 'block';
             this.chatContainer.style.display = 'none';
             this.updateTabStyles(transcriptTab, chatTab);
+            
+            // Refresh the toolbar with the new active tab
+            this.refresh();
         });
     }
     
@@ -386,8 +276,125 @@ export class TranscriptionView extends ItemView {
     }
 
     private async renderTranscriptContent() {
+        // Create transcript toolbar container at the top
+        const transcriptToolbarContainer = this.transcriptContainer.createDiv({
+            cls: 'transcript-toolbar-container'
+        });
+        
+        // Create toolbar with transcript commands
+        const toolbarContext = {
+            plugin: this.plugin,
+            view: this,
+            content: this.content,
+            videoUrl: this.videoUrl,
+            activeTab: this.activeTab
+        };
+        
+        // Create custom toolbar with specific buttons
+        const customToolbarContainer = transcriptToolbarContainer.createDiv({
+            cls: 'nav-buttons-container toolbar-container',
+            attr: {
+                'data-toolbar-id': 'transcript-custom'
+            }
+        });
+        
+        // Create Copy button
+        const copyButton = customToolbarContainer.createEl('button', {
+            cls: 'clickable-icon',
+            attr: { 
+                'aria-label': 'Copy to clipboard',
+                'title': 'Copy to clipboard'
+            }
+        });
+        setIcon(copyButton, 'copy');
+        copyButton.addEventListener('click', async () => {
+            if (!this.content) return;
+            await navigator.clipboard.writeText(this.content);
+            new Notice('Transcript copied to clipboard');
+        });
+        
+        // Create Save button
+        const saveButton = customToolbarContainer.createEl('button', {
+            cls: 'clickable-icon',
+            attr: { 
+                'aria-label': 'Save transcript',
+                'title': 'Save transcript'
+            }
+        });
+        setIcon(saveButton, 'save');
+        saveButton.addEventListener('click', async () => {
+            if (!this.content) return;
+            
+            const timestamp = new Date().toISOString().replace(/[:.]/g, '-');
+            const filename = `${this.plugin.settings.transcriptFolder}/transcript-${timestamp}.md`;
+            
+            // Add metadata at the top of the file
+            const fileContent = [
+                '---',
+                'type: transcript',
+                `created: ${new Date().toISOString()}`,
+                '---',
+                '',
+                '# Video Transcript',
+                '',
+                this.content
+            ].join('\n');
+            
+            await this.plugin.app.vault.create(filename, fileContent);
+            new Notice(`Transcript saved to ${filename}`);
+        });
+        
+        // Create Enhance button
+        const enhanceButton = customToolbarContainer.createEl('button', {
+            cls: 'clickable-icon',
+            attr: { 
+                'aria-label': 'Enhance with AI',
+                'title': 'Enhance with AI'
+            }
+        });
+        setIcon(enhanceButton, 'wand');
+        enhanceButton.addEventListener('click', async () => {
+            if (!this.content || !this.plugin.settings.openaiApiKey) {
+                new Notice('Please set your OpenAI API key in settings');
+                return;
+            }
+            
+            new Notice('AI enhancement in progress...');
+            
+            try {
+                // Use the OpenAI service's reformatText method
+                const formattedContent = await this.plugin.openaiService.reformatText(this.content);
+                
+                // Update the content
+                this.setContent(formattedContent, this.videoUrl);
+                
+                new Notice('Transcript enhanced with AI');
+            } catch (error) {
+                console.error('AI enhancement error:', error);
+                new Notice(`AI enhancement error: ${error instanceof Error ? error.message : 'Unknown error'}`);
+            }
+        });
+        
+        // Create Play button
+        const playButton = customToolbarContainer.createEl('button', {
+            cls: 'clickable-icon',
+            attr: { 
+                'aria-label': 'Play transcript',
+                'title': 'Play transcript'
+            }
+        });
+        setIcon(playButton, 'play-circle');
+        playButton.addEventListener('click', async () => {
+            if (!this.content) return;
+            
+            // This would interact with the AudioPlayer service
+            new Notice('Play functionality not yet implemented');
+        });
+        
         // Create markdown content container
-        const markdownContainer = this.transcriptContainer.createDiv();
+        const markdownContainer = this.transcriptContainer.createDiv({
+            cls: 'transcript-content'
+        });
         
         await MarkdownRenderer.renderMarkdown(
             this.content,
@@ -402,21 +409,56 @@ export class TranscriptionView extends ItemView {
         const chatMessagesContainer = this.chatContainer.createDiv({
             cls: 'chat-messages-container'
         });
-        chatMessagesContainer.style.overflowY = 'auto';
-        chatMessagesContainer.style.marginBottom = '10px';
-        chatMessagesContainer.style.padding = '10px';
+        
+        // Let CSS handle the styling
         chatMessagesContainer.style.backgroundColor = 'var(--background-secondary)';
         chatMessagesContainer.style.borderRadius = '5px';
 
         // Render existing messages
         this.renderChatMessages(chatMessagesContainer);
+        
+        // Create chat toolbar container
+        const chatToolbarContainer = this.chatContainer.createDiv({
+            cls: 'chat-toolbar-container'
+        });
+        
+        // Create toolbar with chat commands
+        const toolbarContext = {
+            plugin: this.plugin,
+            view: this,
+            content: this.content,
+            videoUrl: this.videoUrl,
+            activeTab: this.activeTab,
+            chatMessages: this.chatState.messages,
+            onClearChat: () => {
+                this.chatState.messages = [];
+                this.renderChatMessages(chatMessagesContainer);
+                
+                // Update toolbar state after clearing chat
+                const chatToolbarContainer = this.chatContainer.querySelector('.chat-toolbar-container') as HTMLElement;
+                if (chatToolbarContainer) {
+                    const updatedContext = {
+                        plugin: this.plugin,
+                        view: this,
+                        content: this.content,
+                        videoUrl: this.videoUrl,
+                        activeTab: this.activeTab,
+                        chatMessages: this.chatState.messages,
+                        onClearChat: () => {} // Prevent infinite recursion
+                    };
+                    this.plugin.toolbarService.updateToolbarState(chatToolbarContainer, updatedContext);
+                }
+            }
+        };
+        
+        this.plugin.toolbarService.createToolbar(chatToolbarContainer, 'chat', toolbarContext);
 
         // Create chat input container
         const chatInputContainer = this.chatContainer.createDiv({
             cls: 'chat-input-container'
         });
-        chatInputContainer.style.display = 'flex';
-        chatInputContainer.style.gap = '10px';
+        
+        // Let CSS handle the styling
 
         // Create chat input
         const chatInput = chatInputContainer.createEl('input', {
@@ -426,22 +468,16 @@ export class TranscriptionView extends ItemView {
                 placeholder: 'Start typing...'
             }
         });
-        chatInput.style.flexGrow = '1';
-        chatInput.style.padding = '8px';
-        chatInput.style.borderRadius = '4px';
-        chatInput.style.border = '1px solid var(--background-modifier-border)';
+        
+        // Let CSS handle the styling
 
         // Create send button
         const sendButton = chatInputContainer.createEl('button', {
             cls: 'chat-send-button',
             text: 'Send'
         });
-        sendButton.style.padding = '8px 16px';
-        sendButton.style.borderRadius = '4px';
-        sendButton.style.backgroundColor = 'var(--interactive-accent)';
-        sendButton.style.color = 'var(--text-on-accent)';
-        sendButton.style.cursor = 'pointer';
-        sendButton.style.border = 'none';
+        
+        // Let CSS handle the styling
 
         // Handle send button click
         const handleSend = async () => {
@@ -463,6 +499,39 @@ export class TranscriptionView extends ItemView {
 
             // Scroll to bottom
             chatMessagesContainer.scrollTop = chatMessagesContainer.scrollHeight;
+            
+            // Update toolbar state after user message
+            const chatToolbarContainer = this.chatContainer.querySelector('.chat-toolbar-container') as HTMLElement;
+            if (chatToolbarContainer) {
+                const toolbarContext = {
+                    plugin: this.plugin,
+                    view: this,
+                    content: this.content,
+                    videoUrl: this.videoUrl,
+                    activeTab: this.activeTab,
+                    chatMessages: this.chatState.messages,
+                    onClearChat: () => {
+                        this.chatState.messages = [];
+                        this.renderChatMessages(chatMessagesContainer);
+                        
+                        // Update toolbar state after clearing chat
+                        const chatToolbarContainer = this.chatContainer.querySelector('.chat-toolbar-container') as HTMLElement;
+                        if (chatToolbarContainer) {
+                            const updatedContext = {
+                                plugin: this.plugin,
+                                view: this,
+                                content: this.content,
+                                videoUrl: this.videoUrl,
+                                activeTab: this.activeTab,
+                                chatMessages: this.chatState.messages,
+                                onClearChat: () => {} // Prevent infinite recursion
+                            };
+                            this.plugin.toolbarService.updateToolbarState(chatToolbarContainer, updatedContext);
+                        }
+                    }
+                };
+                this.plugin.toolbarService.updateToolbarState(chatToolbarContainer, toolbarContext);
+            }
 
             try {
                 if (!this.plugin.settings.openaiApiKey) {
@@ -505,6 +574,24 @@ export class TranscriptionView extends ItemView {
 
                 // Scroll to bottom
                 chatMessagesContainer.scrollTop = chatMessagesContainer.scrollHeight;
+                
+                // Update toolbar state
+                const chatToolbarContainer = this.chatContainer.querySelector('.chat-toolbar-container') as HTMLElement;
+                if (chatToolbarContainer) {
+                    const toolbarContext = {
+                        plugin: this.plugin,
+                        view: this,
+                        content: this.content,
+                        videoUrl: this.videoUrl,
+                        activeTab: this.activeTab,
+                        chatMessages: this.chatState.messages,
+                        onClearChat: () => {
+                            this.chatState.messages = [];
+                            this.renderChatMessages(chatMessagesContainer);
+                        }
+                    };
+                    this.plugin.toolbarService.updateToolbarState(chatToolbarContainer, toolbarContext);
+                }
             } catch (error) {
                 new Notice('Failed to get response: ' + error.message);
                 console.error('Chat Error:', error);
