@@ -1,6 +1,6 @@
 import { Notice } from 'obsidian';
 import { OpenAIService } from './OpenAIService';
-import { EventEmitter } from 'events';
+import { EventEmitter } from './EventEmitter';
 
 export class AudioPlayer extends EventEmitter {
     private openAIService: OpenAIService;
