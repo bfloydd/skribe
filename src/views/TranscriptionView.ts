@@ -702,6 +702,9 @@ export class TranscriptionView extends ItemView {
         this.refresh();
         
         console.log('TranscriptionView: View has been reset');
+        
+        // Notify user
+        new Notice('Starting over');
     }
 
     /**

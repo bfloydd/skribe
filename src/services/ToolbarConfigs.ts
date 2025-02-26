@@ -27,10 +27,13 @@ const topToolbarCommands: ToolbarCommand[] = [
                 viewProperties: context.view ? Object.keys(context.view) : []
             });
             
-            if (context.view && typeof context.view.resetView === 'function') {
-                console.log('Calling resetView method');
+            // Direct approach to access the view instance
+            if (context.view) {
+                console.log('Calling resetView method directly');
                 try {
-                    context.view.resetView();
+                    // Force call the resetView method directly on the view instance
+                    const resetMethod = context.view.resetView.bind(context.view);
+                    resetMethod();
                     console.log('resetView method called successfully');
                     new Notice('Starting over');
                 } catch (error) {
@@ -38,7 +41,7 @@ const topToolbarCommands: ToolbarCommand[] = [
                     new Notice(`Error: ${error instanceof Error ? error.message : 'Unknown error'}`);
                 }
             } else {
-                console.error('Cannot reset view: resetView method not found on view object');
+                console.error('Cannot reset view: view object not found in context');
                 new Notice('Error: Could not reset view');
             }
         }

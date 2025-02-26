@@ -116,7 +116,7 @@ export class ToolbarService {
         console.log(`Command ${actualCommand.id} isEnabled: ${isEnabled}`);
         
         const button = container.createEl('button', {
-            cls: 'clickable-icon',
+            cls: 'clickable-icon toolbar-button',
             attr: { 
                 'aria-label': actualCommand.tooltip,
                 'title': actualCommand.tooltip,
@@ -154,6 +154,12 @@ export class ToolbarService {
                 } catch (error) {
                     console.error(`Error getting fresh context from view: ${error}`);
                 }
+            }
+            
+            // Ensure the view reference is preserved
+            if (!currentContext.view && context.view) {
+                currentContext.view = context.view;
+                console.log('Preserved original view reference in context');
             }
             
             // Check if the command is enabled with the current context
