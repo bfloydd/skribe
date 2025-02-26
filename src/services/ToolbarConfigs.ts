@@ -4,13 +4,32 @@ import { createCommonCommandReference } from './CommonCommands';
 import type SkribePlugin from '../../main';
 
 /**
+ * Top toolbar commands
+ */
+const topToolbarCommands: ToolbarCommand[] = [
+    {
+        id: 'start-over',
+        icon: 'rotate-ccw',
+        tooltip: 'Start over',
+        isEnabled: () => true, // Always enabled
+        execute: (context: CommandContext) => {
+            if (context.view && typeof context.view.resetView === 'function') {
+                context.view.resetView();
+                new Notice('Starting over');
+            }
+        }
+    }
+];
+
+/**
  * Transcript-specific commands
  */
 const transcriptCommands: ToolbarCommand[] = [
     // Reference common commands
     createCommonCommandReference('copy'),
     createCommonCommandReference('save'),
-    createCommonCommandReference('format-ai'),
+    // Note: The "Enhance with AI" button is implemented directly in TranscriptionView.ts
+    // instead of using the common format-ai command to ensure reliable operation
     
     // Transcript-specific commands
     {
@@ -213,6 +232,11 @@ const summaryCommands: ToolbarCommand[] = [
  * Toolbar configurations for different tab types
  */
 export const ToolbarConfigs: ToolbarConfig[] = [
+    {
+        id: 'top',
+        name: 'Top Toolbar',
+        commands: topToolbarCommands
+    },
     {
         id: 'transcript',
         name: 'Transcript Toolbar',

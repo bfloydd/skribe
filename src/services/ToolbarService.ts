@@ -95,12 +95,25 @@ export class ToolbarService {
         command: ToolbarCommand, 
         context: CommandContext
     ): HTMLElement {
+        console.log(`Creating button for command: ${command.id}`);
+        
         // Check if this is a reference to a common command
-        const actualCommand = command.id.startsWith('common:') 
-            ? this.commonCommands.get(command.id.substring(7)) || command
-            : command;
+        let actualCommand = command;
+        
+        if (command.id.startsWith('common:')) {
+            const commonCommandId = command.id.substring(7);
+            const commonCommand = this.commonCommands.get(commonCommandId);
+            
+            if (commonCommand) {
+                console.log(`Found common command for: ${commonCommandId}`);
+                actualCommand = commonCommand;
+            } else {
+                console.warn(`Common command not found for: ${commonCommandId}`);
+            }
+        }
 
         const isEnabled = actualCommand.isEnabled(context);
+        console.log(`Command ${actualCommand.id} isEnabled: ${isEnabled}`);
         
         const button = container.createEl('button', {
             cls: 'clickable-icon',
@@ -118,11 +131,20 @@ export class ToolbarService {
             button.addClass('disabled-button');
         }
         
-        button.addEventListener('click', async () => {
-            if (!isEnabled) return;
+        button.addEventListener('click', async (e) => {
+            console.log(`Button clicked for command: ${actualCommand.id}`);
+            e.preventDefault();
+            e.stopPropagation();
+            
+            if (!isEnabled) {
+                console.log(`Command ${actualCommand.id} is disabled, not executing`);
+                return;
+            }
             
             try {
+                console.log(`Executing command: ${actualCommand.id}`);
                 await actualCommand.execute(context);
+                console.log(`Command ${actualCommand.id} executed successfully`);
             } catch (error) {
                 console.error(`Error executing command ${actualCommand.id}:`, error);
                 new Notice(`Error: ${error instanceof Error ? error.message : 'Unknown error'}`);
@@ -166,15 +188,18 @@ export class ToolbarService {
     }
 
     /**
-     * Update the enabled state of buttons in a toolbar
+     * Update the state of an existing toolbar
      */
     public updateToolbarState(
         container: HTMLElement,
         context: CommandContext
     ): void {
-        const buttons = container.querySelectorAll('button.clickable-icon[data-command-id]');
+        console.log('ToolbarService: Updating toolbar state');
         
-        buttons.forEach((button: HTMLElement) => {
+        // Find all buttons in the container
+        const buttons = container.querySelectorAll('button[data-command-id]');
+        
+        buttons.forEach(button => {
             const commandId = button.getAttribute('data-command-id');
             if (!commandId) return;
             
@@ -184,23 +209,27 @@ export class ToolbarService {
             if (commandId.startsWith('common:')) {
                 command = this.commonCommands.get(commandId.substring(7));
             } else {
-                // Search in all registered toolbars
-                for (const config of this.toolbarConfigs.values()) {
-                    command = config.commands.find(cmd => cmd.id === commandId);
-                    if (command) break;
-                }
+                // Find the toolbar config
+                const toolbarId = container.getAttribute('data-toolbar-id');
+                if (!toolbarId) return;
+                
+                const toolbarConfig = this.toolbarConfigs.get(toolbarId);
+                if (!toolbarConfig) return;
+                
+                command = toolbarConfig.commands.find(cmd => cmd.id === commandId);
             }
             
             if (!command) return;
             
+            // Update button state
             const isEnabled = command.isEnabled(context);
             
             if (isEnabled) {
                 button.removeAttribute('disabled');
-                button.removeClass('disabled-button');
+                button.classList.remove('disabled-button');
             } else {
                 button.setAttribute('disabled', 'true');
-                button.addClass('disabled-button');
+                button.classList.add('disabled-button');
             }
         });
     }

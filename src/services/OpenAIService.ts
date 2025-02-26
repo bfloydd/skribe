@@ -24,88 +24,93 @@ export class OpenAIService {
         this.plugin = plugin;
     }
 
-    public async reformatText(text: string): Promise<string> {
+    public async reformatText(content: string): Promise<string> {
         if (!this.apiKey) {
+            console.error('OpenAIService: API key not set');
             throw new Error('OpenAI API key not set');
         }
-
-        const prompt = `Please analyze and reformat this transcript into a well-structured markdown document. Include:
-
-1. A brief summary (2-3 sentences) at the top
-2. Key points or takeaways as bullet points
-3. The main transcript content below, reformatted with:
-   - Proper paragraphs
-   - Correct punctuation
-   - Logical flow
-   - Clear speaker transitions (if any)
-   - Don't lose any information, especially including examples, quotes, or specific details.
-
-Format the output as follows:
-
-# Summary
-[2-3 sentence summary]
-
-## Key Points
-- [key point 1]
-- [key point 2]
-etc.
-
-## Transcript
-[reformatted transcript content]
-
-Here's the transcript to process: ${text}`;
-
+        
+        console.log('OpenAIService: Starting to reformat text');
+        console.log('OpenAIService: Content length:', content.length);
+        
         try {
-            console.log('Making OpenAI API request...');
-            const response = await requestUrl({
-                url: 'https://api.openai.com/v1/chat/completions',
-                method: 'POST',
-                headers: {
-                    'Authorization': `Bearer ${this.apiKey}`,
-                    'Content-Type': 'application/json'
-                },
-                body: JSON.stringify({
-                    model: this.plugin.settings.model,
-                    messages: [
-                        {
-                            role: "user",
-                            content: prompt
-                        }
-                    ],
-                    temperature: 1
-                })
-            });
+            // Make sure we're using a prompt that will work well
+            const prompt = `Please analyze and provide a concise summary of the following transcript. 
+            Include key points, insights, and important information in a well-structured format with headings:
 
-            if (response.status !== 200) {
-                console.error('OpenAI API Error:', {
+            ${content}`;
+            
+            console.log('OpenAIService: Sending request to OpenAI');
+            
+            try {
+                const response = await requestUrl({
+                    url: 'https://api.openai.com/v1/chat/completions',
+                    method: 'POST',
+                    headers: {
+                        'Authorization': `Bearer ${this.apiKey}`,
+                        'Content-Type': 'application/json'
+                    },
+                    body: JSON.stringify({
+                        model: "gpt-3.5-turbo",
+                        messages: [
+                            {
+                                role: "system",
+                                content: "You are an AI assistant that creates concise, well-structured summaries of transcripts."
+                            },
+                            {
+                                role: "user",
+                                content: prompt
+                            }
+                        ],
+                        temperature: 0.5
+                    })
+                });
+                
+                console.log('OpenAIService: Received response from OpenAI', {
                     status: response.status,
                     statusText: response.status,
-                    response: response.text
+                    responseLength: response.text?.length
                 });
-                throw new Error(`OpenAI API Error: ${response.status} - ${response.text}`);
+                
+                if (response.status !== 200) {
+                    console.error('OpenAIService: API Error', {
+                        status: response.status,
+                        statusText: response.status,
+                        response: response.text
+                    });
+                    throw new Error(`OpenAI API Error: ${response.status} - ${response.text}`);
+                }
+                
+                const result = JSON.parse(response.text);
+                if (result.choices && result.choices.length > 0) {
+                    const formattedText = result.choices[0].message.content;
+                    console.log('OpenAIService: Formatted text length:', formattedText?.length);
+                    
+                    if (!formattedText) {
+                        console.error('OpenAIService: Empty response from OpenAI');
+                        throw new Error('Received empty response from OpenAI');
+                    }
+                    
+                    // Ensure we have a valid string to return
+                    return formattedText;
+                } else {
+                    console.error('OpenAIService: No valid choices in response', result);
+                    throw new Error('No valid response from OpenAI');
+                }
+            } catch (requestError) {
+                console.error('OpenAIService: Request error', requestError);
+                
+                if (requestError.status === 401) {
+                    throw new Error('Invalid OpenAI API key. Please check your API key in settings.');
+                } else if (requestError.status === 429) {
+                    throw new Error('OpenAI API rate limit exceeded. Please try again later.');
+                } else {
+                    throw new Error(`OpenAI API Error: ${requestError.message || 'Unknown error'}`);
+                }
             }
-
-            const result = JSON.parse(response.text);
-            if (!result.choices?.[0]?.message?.content) {
-                console.error('Unexpected API response format:', result);
-                throw new Error('Unexpected API response format');
-            }
-
-            return result.choices[0].message.content.trim();
         } catch (error) {
-            console.error('Error details:', {
-                message: error.message,
-                status: error.status,
-                response: error.response?.text
-            });
-            
-            if (error.status === 401) {
-                throw new Error('Invalid OpenAI API key. Please check your API key in settings.');
-            } else if (error.status === 429) {
-                throw new Error('OpenAI API rate limit exceeded. Please try again later.');
-            } else {
-                throw new Error(`OpenAI API Error: ${error.message}`);
-            }
+            console.error('Error in reformatText:', error);
+            throw error;
         }
     }
 

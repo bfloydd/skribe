@@ -68,32 +68,90 @@ export const CommonCommands: ToolbarCommand[] = [
         icon: 'wand',
         tooltip: 'Enhance with AI (Format + Summary)',
         isEnabled: (context: CommandContext) => {
+            console.log('format-ai isEnabled check', {
+                hasContent: !!context.content,
+                contentLength: context.content?.length,
+                hasPlugin: !!context.plugin,
+                hasApiKey: !!context.plugin?.settings?.openaiApiKey,
+                view: context.view?.constructor.name
+            });
+            
+            // Make sure we have content and an API key
             return !!context.content && 
                    !!context.plugin?.settings?.openaiApiKey;
         },
         execute: async (context: CommandContext) => {
-            if (!context.content || !context.view) return;
+            console.log('format-ai execute called', {
+                hasContent: !!context.content,
+                contentLength: context.content?.length,
+                hasView: !!context.view,
+                viewType: context.view?.constructor.name
+            });
             
-            // Use a generic approach since reformatWithAI is private
-            new Notice('AI formatting in progress...');
-            const plugin = context.plugin as SkribePlugin;
-            
-            try {
-                // Use the OpenAI service's reformatText method
-                const formattedContent = await plugin.openaiService.reformatText(context.content);
+            // Check if we're in a TranscriptionView
+            if (context.view && context.view.constructor.name === 'TranscriptionView') {
+                console.log('format-ai: Calling enhanceWithAI directly on TranscriptionView');
                 
-                // Update the content in the context
-                context.content = formattedContent;
+                // Call the enhanceWithAI method directly
+                await context.view.enhanceWithAI();
+            } else {
+                console.log('format-ai: Not a TranscriptionView, using fallback approach');
                 
-                // If the view has a setContent method, use it
-                if (typeof context.view.setContent === 'function') {
-                    context.view.setContent(formattedContent);
+                if (!context.content) {
+                    console.error('format-ai: No content available');
+                    new Notice('No content available for AI enhancement');
+                    return;
                 }
                 
-                new Notice('Content enhanced with AI');
-            } catch (error) {
-                console.error('AI formatting error:', error);
-                new Notice(`AI formatting error: ${error instanceof Error ? error.message : 'Unknown error'}`);
+                if (!context.plugin?.settings?.openaiApiKey) {
+                    console.error('format-ai: No OpenAI API key set');
+                    new Notice('Please set your OpenAI API key in settings');
+                    return;
+                }
+                
+                // Show a persistent notification while processing
+                console.log('format-ai: Showing Summarizing notice');
+                const loadingNotice = new Notice('Summarizing...', 0);
+                const plugin = context.plugin;
+                
+                try {
+                    // Use the OpenAI service's reformatText method
+                    const formattedContent = await plugin.openaiService.reformatText(context.content);
+                    console.log('Received formatted content, length:', formattedContent?.length);
+                    
+                    if (!formattedContent) {
+                        throw new Error('Received empty response from OpenAI');
+                    }
+                    
+                    const timestamp = new Date().toISOString().replace(/[:.]/g, '-');
+                    const filename = `${plugin.settings.transcriptFolder}/summary-${timestamp}.md`;
+                    
+                    // Add metadata at the top of the file
+                    const fileContent = [
+                        '---',
+                        'type: summary',
+                        `created: ${new Date().toISOString()}`,
+                        `video_url: ${context.videoUrl || ''}`,
+                        '---',
+                        '',
+                        formattedContent
+                    ].join('\n');
+                    
+                    // Create the file
+                    const file = await plugin.app.vault.create(filename, fileContent);
+                    
+                    // Open the file in a new tab
+                    await plugin.app.workspace.getLeaf(true).openFile(file);
+                    
+                    // Hide the loading notice and show success
+                    loadingNotice.hide();
+                    new Notice('Summary created and opened in new tab');
+                } catch (error) {
+                    console.error('AI formatting error:', error);
+                    // Hide the loading notice and show error
+                    loadingNotice.hide();
+                    new Notice(`AI enhancement error: ${error instanceof Error ? error.message : 'Unknown error'}`);
+                }
             }
         }
     }
@@ -114,6 +172,16 @@ export function createCommonCommandReference(commonCommandId: string): ToolbarCo
         icon: command.icon,
         tooltip: command.tooltip,
         isEnabled: command.isEnabled,
-        execute: command.execute
+        execute: async (context: CommandContext) => {
+            console.log(`Executing common command reference: ${commonCommandId}`, {
+                hasContent: !!context.content,
+                contentLength: context.content?.length,
+                hasView: !!context.view,
+                viewType: context.view?.constructor.name
+            });
+            
+            // Call the original execute function with the provided context
+            return command.execute(context);
+        }
     };
 } 

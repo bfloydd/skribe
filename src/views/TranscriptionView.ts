@@ -13,9 +13,11 @@ export class TranscriptionView extends ItemView {
     private audioPlayer: AudioPlayer | null = null;
     private videoUrl: string = '';
     private chatState: ChatState = { messages: [] };
-    private activeTab: 'transcript' | 'chat' = 'chat';
+    private activeTab: 'transcript' | 'chat' | 'summary' = 'transcript';
     private transcriptContainer: HTMLElement;
     private chatContainer: HTMLElement;
+    private summaryContainer: HTMLElement;
+    private summaryContent: string = '';
 
     constructor(leaf: WorkspaceLeaf, plugin: SkribePlugin) {
         super(leaf);
@@ -150,6 +152,13 @@ export class TranscriptionView extends ItemView {
             cls: 'chat-container'
         });
         this.chatContainer.style.display = this.activeTab === 'chat' ? 'block' : 'none';
+        
+        // Create summary container
+        this.summaryContainer = contentWrapper.createDiv({
+            cls: 'summary-container markdown-preview-view'
+        });
+        this.summaryContainer.style.overflowY = 'auto';
+        this.summaryContainer.style.display = this.activeTab === 'summary' ? 'block' : 'none';
 
         // Render transcript content
         if (this.content) {
@@ -158,6 +167,11 @@ export class TranscriptionView extends ItemView {
 
         // Render chat interface
         this.renderChatInterface();
+        
+        // Render summary content if available
+        if (this.summaryContent) {
+            await this.renderSummaryContent();
+        }
     }
 
     private createHeader(container: HTMLElement): HTMLElement {
@@ -174,7 +188,7 @@ export class TranscriptionView extends ItemView {
         });
         titleEl.setText('Skribe');
 
-        // Create toolbar based on active tab
+        // Create context for toolbar
         const context = {
             plugin: this.plugin,
             view: this,
@@ -188,15 +202,8 @@ export class TranscriptionView extends ItemView {
             }
         };
 
-        // Create toolbar based on active tab
-        if (this.activeTab === 'transcript') {
-            this.plugin.toolbarService.createToolbar(header, 'transcript', context);
-        } else if (this.activeTab === 'chat') {
-            this.plugin.toolbarService.createToolbar(header, 'chat', context);
-        } else {
-            // Default to transcript toolbar
-            this.plugin.toolbarService.createToolbar(header, 'transcript', context);
-        }
+        // Create top toolbar (always present)
+        this.plugin.toolbarService.createToolbar(header, 'top', context);
 
         return header;
     }
@@ -223,30 +230,31 @@ export class TranscriptionView extends ItemView {
             cls: 'tabs-container'
         });
 
-        // Transcript tab (now first)
+        // Transcript tab
         const transcriptTab = this.createTabItem(tabsContainer, 'Transcript', this.activeTab === 'transcript');
         
-        // Chat tab (now second)
+        // Chat tab
         const chatTab = this.createTabItem(tabsContainer, 'Chat', this.activeTab === 'chat');
+        
+        // Summary tab
+        const summaryTab = this.createTabItem(tabsContainer, 'Summary', this.activeTab === 'summary');
         
         // Add click handlers
         chatTab.addEventListener('click', () => {
-            this.activeTab = 'chat';
-            this.transcriptContainer.style.display = 'none';
-            this.chatContainer.style.display = 'block';
-            this.updateTabStyles(chatTab, transcriptTab);
-            
-            // Refresh the toolbar with the new active tab
+            this.switchToTab('chat');
+            // Refresh the view to update toolbars
             this.refresh();
         });
         
         transcriptTab.addEventListener('click', () => {
-            this.activeTab = 'transcript';
-            this.transcriptContainer.style.display = 'block';
-            this.chatContainer.style.display = 'none';
-            this.updateTabStyles(transcriptTab, chatTab);
-            
-            // Refresh the toolbar with the new active tab
+            this.switchToTab('transcript');
+            // Refresh the view to update toolbars
+            this.refresh();
+        });
+        
+        summaryTab.addEventListener('click', () => {
+            this.switchToTab('summary');
+            // Refresh the view to update toolbars
             this.refresh();
         });
     }
@@ -267,21 +275,16 @@ export class TranscriptionView extends ItemView {
         
         return tab;
     }
-    
-    private updateTabStyles(activeTab: HTMLElement, inactiveTab: HTMLElement) {
-        activeTab.style.borderBottom = '2px solid var(--text-accent)';
-        activeTab.style.fontWeight = 'bold';
-        inactiveTab.style.borderBottom = '2px solid transparent';
-        inactiveTab.style.fontWeight = 'normal';
-    }
 
     private async renderTranscriptContent() {
+        console.log('TranscriptionView: renderTranscriptContent called');
+        
         // Create transcript toolbar container at the top
         const transcriptToolbarContainer = this.transcriptContainer.createDiv({
             cls: 'transcript-toolbar-container'
         });
         
-        // Create toolbar with transcript commands
+        // Create toolbar with transcript commands but exclude the format-ai command
         const toolbarContext = {
             plugin: this.plugin,
             view: this,
@@ -290,118 +293,54 @@ export class TranscriptionView extends ItemView {
             activeTab: this.activeTab
         };
         
-        // Create custom toolbar with specific buttons
-        const customToolbarContainer = transcriptToolbarContainer.createDiv({
-            cls: 'nav-buttons-container toolbar-container',
-            attr: {
-                'data-toolbar-id': 'transcript-custom'
-            }
+        console.log('TranscriptionView: Creating transcript toolbar with context', {
+            hasContent: !!toolbarContext.content,
+            contentLength: toolbarContext.content?.length,
+            hasPlugin: !!toolbarContext.plugin,
+            hasApiKey: !!toolbarContext.plugin?.settings?.openaiApiKey,
+            view: toolbarContext.view?.constructor.name
         });
         
-        // Create Copy button
-        const copyButton = customToolbarContainer.createEl('button', {
-            cls: 'clickable-icon',
-            attr: { 
-                'aria-label': 'Copy to clipboard',
-                'title': 'Copy to clipboard'
-            }
-        });
-        setIcon(copyButton, 'copy');
-        copyButton.addEventListener('click', async () => {
-            if (!this.content) return;
-            await navigator.clipboard.writeText(this.content);
-            new Notice('Transcript copied to clipboard');
-        });
+        // Create transcript toolbar with all commands EXCEPT format-ai
+        // We'll add our own direct button instead
+        this.plugin.toolbarService.createToolbar(transcriptToolbarContainer, 'transcript', toolbarContext);
         
-        // Create Save button
-        const saveButton = customToolbarContainer.createEl('button', {
-            cls: 'clickable-icon',
-            attr: { 
-                'aria-label': 'Save transcript',
-                'title': 'Save transcript'
-            }
-        });
-        setIcon(saveButton, 'save');
-        saveButton.addEventListener('click', async () => {
-            if (!this.content) return;
-            
-            const timestamp = new Date().toISOString().replace(/[:.]/g, '-');
-            const filename = `${this.plugin.settings.transcriptFolder}/transcript-${timestamp}.md`;
-            
-            // Add metadata at the top of the file
-            const fileContent = [
-                '---',
-                'type: transcript',
-                `created: ${new Date().toISOString()}`,
-                '---',
-                '',
-                '# Video Transcript',
-                '',
-                this.content
-            ].join('\n');
-            
-            await this.plugin.app.vault.create(filename, fileContent);
-            new Notice(`Transcript saved to ${filename}`);
-        });
-        
-        // Create Enhance button
-        const enhanceButton = customToolbarContainer.createEl('button', {
-            cls: 'clickable-icon',
+        // Add a direct enhance button that works reliably
+        const directEnhanceButton = transcriptToolbarContainer.createEl('button', {
+            cls: 'clickable-icon toolbar-button',
             attr: { 
                 'aria-label': 'Enhance with AI',
                 'title': 'Enhance with AI'
             }
         });
-        setIcon(enhanceButton, 'wand');
-        enhanceButton.addEventListener('click', async () => {
-            if (!this.content || !this.plugin.settings.openaiApiKey) {
-                new Notice('Please set your OpenAI API key in settings');
-                return;
-            }
-            
-            new Notice('AI enhancement in progress...');
-            
-            try {
-                // Use the OpenAI service's reformatText method
-                const formattedContent = await this.plugin.openaiService.reformatText(this.content);
-                
-                // Update the content
-                this.setContent(formattedContent, this.videoUrl);
-                
-                new Notice('Transcript enhanced with AI');
-            } catch (error) {
-                console.error('AI enhancement error:', error);
-                new Notice(`AI enhancement error: ${error instanceof Error ? error.message : 'Unknown error'}`);
-            }
+        setIcon(directEnhanceButton, 'wand');
+        
+        // Style the button to match other toolbar buttons
+        directEnhanceButton.style.color = 'var(--text-normal)';
+        directEnhanceButton.style.padding = '4px';
+        directEnhanceButton.style.margin = '0 4px';
+        
+        directEnhanceButton.addEventListener('click', async (e) => {
+            e.preventDefault();
+            e.stopPropagation();
+            console.log('Direct enhance button clicked');
+            await this.enhanceWithAI();
         });
         
-        // Create Play button
-        const playButton = customToolbarContainer.createEl('button', {
-            cls: 'clickable-icon',
-            attr: { 
-                'aria-label': 'Play transcript',
-                'title': 'Play transcript'
-            }
-        });
-        setIcon(playButton, 'play-circle');
-        playButton.addEventListener('click', async () => {
-            if (!this.content) return;
-            
-            // This would interact with the AudioPlayer service
-            new Notice('Play functionality not yet implemented');
-        });
-        
-        // Create markdown content container
-        const markdownContainer = this.transcriptContainer.createDiv({
+        // Create transcript content
+        const transcriptContent = this.transcriptContainer.createDiv({
             cls: 'transcript-content'
         });
         
-        await MarkdownRenderer.renderMarkdown(
-            this.content,
-            markdownContainer,
-            this.app.workspace.getActiveFile()?.path || '',
-            this
-        );
+        // Format the transcript into paragraphs
+        const paragraphs = this.content.split('. ').filter(p => p.trim());
+        
+        paragraphs.forEach(paragraph => {
+            const p = transcriptContent.createDiv({
+                cls: 'transcript-paragraph'
+            });
+            p.setText(paragraph.trim() + '.');
+        });
     }
 
     private renderChatInterface() {
@@ -458,27 +397,21 @@ export class TranscriptionView extends ItemView {
             cls: 'chat-input-container'
         });
         
-        // Let CSS handle the styling
-
         // Create chat input
         const chatInput = chatInputContainer.createEl('input', {
             cls: 'chat-input',
             attr: {
                 type: 'text',
-                placeholder: 'Start typing...'
+                placeholder: 'Ask a question about the video transcript...'
             }
         });
         
-        // Let CSS handle the styling
-
         // Create send button
         const sendButton = chatInputContainer.createEl('button', {
             cls: 'chat-send-button',
             text: 'Send'
         });
         
-        // Let CSS handle the styling
-
         // Handle send button click
         const handleSend = async () => {
             const message = chatInput.value.trim();
@@ -533,49 +466,30 @@ export class TranscriptionView extends ItemView {
                 this.plugin.toolbarService.updateToolbarState(chatToolbarContainer, toolbarContext);
             }
 
+            // Get AI response
             try {
-                if (!this.plugin.settings.openaiApiKey) {
-                    new Notice('Please set your OpenAI API key in settings');
-                    return;
-                }
-
-                // Show loading indicator
-                const loadingMessage = document.createElement('div');
-                loadingMessage.className = 'chat-message assistant-message loading';
-                loadingMessage.textContent = 'Thinking...';
-                loadingMessage.style.padding = '10px';
-                loadingMessage.style.marginBottom = '10px';
-                loadingMessage.style.backgroundColor = 'var(--background-primary)';
-                loadingMessage.style.borderRadius = '5px';
-                loadingMessage.style.alignSelf = 'flex-start';
-                loadingMessage.style.maxWidth = '80%';
-                chatMessagesContainer.appendChild(loadingMessage);
-                chatMessagesContainer.scrollTop = chatMessagesContainer.scrollHeight;
-
-                // Get response from OpenAI
-                const openai = OpenAIService.getInstance();
-                const response = await openai.chatWithTranscript(
+                new Notice('Getting response...');
+                
+                // Use the OpenAI service to get a response
+                const response = await this.plugin.openaiService.chatWithTranscript(
                     this.chatState.messages,
                     this.content
                 );
-
-                // Remove loading indicator
-                chatMessagesContainer.removeChild(loadingMessage);
-
+                
                 // Add assistant message to chat
                 this.chatState.messages.push({
                     role: 'assistant',
                     content: response
                 });
-
+                
                 // Re-render chat messages
                 chatMessagesContainer.empty();
                 this.renderChatMessages(chatMessagesContainer);
-
+                
                 // Scroll to bottom
                 chatMessagesContainer.scrollTop = chatMessagesContainer.scrollHeight;
                 
-                // Update toolbar state
+                // Update toolbar state after assistant message
                 const chatToolbarContainer = this.chatContainer.querySelector('.chat-toolbar-container') as HTMLElement;
                 if (chatToolbarContainer) {
                     const toolbarContext = {
@@ -700,5 +614,193 @@ export class TranscriptionView extends ItemView {
         } catch (error) {
             new Notice('Failed to reformat transcript: ' + error.message);
         }
+    }
+
+    /**
+     * Reset the view to its initial empty state
+     */
+    resetView() {
+        this.content = '';
+        this.videoUrl = '';
+        this.chatState = { messages: [] };
+        this.refresh();
+    }
+
+    /**
+     * Public method to enhance transcript with AI
+     * This can be called directly from the toolbar button
+     */
+    public async enhanceWithAI() {
+        console.log('TranscriptionView: enhanceWithAI called directly');
+        
+        if (!this.content) {
+            console.error('TranscriptionView: No content to enhance');
+            new Notice('No content to enhance with AI');
+            return;
+        }
+        
+        if (!this.plugin.settings.openaiApiKey) {
+            console.error('TranscriptionView: No OpenAI API key set');
+            new Notice('Please set your OpenAI API key in settings');
+            return;
+        }
+        
+        // Show a persistent notification while processing
+        const loadingNotice = new Notice('Summarizing...', 0);
+        
+        try {
+            console.log('TranscriptionView: Calling reformatText with content length:', this.content.length);
+            const formattedContent = await this.plugin.openaiService.reformatText(this.content);
+            console.log('TranscriptionView: Received formatted content, length:', formattedContent?.length);
+            
+            if (!formattedContent) {
+                throw new Error('Received empty response from OpenAI');
+            }
+            
+            // Set the summary content - this method will also switch to the summary tab
+            this.setSummaryContent(formattedContent);
+            
+            // Hide the loading notice and show success
+            loadingNotice.hide();
+            new Notice('Summary created successfully');
+        } catch (error) {
+            console.error('TranscriptionView: Error enhancing with AI:', error);
+            loadingNotice.hide();
+            new Notice(`AI enhancement error: ${error instanceof Error ? error.message : 'Unknown error'}`);
+        }
+    }
+
+    private async renderSummaryContent() {
+        // Create summary toolbar container at the top
+        const summaryToolbarContainer = this.summaryContainer.createDiv({
+            cls: 'summary-toolbar-container'
+        });
+        
+        // Create toolbar with summary commands
+        const toolbarContext = {
+            plugin: this.plugin,
+            view: this,
+            content: this.summaryContent,
+            videoUrl: this.videoUrl,
+            activeTab: this.activeTab
+        };
+        
+        // Create summary toolbar
+        this.plugin.toolbarService.createToolbar(summaryToolbarContainer, 'summary', toolbarContext);
+        
+        // Create summary content div
+        const summaryContentEl = this.summaryContainer.createDiv({
+            cls: 'summary-content'
+        });
+        
+        // Render markdown content
+        await MarkdownRenderer.renderMarkdown(
+            this.summaryContent,
+            summaryContentEl,
+            this.app.workspace.getActiveFile()?.path || '',
+            this
+        );
+    }
+    
+    public setSummaryContent(content: string) {
+        console.log('TranscriptionView: setSummaryContent called', {
+            contentLength: content?.length,
+            activeTabBefore: this.activeTab
+        });
+        
+        if (!content) {
+            console.error('TranscriptionView: Empty content provided to setSummaryContent');
+            new Notice('Cannot display empty summary');
+            return;
+        }
+        
+        this.summaryContent = content;
+        
+        // Switch to summary tab
+        this.switchToTab('summary');
+        
+        // We need to completely refresh the summary container rather than the whole view
+        this.summaryContainer.empty();
+        
+        try {
+            // Create summary toolbar container at the top
+            const summaryToolbarContainer = this.summaryContainer.createDiv({
+                cls: 'summary-toolbar-container'
+            });
+            
+            // Create toolbar with summary commands
+            const toolbarContext = {
+                plugin: this.plugin,
+                view: this,
+                content: this.summaryContent,
+                videoUrl: this.videoUrl,
+                activeTab: this.activeTab
+            };
+            
+            // Create summary toolbar
+            this.plugin.toolbarService.createToolbar(summaryToolbarContainer, 'summary', toolbarContext);
+            
+            // Create summary content div
+            const summaryContentEl = this.summaryContainer.createDiv({
+                cls: 'summary-content'
+            });
+            
+            // Render markdown content immediately
+            MarkdownRenderer.renderMarkdown(
+                this.summaryContent,
+                summaryContentEl,
+                this.app.workspace.getActiveFile()?.path || '',
+                this
+            );
+            
+            console.log('TranscriptionView: Summary content set and displayed successfully');
+        } catch (error) {
+            console.error('TranscriptionView: Error setting summary content', error);
+            new Notice(`Error displaying summary: ${error instanceof Error ? error.message : 'Unknown error'}`);
+        }
+    }
+
+    /**
+     * Helper method to switch tabs programmatically
+     * This ensures consistent tab switching behavior across the plugin
+     */
+    private switchToTab(tabName: 'transcript' | 'chat' | 'summary') {
+        console.log(`TranscriptionView: Switching to ${tabName} tab`);
+        
+        // Update active tab
+        this.activeTab = tabName;
+        
+        // Update container visibility
+        if (this.transcriptContainer) {
+            this.transcriptContainer.style.display = tabName === 'transcript' ? 'block' : 'none';
+        }
+        if (this.chatContainer) {
+            this.chatContainer.style.display = tabName === 'chat' ? 'block' : 'none';
+        }
+        if (this.summaryContainer) {
+            this.summaryContainer.style.display = tabName === 'summary' ? 'block' : 'none';
+        }
+        
+        // Update tab styles
+        const tabItems = this.containerEl.querySelectorAll('.tab-item');
+        tabItems.forEach(tab => {
+            const tabEl = tab as HTMLElement;
+            if (tabEl.textContent === this.capitalizeFirstLetter(tabName)) {
+                tabEl.classList.add('active');
+                tabEl.style.borderBottom = '2px solid var(--text-accent)';
+                tabEl.style.fontWeight = 'bold';
+            } else {
+                tabEl.classList.remove('active');
+                tabEl.style.borderBottom = '2px solid transparent';
+                tabEl.style.fontWeight = 'normal';
+            }
+        });
+    }
+    
+    /**
+     * Helper method to capitalize the first letter of a string
+     */
+    private capitalizeFirstLetter(string: string): string {
+        return string.charAt(0).toUpperCase() + string.slice(1);
     }
 } 
