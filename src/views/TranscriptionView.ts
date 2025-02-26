@@ -2,7 +2,7 @@ import { ItemView, WorkspaceLeaf, setIcon, Notice, MarkdownRenderer } from 'obsi
 import type SkribePlugin from '../../main';
 import { OpenAIService } from '../services/OpenAIService';
 import { AudioPlayer } from '../services/AudioPlayer';
-import { ChatMessage, ChatState } from '../types';
+import { ChatMessage, ChatState, CommandContext } from '../types';
 
 export const VIEW_TYPE_TRANSCRIPTION = "transcription-view";
 
@@ -204,6 +204,60 @@ export class TranscriptionView extends ItemView {
 
         // Create top toolbar (always present)
         this.plugin.toolbarService.createToolbar(header, 'top', context);
+        
+        // Add a direct "Start over" button that doesn't rely on the toolbar system
+        const directStartOverButton = header.createEl('button', {
+            cls: 'clickable-icon direct-start-over-button',
+            attr: { 
+                'aria-label': 'Start over',
+                'title': 'Start over'
+            }
+        });
+        
+        // Position the button at the top right
+        directStartOverButton.style.position = 'absolute';
+        directStartOverButton.style.right = '10px';
+        directStartOverButton.style.top = '5px';
+        directStartOverButton.style.backgroundColor = 'var(--background-modifier-border)';
+        directStartOverButton.style.color = 'var(--text-normal)';
+        directStartOverButton.style.padding = '4px 8px';
+        directStartOverButton.style.borderRadius = '4px';
+        directStartOverButton.style.fontWeight = 'bold';
+        directStartOverButton.style.cursor = 'pointer';
+        directStartOverButton.style.zIndex = '100';
+        
+        setIcon(directStartOverButton, 'rotate-ccw');
+        
+        // Add direct click handler
+        directStartOverButton.addEventListener('click', (e) => {
+            e.preventDefault();
+            e.stopPropagation();
+            console.log('Direct start over button clicked');
+            
+            try {
+                // Reset all state variables
+                this.content = '';
+                this.videoUrl = '';
+                this.chatState = { messages: [] };
+                this.summaryContent = '';
+                this.activeTab = 'transcript';
+                
+                // Clear any audio player
+                if (this.audioPlayer) {
+                    this.audioPlayer.stop();
+                    this.audioPlayer = null;
+                }
+                
+                // Refresh the view to show the welcome screen
+                this.refresh();
+                
+                new Notice('Starting over');
+                console.log('View has been reset directly');
+            } catch (error) {
+                console.error('Error resetting view directly:', error);
+                new Notice(`Error: ${error instanceof Error ? error.message : 'Unknown error'}`);
+            }
+        });
 
         return header;
     }
@@ -619,11 +673,35 @@ export class TranscriptionView extends ItemView {
     /**
      * Reset the view to its initial empty state
      */
-    resetView() {
+    public resetView(): void {
+        console.log('TranscriptionView: Resetting view to initial state', {
+            contentBefore: this.content ? this.content.substring(0, 50) + '...' : 'empty',
+            videoUrlBefore: this.videoUrl,
+            activeTabBefore: this.activeTab,
+            hasChatMessages: this.chatState.messages.length > 0,
+            hasSummary: !!this.summaryContent
+        });
+        
+        // Reset all state variables
         this.content = '';
         this.videoUrl = '';
         this.chatState = { messages: [] };
+        this.summaryContent = '';
+        this.activeTab = 'transcript';
+        
+        // Clear any audio player
+        if (this.audioPlayer) {
+            console.log('TranscriptionView: Stopping audio player');
+            this.audioPlayer.stop();
+            this.audioPlayer = null;
+        }
+        
+        console.log('TranscriptionView: About to refresh view');
+        
+        // Refresh the view to show the welcome screen
         this.refresh();
+        
+        console.log('TranscriptionView: View has been reset');
     }
 
     /**
@@ -802,5 +880,24 @@ export class TranscriptionView extends ItemView {
      */
     private capitalizeFirstLetter(string: string): string {
         return string.charAt(0).toUpperCase() + string.slice(1);
+    }
+    
+    /**
+     * Get a fresh command context for toolbar commands
+     * This ensures that toolbar commands always have the latest state
+     */
+    public getCommandContext(): CommandContext {
+        return {
+            plugin: this.plugin,
+            view: this,
+            content: this.content,
+            videoUrl: this.videoUrl,
+            activeTab: this.activeTab,
+            chatMessages: this.chatState.messages,
+            onClearChat: () => {
+                this.chatState.messages = [];
+                this.renderChatMessages(this.chatContainer);
+            }
+        };
     }
 } 

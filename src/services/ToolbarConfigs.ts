@@ -11,11 +11,35 @@ const topToolbarCommands: ToolbarCommand[] = [
         id: 'start-over',
         icon: 'rotate-ccw',
         tooltip: 'Start over',
-        isEnabled: () => true, // Always enabled
+        isEnabled: (context: CommandContext) => {
+            console.log('Checking if start-over is enabled', {
+                hasView: !!context.view,
+                viewType: context.view?.constructor?.name,
+                hasResetView: typeof context.view?.resetView === 'function'
+            });
+            return true; // Always enabled
+        },
         execute: (context: CommandContext) => {
+            console.log('Start over button clicked', {
+                hasView: !!context.view,
+                viewType: context.view?.constructor?.name,
+                hasResetView: typeof context.view?.resetView === 'function',
+                viewProperties: context.view ? Object.keys(context.view) : []
+            });
+            
             if (context.view && typeof context.view.resetView === 'function') {
-                context.view.resetView();
-                new Notice('Starting over');
+                console.log('Calling resetView method');
+                try {
+                    context.view.resetView();
+                    console.log('resetView method called successfully');
+                    new Notice('Starting over');
+                } catch (error) {
+                    console.error('Error calling resetView:', error);
+                    new Notice(`Error: ${error instanceof Error ? error.message : 'Unknown error'}`);
+                }
+            } else {
+                console.error('Cannot reset view: resetView method not found on view object');
+                new Notice('Error: Could not reset view');
             }
         }
     }

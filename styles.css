@@ -27,11 +27,24 @@
     transition: all 0.2s ease;
 }
 
+/* Make the Start over button more prominent */
+.toolbar-container[data-toolbar-id="top"] button[data-command-id="start-over"] {
+    background-color: var(--background-modifier-border);
+    color: var(--text-normal);
+    font-weight: bold;
+}
+
 .toolbar-container[data-toolbar-id="top"] button:hover:not(.disabled-button) {
     background-color: var(--background-modifier-hover);
     color: var(--text-accent);
     transform: translateY(-1px);
     box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+}
+
+/* Make the Start over button hover state more prominent */
+.toolbar-container[data-toolbar-id="top"] button[data-command-id="start-over"]:hover:not(.disabled-button) {
+    background-color: var(--text-accent);
+    color: var(--text-on-accent);
 }
 
 /* Fix for vertical scrolling issue */
@@ -140,8 +153,8 @@
     align-items: center;
     position: relative;
     padding-top: 0px;
-    padding-bottom: 2px;
-    min-height: 80px;
+    padding-bottom: 0px;
+    min-height: 40px;
 }
 
 .nav-buttons-container {
@@ -169,7 +182,7 @@
     margin-top: -2px;
     position: absolute;
     width: 100%;
-    top: 70px;
+    top: 40px;
     left: 0;
     height: calc(100% - 22px);
     display: flex;
@@ -185,7 +198,7 @@
 .markdown-preview-view .nav-header {
     padding-top: 0;
     padding-bottom: 0;
-    min-height: 60px;
+    min-height: 40px;
 }
 
 .nav-folder-content {
@@ -209,8 +222,8 @@ div.nav-folder-content.markdown-preview-view {
 /* Video URL display */
 .video-url-container {
     text-align: center;
-    padding: 5px;
-    margin-bottom: 10px;
+    padding: 2px;
+    margin-bottom: 5px;
     border-bottom: 1px solid var(--background-modifier-border);
 }
 
@@ -250,7 +263,7 @@ div.nav-folder-content.markdown-preview-view {
 .skribe-content-wrapper {
     display: flex;
     flex-direction: column;
-    height: calc(100% - 120px); /* Adjusted height calculation */
+    height: calc(100% - 90px); /* Adjusted from 120px to account for smaller header */
     overflow: hidden; /* Prevent wrapper from scrolling */
 }
 
@@ -269,7 +282,7 @@ div.nav-folder-content.markdown-preview-view {
     background-color: var(--background-secondary);
     border-radius: 5px;
     margin-bottom: 60px !important; /* Make room for toolbar */
-    max-height: calc(100% - 120px); /* Adjust height to not overlap */
+    max-height: calc(100% - 90px); /* Adjusted from 120px to match new header size */
     overflow-y: auto;
     position: absolute;
     top: 0;

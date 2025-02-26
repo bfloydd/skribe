@@ -132,18 +132,42 @@ export class ToolbarService {
         }
         
         button.addEventListener('click', async (e) => {
-            console.log(`Button clicked for command: ${actualCommand.id}`);
+            console.log(`Button clicked for command: ${actualCommand.id}`, {
+                commandId: actualCommand.id,
+                hasView: !!context.view,
+                viewType: context.view?.constructor?.name,
+                hasGetCommandContext: typeof context.view?.getCommandContext === 'function'
+            });
             e.preventDefault();
             e.stopPropagation();
             
-            if (!isEnabled) {
+            // Get a fresh context from the view if possible
+            let currentContext = context;
+            if (context.view && typeof context.view.getCommandContext === 'function') {
+                try {
+                    currentContext = context.view.getCommandContext();
+                    console.log(`Got fresh context from view for command: ${actualCommand.id}`, {
+                        hasView: !!currentContext.view,
+                        viewType: currentContext.view?.constructor?.name,
+                        hasResetView: typeof currentContext.view?.resetView === 'function'
+                    });
+                } catch (error) {
+                    console.error(`Error getting fresh context from view: ${error}`);
+                }
+            }
+            
+            // Check if the command is enabled with the current context
+            const currentlyEnabled = actualCommand.isEnabled(currentContext);
+            console.log(`Command ${actualCommand.id} currentlyEnabled: ${currentlyEnabled}`);
+            
+            if (!currentlyEnabled) {
                 console.log(`Command ${actualCommand.id} is disabled, not executing`);
                 return;
             }
             
             try {
                 console.log(`Executing command: ${actualCommand.id}`);
-                await actualCommand.execute(context);
+                await actualCommand.execute(currentContext);
                 console.log(`Command ${actualCommand.id} executed successfully`);
             } catch (error) {
                 console.error(`Error executing command ${actualCommand.id}:`, error);
