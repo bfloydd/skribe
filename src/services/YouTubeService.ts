@@ -60,13 +60,27 @@ export class YouTubeService {
     }
 
     private async fetchAndParseTranscript(baseUrl: string): Promise<string> {
-        const transcriptResponse = await requestUrl({
-            url: `${baseUrl}&fmt=json3`,
-            method: 'GET'
-        });
+        // Ensure the URL is properly encoded for all platforms
+        const encodedUrl = encodeURI(baseUrl) + '&fmt=json3';
+        
+        try {
+            const transcriptResponse = await requestUrl({
+                url: encodedUrl,
+                method: 'GET',
+                headers: {
+                    'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/91.0.4472.124 Safari/537.36'
+                }
+            });
 
-        const transcript = JSON.parse(transcriptResponse.text);
-        return this.parseTranscript(transcript);
+            const transcript = JSON.parse(transcriptResponse.text);
+            return this.parseTranscript(transcript);
+        } catch (error) {
+            console.error('Error fetching transcript:', error);
+            if (error.message.includes('MalformedURI')) {
+                throw new Error('Malformed URL error. This can happen on mobile devices. Please try a different video or check your network connection.');
+            }
+            throw error;
+        }
     }
 
     private parseTranscript(transcript: any): string {
