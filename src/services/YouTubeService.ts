@@ -60,10 +60,21 @@ export class YouTubeService {
     }
 
     private async fetchAndParseTranscript(baseUrl: string): Promise<string> {
-        const encodedUrl = baseUrl.split('&').map(param => {
-            const [key, value] = param.split('=');
-            return encodeURIComponent(key) + '=' + encodeURIComponent(value || '');
-        }).join('&') + '&fmt=json3';
+        // Check if baseUrl is a relative URL (starts with /)
+        let fullUrl = baseUrl;
+        if (baseUrl.startsWith('/')) {
+            fullUrl = 'https://www.youtube.com' + baseUrl;
+        } else if (!baseUrl.startsWith('http')) {
+            fullUrl = 'https://' + baseUrl;
+        }
+        
+        // Now encode the parameters correctly
+        const urlObj = new URL(fullUrl);
+        const params = new URLSearchParams(urlObj.search);
+        params.append('fmt', 'json3');
+        
+        // Rebuild the URL with proper encoding
+        const encodedUrl = urlObj.origin + urlObj.pathname + '?' + params.toString();
         
         try {
             const transcriptResponse = await requestUrl({
@@ -78,7 +89,8 @@ export class YouTubeService {
             return this.parseTranscript(transcript);
         } catch (error) {
             console.error('Error fetching transcript:', error);
-            if (error.message.includes('MalformedURI')) {
+            console.log('Failed URL:', encodedUrl);
+            if (error.message.includes('MalformedURI') || error.message.includes('no protocol')) {
                 throw new Error('Malformed URL error. This can happen on mobile devices. Please try a different video or check your network connection.');
             }
             throw error;
