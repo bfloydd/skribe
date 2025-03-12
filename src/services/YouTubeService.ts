@@ -60,8 +60,10 @@ export class YouTubeService {
     }
 
     private async fetchAndParseTranscript(baseUrl: string): Promise<string> {
-        // Ensure the URL is properly encoded for all platforms
-        const encodedUrl = encodeURI(baseUrl) + '&fmt=json3';
+        const encodedUrl = baseUrl.split('&').map(param => {
+            const [key, value] = param.split('=');
+            return encodeURIComponent(key) + '=' + encodeURIComponent(value || '');
+        }).join('&') + '&fmt=json3';
         
         try {
             const transcriptResponse = await requestUrl({
