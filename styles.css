@@ -379,6 +379,13 @@ div.nav-folder-content.markdown-preview-view {
     background-color: var(--background-secondary);
     border-radius: 8px;
     box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+    position: relative;
+    z-index: 1;
+}
+
+.empty-state-container::before,
+.empty-state-container::after {
+    display: none !important;
 }
 
 .empty-state-message {
@@ -533,4 +540,20 @@ div.nav-folder-content.markdown-preview-view {
 /* Style for the summary tab toolbar */
 .toolbar-container[data-toolbar-id="summary"] {
     background-color: rgba(var(--text-normal-rgb), 0.05);
+}
+
+/* Empty state styles */
+.empty-state-logo-container {
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    width: 100%;
+    margin-bottom: 16px;
+}
+
+.empty-state-logo {
+    display: block;
+    max-width: 128px;
+    height: auto;
+    object-fit: contain;
 }

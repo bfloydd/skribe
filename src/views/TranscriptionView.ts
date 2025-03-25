@@ -70,8 +70,23 @@ export class TranscriptionView extends ItemView {
                 cls: 'empty-state-container'
             });
             
+            // Add logo image
+            const logoContainer = promptContainer.createDiv({
+                cls: 'empty-state-logo-container'
+            });
+            const logo = logoContainer.createEl('img', {
+                cls: 'empty-state-logo',
+                attr: {
+                    src: this.app.vault.adapter.getResourcePath('.obsidian/plugins/skribe/logo.png'),
+                    alt: 'Skribe Logo'
+                }
+            });
+            logo.style.width = '128px';
+            logo.style.height = 'auto';
+            logo.style.marginBottom = '20px';
+            
             const promptMessage = promptContainer.createEl('div', {
-                text: 'Skribe a video now',
+                text: 'Skribe a Video',
                 cls: 'empty-state-message'
             });
             
@@ -99,7 +114,7 @@ export class TranscriptionView extends ItemView {
             // Create get transcript button
             const getButton = inputContainer.createEl('button', {
                 cls: 'empty-state-get-button',
-                text: 'Get Transcript'
+                text: 'Go!'
             });
             getButton.style.padding = '8px 16px';
             getButton.style.borderRadius = '4px';
