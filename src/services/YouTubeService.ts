@@ -24,11 +24,13 @@ export class YouTubeService {
         return (match && match[2].length === 11) ? match[2] : null;
     }
 
-    public async getTranscript(videoId: string): Promise<string> {
+    public async getTranscript(videoId: string): Promise<{ transcript: string, title: string }> {
         try {
             const player = await this.fetchVideoData(videoId);
             const tracks = await this.getCapTracks(player);
-            return await this.fetchAndParseTranscript(tracks[0].baseUrl);
+            const transcript = await this.fetchAndParseTranscript(tracks[0].baseUrl);
+            const title = this.extractVideoTitle(player);
+            return { transcript, title };
         } catch (error) {
             console.error('Error fetching transcript:', error);
             throw error;
@@ -119,5 +121,14 @@ export class YouTubeService {
         if (track1.kind !== 'asr' && track2.kind === 'asr') return -1;
         if (track1.kind === 'asr' && track2.kind !== 'asr') return 1;
         return 0;
+    }
+
+    private extractVideoTitle(player: any): string {
+        try {
+            return player.videoDetails?.title || 'Unknown Title';
+        } catch (error) {
+            console.error('Error extracting video title:', error);
+            return 'Unknown Title';
+        }
     }
 }

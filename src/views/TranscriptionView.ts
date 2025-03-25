@@ -12,6 +12,7 @@ export class TranscriptionView extends ItemView {
     contentEl: HTMLElement;
     private audioPlayer: AudioPlayer | null = null;
     private videoUrl: string = '';
+    private videoTitle: string = '';
     private chatState: ChatState = { messages: [] };
     private activeTab: 'transcript' | 'revised' | 'summary' | 'chat' = 'transcript';
     private transcriptContainer: HTMLElement;
@@ -49,11 +50,14 @@ export class TranscriptionView extends ItemView {
         return "Video Transcription";
     }
 
-    setContent(content: string, videoUrl?: string) {
+    setContent(content: string, videoUrl?: string, videoTitle?: string) {
         this.content = content;
         if (videoUrl) {
             this.videoUrl = videoUrl;
             this.chatState.videoUrl = videoUrl;
+        }
+        if (videoTitle) {
+            this.videoTitle = videoTitle;
         }
         this.refresh();
     }
@@ -251,16 +255,20 @@ export class TranscriptionView extends ItemView {
         const urlContainer = container.createDiv({
             cls: 'video-url-container'
         });
-        urlContainer.style.textAlign = 'center';
-        urlContainer.style.padding = '5px';
-        urlContainer.style.marginBottom = '10px';
+        
+        // Add title display
+        if (this.videoTitle) {
+            const titleElement = urlContainer.createEl('div', {
+                cls: 'video-title',
+                text: this.videoTitle
+            });
+        }
         
         const urlLink = urlContainer.createEl('a', {
             text: this.videoUrl,
             href: this.videoUrl,
             cls: 'video-url-link'
         });
-        urlLink.style.color = 'var(--text-accent)';
         urlLink.target = '_blank';
     }
 

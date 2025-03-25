@@ -165,9 +165,9 @@ export default class SkribePlugin extends Plugin {
 
         new Notice('Fetching transcript...');
         try {
-            const transcript = await this.youtubeService.getTranscript(videoId);
+            const { transcript, title } = await this.youtubeService.getTranscript(videoId);
             const view = await this.activateView();
-            view.setContent(transcript, url);
+            view.setContent(transcript, url, title);
         } catch (error) {
             new Notice(error instanceof Error ? error.message : 'Unknown error occurred');
             console.error('Skribe Transcript Error:', error);
@@ -200,8 +200,8 @@ export default class SkribePlugin extends Plugin {
 
         new Notice('Fetching transcript...');
         try {
-            const transcript = await this.youtubeService.getTranscript(videoId);
-            const filePath = await this.saveTranscriptToFile(transcript);
+            const { transcript, title } = await this.youtubeService.getTranscript(videoId);
+            const filePath = await this.saveTranscriptToFile(transcript, title);
             
             // Replace the selection with a wikilink to the new file
             const fileName = filePath.split('/').pop();
@@ -215,7 +215,7 @@ export default class SkribePlugin extends Plugin {
         }
     }
 
-    private async saveTranscriptToFile(content: string): Promise<string> {
+    private async saveTranscriptToFile(content: string, title?: string): Promise<string> {
         const folder = this.settings.transcriptFolder;
         const folderPath = folder.replace(/^\/+|\/+$/g, '');
         
@@ -231,19 +231,21 @@ export default class SkribePlugin extends Plugin {
             .join('\n\n');
 
         const timestamp = new Date().toISOString().replace(/[:.]/g, '-');
-        const filename = `${folderPath}/transcript-${timestamp}.md`;
+        const safeTitle = title ? title.replace(/[\\/:*?"<>|]/g, '-').substring(0, 50) : '';
+        const filename = `${folderPath}/transcript-${safeTitle ? safeTitle + '-' : ''}${timestamp}.md`;
 
         // Add metadata at the top of the file
         const fileContent = [
             '---',
             'type: transcript',
             `created: ${new Date().toISOString()}`,
+            title ? `title: "${title}"` : '',
             '---',
             '',
-            '# Video Transcript',
+            title ? `# ${title}` : '# Video Transcript',
             '',
             formattedContent
-        ].join('\n');
+        ].filter(line => line !== '').join('\n');
 
         await this.app.vault.create(filename, fileContent);
         return filename;

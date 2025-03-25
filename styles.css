@@ -213,6 +213,18 @@ div.nav-folder-content.markdown-preview-view {
     border-bottom: 1px solid var(--background-modifier-border);
 }
 
+.video-title {
+    font-weight: bold;
+    font-size: 1.1em;
+    margin-bottom: 4px;
+    color: var(--text-accent);
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    max-width: 90%;
+    margin: 0 auto 4px;
+}
+
 .video-url-link {
     color: var(--text-accent);
     text-decoration: none;
