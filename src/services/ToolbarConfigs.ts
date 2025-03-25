@@ -267,13 +267,14 @@ const chatCommands: ToolbarCommand[] = [
         }
     },
     {
-        id: 'append-chat',
-        icon: 'file-plus',
-        tooltip: 'Append chat to existing note',
+        id: 'append',
+        icon: 'arrow-down',
+        tooltip: 'Append content to current note',
         isEnabled: (context: CommandContext) => {
             return context.activeTab === 'chat' && 
                    Array.isArray(context.chatMessages) && 
-                   context.chatMessages.length > 0;
+                   context.chatMessages.length > 0 &&
+                   !!context.plugin?.app.workspace.getActiveFile();
         },
         execute: async (context: CommandContext) => {
             if (!context.chatMessages || !context.chatMessages.length) return;
@@ -295,11 +296,14 @@ const chatCommands: ToolbarCommand[] = [
                     return `${role}: ${msg.content}`;
                 }).join('\n\n');
                 
-                // Add section header with timestamp
+                // Create content with a proper horizontal rule and changed header text
                 const timestamp = new Date().toLocaleString();
                 const appendContent = [
                     '',
-                    '## Chat Export - ' + timestamp,
+                    '',
+                    '---',
+                    '',
+                    '## Chat Append - ' + timestamp,
                     '',
                     chatContent,
                     ''
@@ -311,7 +315,7 @@ const chatCommands: ToolbarCommand[] = [
                 // Append new content
                 await plugin.app.vault.modify(activeFile, existingContent + appendContent);
                 
-                new Notice(`Chat appended to ${activeFile.name}`);
+                new Notice(`Content appended to ${activeFile.name}`);
             } catch (error) {
                 console.error('Append error:', error);
                 new Notice(`Append error: ${error instanceof Error ? error.message : 'Unknown error'}`);
