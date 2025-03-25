@@ -131,4 +131,12 @@ export class YouTubeService {
             return 'Unknown Title';
         }
     }
+
+    public extractVideoIdForFilename(url: string): string {
+        // Extract the video ID using the main method
+        const videoId = this.extractVideoId(url);
+        
+        // Return the video ID if found, otherwise empty string
+        return videoId || '';
+    }
 }

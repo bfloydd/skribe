@@ -49,10 +49,8 @@ export const CommonCommands: ToolbarCommand[] = [
                 // Try to extract v parameter from YouTube URL
                 let vParam = '';
                 if (videoUrl) {
-                    const match = videoUrl.match(/[?&]v=([^&]+)/);
-                    if (match && match[1]) {
-                        vParam = match[1];
-                    }
+                    // Use the YouTubeService to extract the video ID
+                    vParam = plugin.youtubeService.extractVideoIdForFilename(videoUrl);
                 }
                 
                 // Determine content type suffix based on active tab
