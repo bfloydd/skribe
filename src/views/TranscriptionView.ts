@@ -21,6 +21,7 @@ export class TranscriptionView extends ItemView {
     private summaryContainer: HTMLElement;
     private summaryContent: string = '';
     private revisedContent: string = '';
+    private chatInput: HTMLInputElement | null = null;
     private welcomeMessages: string[] = [
         'Hello, Skribe!',
         'Hire a Skribe',
@@ -409,6 +410,9 @@ export class TranscriptionView extends ItemView {
             }
         });
         
+        // Store a reference to the chat input
+        this.chatInput = chatInput;
+        
         // Create send button
         const sendButton = chatInputContainer.createEl('button', {
             cls: 'chat-send-button',
@@ -721,6 +725,23 @@ export class TranscriptionView extends ItemView {
         }
         if (this.chatContainer) {
             this.chatContainer.style.display = tabName === 'chat' ? 'block' : 'none';
+            
+            // Focus on chat input when switching to chat tab
+            if (tabName === 'chat') {
+                // Use setTimeout to ensure the focus happens after the display change
+                setTimeout(() => {
+                    // Try the stored reference first
+                    if (this.chatInput) {
+                        this.chatInput.focus();
+                    } else {
+                        // Fallback to finding it in the DOM
+                        const chatInput = this.chatContainer.querySelector('.chat-input') as HTMLInputElement;
+                        if (chatInput) {
+                            chatInput.focus();
+                        }
+                    }
+                }, 50);
+            }
         }
         if (this.summaryContainer) {
             this.summaryContainer.style.display = tabName === 'summary' ? 'block' : 'none';
