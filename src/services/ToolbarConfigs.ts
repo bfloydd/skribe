@@ -215,6 +215,9 @@ const chatCommands: ToolbarCommand[] = [
                 const videoTitle = context.videoTitle || 'Untitled Video';
                 const videoUrl = context.videoUrl || '';
                 
+                // Clean the URL to keep only essential parameters
+                const cleanVideoUrl = videoUrl ? plugin.youtubeService.cleanYouTubeUrl(videoUrl) : '';
+                
                 // Format the date to yyyy-mm-dd hh:mm format
                 const now = new Date();
                 const dateStr = now.toISOString().split('T')[0];
@@ -245,12 +248,12 @@ const chatCommands: ToolbarCommand[] = [
                     'type: chat',
                     `created: ${now.toISOString()}`,
                     videoTitle ? `title: "${videoTitle}"` : '',
-                    videoUrl ? `source: "${videoUrl}"` : '',
+                    cleanVideoUrl ? `source: "${cleanVideoUrl}"` : '',
                     '---',
                     '',
                     videoTitle ? `# ${videoTitle} - Chat Export` : '# Chat Export',
                     '',
-                    videoUrl ? `Source: [${videoUrl}](${videoUrl})` : '',
+                    cleanVideoUrl ? `Source: [${cleanVideoUrl}](${cleanVideoUrl})` : '',
                     '',
                     chatContent
                 ].filter(line => line !== '').join('\n');

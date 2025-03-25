@@ -38,6 +38,9 @@ export const CommonCommands: ToolbarCommand[] = [
                 const videoTitle = context.videoTitle || 'Untitled Video';
                 const videoUrl = context.videoUrl || '';
                 
+                // Clean the URL to keep only essential parameters
+                const cleanVideoUrl = videoUrl ? plugin.youtubeService.cleanYouTubeUrl(videoUrl) : '';
+                
                 // Format the date to yyyy-mm-dd hh:mm format
                 const now = new Date();
                 const dateStr = now.toISOString().split('T')[0];
@@ -73,12 +76,12 @@ export const CommonCommands: ToolbarCommand[] = [
                     `type: ${activeTab}`,
                     `created: ${now.toISOString()}`,
                     videoTitle ? `title: "${videoTitle}"` : '',
-                    videoUrl ? `source: "${videoUrl}"` : '',
+                    cleanVideoUrl ? `source: "${cleanVideoUrl}"` : '',
                     '---',
                     '',
                     videoTitle ? `# ${videoTitle}${contentTypeSuffix ? ' - ' + activeTab.charAt(0).toUpperCase() + activeTab.slice(1) : ''}` : `# Video ${contentTypeSuffix ? activeTab.charAt(0).toUpperCase() + activeTab.slice(1) : 'Transcript'}`,
                     '',
-                    videoUrl ? `Source: [${videoUrl}](${videoUrl})` : '',
+                    cleanVideoUrl ? `Source: [${cleanVideoUrl}](${cleanVideoUrl})` : '',
                     '',
                     context.content
                 ].filter(line => line !== '').join('\n');

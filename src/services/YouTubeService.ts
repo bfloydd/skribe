@@ -139,4 +139,50 @@ export class YouTubeService {
         // Return the video ID if found, otherwise empty string
         return videoId || '';
     }
+
+    /**
+     * Clean a YouTube URL to keep only v and t parameters
+     * @param url The YouTube URL to clean
+     * @returns A clean YouTube URL with only v and t parameters
+     */
+    public cleanYouTubeUrl(url: string): string {
+        if (!url) return url;
+        
+        try {
+            // Handle youtu.be URLs
+            if (url.includes('youtu.be/')) {
+                const videoId = this.extractVideoId(url);
+                if (!videoId) return url; // If no video ID found, return original URL
+                
+                // Parse the URL to get the time parameter
+                const urlObj = new URL(url);
+                const timeParam = urlObj.searchParams.get('t');
+                
+                // Construct the clean URL
+                return timeParam 
+                    ? `https://youtu.be/${videoId}?t=${timeParam}` 
+                    : `https://youtu.be/${videoId}`;
+            } 
+            // Handle youtube.com URLs
+            else if (url.includes('youtube.com/watch')) {
+                const videoId = this.extractVideoId(url);
+                if (!videoId) return url; // If no video ID found, return original URL
+                
+                // Parse the URL to get the time parameter
+                const urlObj = new URL(url);
+                const timeParam = urlObj.searchParams.get('t');
+                
+                // Construct the clean URL
+                return timeParam 
+                    ? `https://www.youtube.com/watch?v=${videoId}&t=${timeParam}` 
+                    : `https://www.youtube.com/watch?v=${videoId}`;
+            }
+            
+            // If not a recognized format, return original URL
+            return url;
+        } catch (error) {
+            console.error('Error cleaning YouTube URL:', error);
+            return url; // Return original URL in case of errors
+        }
+    }
 }

@@ -53,8 +53,10 @@ export class TranscriptionView extends ItemView {
     setContent(content: string, videoUrl?: string, videoTitle?: string) {
         this.content = content;
         if (videoUrl) {
-            this.videoUrl = videoUrl;
-            this.chatState.videoUrl = videoUrl;
+            // Clean the URL before storing it
+            const cleanVideoUrl = this.plugin.youtubeService.cleanYouTubeUrl(videoUrl);
+            this.videoUrl = cleanVideoUrl;
+            this.chatState.videoUrl = cleanVideoUrl;
         }
         if (videoTitle) {
             this.videoTitle = videoTitle;
@@ -264,9 +266,12 @@ export class TranscriptionView extends ItemView {
             });
         }
         
+        // Clean the YouTube URL before displaying
+        const cleanVideoUrl = this.plugin.youtubeService.cleanYouTubeUrl(this.videoUrl);
+        
         const urlLink = urlContainer.createEl('a', {
-            text: this.videoUrl,
-            href: this.videoUrl,
+            text: cleanVideoUrl,
+            href: cleanVideoUrl,
             cls: 'video-url-link'
         });
         urlLink.target = '_blank';
