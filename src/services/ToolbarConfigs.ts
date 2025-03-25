@@ -256,7 +256,7 @@ const revisedCommands: ToolbarCommand[] = [
     // Revised-specific commands
     {
         id: 'regenerate-revised',
-        icon: 'refresh-cw',
+        icon: 'edit-2',
         tooltip: 'Regenerate revised content',
         isEnabled: (context: CommandContext) => {
             return !!context.content && 

@@ -408,7 +408,7 @@ export class TranscriptionView extends ItemView {
                 'title': 'Create Revised Version'
             }
         });
-        setIcon(createRevisedButton, 'file-plus');
+        setIcon(createRevisedButton, 'edit');
         
         // Style the button to match other toolbar buttons
         createRevisedButton.style.color = 'var(--text-normal)';
