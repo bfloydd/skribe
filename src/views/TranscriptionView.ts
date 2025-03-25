@@ -13,7 +13,7 @@ export class TranscriptionView extends ItemView {
     private audioPlayer: AudioPlayer | null = null;
     private videoUrl: string = '';
     private chatState: ChatState = { messages: [] };
-    private activeTab: 'transcript' | 'revised' | 'chat' | 'summary' = 'transcript';
+    private activeTab: 'transcript' | 'revised' | 'summary' | 'chat' = 'transcript';
     private transcriptContainer: HTMLElement;
     private revisedContainer: HTMLElement;
     private chatContainer: HTMLElement;
@@ -182,12 +182,6 @@ export class TranscriptionView extends ItemView {
         });
         this.revisedContainer.style.overflowY = 'auto';
         this.revisedContainer.style.display = this.activeTab === 'revised' ? 'block' : 'none';
-
-        // Create chat container
-        this.chatContainer = contentWrapper.createDiv({
-            cls: 'chat-container'
-        });
-        this.chatContainer.style.display = this.activeTab === 'chat' ? 'block' : 'none';
         
         // Create summary container
         this.summaryContainer = contentWrapper.createDiv({
@@ -195,6 +189,12 @@ export class TranscriptionView extends ItemView {
         });
         this.summaryContainer.style.overflowY = 'auto';
         this.summaryContainer.style.display = this.activeTab === 'summary' ? 'block' : 'none';
+
+        // Create chat container
+        this.chatContainer = contentWrapper.createDiv({
+            cls: 'chat-container'
+        });
+        this.chatContainer.style.display = this.activeTab === 'chat' ? 'block' : 'none';
 
         // Render transcript content
         if (this.content) {
@@ -205,14 +205,14 @@ export class TranscriptionView extends ItemView {
         if (this.revisedContent) {
             await this.renderRevisedContent();
         }
-
-        // Render chat interface
-        this.renderChatInterface();
         
         // Render summary content if available
         if (this.summaryContent) {
             await this.renderSummaryContent();
         }
+
+        // Render chat interface
+        this.renderChatInterface();
     }
 
     private createHeader(container: HTMLElement): HTMLElement {
@@ -300,11 +300,11 @@ export class TranscriptionView extends ItemView {
         // Revised tab
         const revisedTab = this.createTabItem(tabsContainer, 'Revised', this.activeTab === 'revised');
         
-        // Chat tab
-        const chatTab = this.createTabItem(tabsContainer, 'Chat', this.activeTab === 'chat');
-        
         // Summary tab
         const summaryTab = this.createTabItem(tabsContainer, 'Summary', this.activeTab === 'summary');
+        
+        // Chat tab
+        const chatTab = this.createTabItem(tabsContainer, 'Chat', this.activeTab === 'chat');
         
         // Add click handlers
         transcriptTab.addEventListener('click', () => {
@@ -319,14 +319,14 @@ export class TranscriptionView extends ItemView {
             this.refresh();
         });
         
-        chatTab.addEventListener('click', () => {
-            this.switchToTab('chat');
+        summaryTab.addEventListener('click', () => {
+            this.switchToTab('summary');
             // Refresh the view to update toolbars
             this.refresh();
         });
         
-        summaryTab.addEventListener('click', () => {
-            this.switchToTab('summary');
+        chatTab.addEventListener('click', () => {
+            this.switchToTab('chat');
             // Refresh the view to update toolbars
             this.refresh();
         });
@@ -877,7 +877,7 @@ export class TranscriptionView extends ItemView {
      * Helper method to switch tabs programmatically
      * This ensures consistent tab switching behavior across the plugin
      */
-    private switchToTab(tabName: 'transcript' | 'revised' | 'chat' | 'summary') {
+    private switchToTab(tabName: 'transcript' | 'revised' | 'summary' | 'chat') {
         console.log(`TranscriptionView: Switching to ${tabName} tab`);
         
         // Update active tab
