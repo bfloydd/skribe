@@ -215,81 +215,45 @@ export class TranscriptionView extends ItemView {
         });
         titleEl.setText('Skribe');
 
-        // Create LEFT button that doesn't use toolbar service
-        const leftStartOverButton = header.createEl('button', {
-            cls: 'clickable-icon left-restart-button',
-            attr: { 
-                'aria-label': 'Start over (left)',
-                'title': 'Start over (left)'
-            }
-        });
-        
-        // Position the LEFT button
-        leftStartOverButton.style.position = 'absolute';
-        leftStartOverButton.style.left = '10px';
-        leftStartOverButton.style.top = '5px';
-        leftStartOverButton.style.backgroundColor = 'var(--background-modifier-error)';
-        leftStartOverButton.style.color = 'var(--text-on-accent)';
-        leftStartOverButton.style.padding = '4px 8px';
-        leftStartOverButton.style.borderRadius = '4px';
-        leftStartOverButton.style.fontWeight = 'bold';
-        leftStartOverButton.style.cursor = 'pointer';
-        leftStartOverButton.style.zIndex = '200'; // Higher than toolbar
-        
-        setIcon(leftStartOverButton, 'rotate-ccw');
-        
-        // Add direct click handler for LEFT button
-        leftStartOverButton.addEventListener('click', (e) => {
-            e.preventDefault();
-            e.stopPropagation();
-            console.log('LEFT button clicked (completely direct implementation)');
+        // Only show restart button if we have content
+        if (this.content) {
+            // Create restart button positioned on the right
+            const restartButton = header.createEl('button', {
+                cls: 'clickable-icon restart-button',
+                attr: { 
+                    'aria-label': 'Start over',
+                    'title': 'Start over'
+                }
+            });
             
-            try {
-                // Show immediate feedback
-                new Notice('LEFT button clicked! Resetting view directly...');
-                this.resetView();
-            } catch (error) {
-                console.error('Error resetting view from LEFT button:', error);
-                new Notice(`Error: ${error instanceof Error ? error.message : 'Unknown error'}`);
-            }
-        });
-
-        // Add a direct "Start over" button that doesn't rely on the toolbar system
-        const directStartOverButton = header.createEl('button', {
-            cls: 'clickable-icon direct-start-over-button',
-            attr: { 
-                'aria-label': 'Start over',
-                'title': 'Start over'
-            }
-        });
-        
-        // Position the button at the top right
-        directStartOverButton.style.position = 'absolute';
-        directStartOverButton.style.right = '10px';
-        directStartOverButton.style.top = '5px';
-        directStartOverButton.style.backgroundColor = 'var(--background-modifier-border)';
-        directStartOverButton.style.color = 'var(--text-normal)';
-        directStartOverButton.style.padding = '4px 8px';
-        directStartOverButton.style.borderRadius = '4px';
-        directStartOverButton.style.fontWeight = 'bold';
-        directStartOverButton.style.cursor = 'pointer';
-        directStartOverButton.style.zIndex = '100';
-        
-        setIcon(directStartOverButton, 'rotate-ccw');
-        
-        // Add direct click handler
-        directStartOverButton.addEventListener('click', (e) => {
-            e.preventDefault();
-            e.stopPropagation();
-            console.log('Direct start over button clicked');
+            // Position the button at the top right
+            restartButton.style.position = 'absolute';
+            restartButton.style.right = '10px';
+            restartButton.style.top = '5px';
+            restartButton.style.backgroundColor = 'var(--background-modifier-border)';
+            restartButton.style.color = 'var(--text-normal)';
+            restartButton.style.padding = '4px 8px';
+            restartButton.style.borderRadius = '4px';
+            restartButton.style.fontWeight = 'bold';
+            restartButton.style.cursor = 'pointer';
+            restartButton.style.zIndex = '100';
             
-            try {
-                this.resetView();
-            } catch (error) {
-                console.error('Error resetting view directly:', error);
-                new Notice(`Error: ${error instanceof Error ? error.message : 'Unknown error'}`);
-            }
-        });
+            setIcon(restartButton, 'rotate-ccw');
+            
+            // Add direct click handler
+            restartButton.addEventListener('click', (e) => {
+                e.preventDefault();
+                e.stopPropagation();
+                console.log('Restart button clicked');
+                
+                try {
+                    this.resetView();
+                } catch (error) {
+                    console.error('Error resetting view:', error);
+                    new Notice(`Error: ${error instanceof Error ? error.message : 'Unknown error'}`);
+                }
+            });
+        }
 
         return header;
     }
