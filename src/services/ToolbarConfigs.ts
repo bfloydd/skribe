@@ -242,7 +242,7 @@ const chatCommands: ToolbarCommand[] = [
                 // Add metadata
                 const fileContent = [
                     '---',
-                    'type: chat-export',
+                    'type: chat',
                     `created: ${now.toISOString()}`,
                     videoTitle ? `title: "${videoTitle}"` : '',
                     videoUrl ? `source: "${videoUrl}"` : '',
