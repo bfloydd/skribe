@@ -12,37 +12,27 @@ const topToolbarCommands: ToolbarCommand[] = [
         icon: 'rotate-ccw',
         tooltip: 'Start over',
         isEnabled: (context: CommandContext) => {
-            console.log('Checking if start-over is enabled', {
-                hasView: !!context.view,
-                viewType: context.view?.constructor?.name,
-                hasResetView: typeof context.view?.resetView === 'function'
-            });
             return true; // Always enabled
         },
-        execute: (context: CommandContext) => {
-            console.log('Start over button clicked', {
-                hasView: !!context.view,
-                viewType: context.view?.constructor?.name,
-                hasResetView: typeof context.view?.resetView === 'function',
-                viewProperties: context.view ? Object.keys(context.view) : []
-            });
-            
-            // Direct approach to access the view instance
-            if (context.view) {
-                console.log('Calling resetView method directly');
-                try {
-                    // Force call the resetView method directly on the view instance
-                    const resetMethod = context.view.resetView.bind(context.view);
-                    resetMethod();
-                    console.log('resetView method called successfully');
-                    new Notice('Starting over');
-                } catch (error) {
-                    console.error('Error calling resetView:', error);
-                    new Notice(`Error: ${error instanceof Error ? error.message : 'Unknown error'}`);
-                }
-            } else {
+        execute: async (context: CommandContext) => {
+            if (!context.view) {
                 console.error('Cannot reset view: view object not found in context');
                 new Notice('Error: Could not reset view');
+                return;
+            }
+
+            try {
+                // Ensure we're working with the TranscriptionView instance
+                const view = context.view;
+                if (typeof view.resetView === 'function') {
+                    await view.resetView();
+                    console.log('View reset successfully');
+                } else {
+                    throw new Error('resetView method not found on view');
+                }
+            } catch (error) {
+                console.error('Error resetting view:', error);
+                new Notice(`Error: ${error instanceof Error ? error.message : 'Unknown error'}`);
             }
         }
     }

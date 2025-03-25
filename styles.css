@@ -3,15 +3,16 @@
 /* Top toolbar styling */
 .toolbar-container[data-toolbar-id="top"] {
     display: flex;
-    justify-content: center;
+    justify-content: flex-start;
     gap: 8px;
     padding: 4px 0;
     margin-top: 4px;
     transition: all 0.3s ease;
     background-color: transparent;
     position: absolute;
-    right: 10px;
-    top: 0;
+    left: 10px;  /* Position to the left */
+    top: 5px;
+    z-index: 100;  /* Ensure it's on top */
 }
 
 .toolbar-container[data-toolbar-id="top"] button {
@@ -29,9 +30,15 @@
 
 /* Make the Start over button more prominent */
 .toolbar-container[data-toolbar-id="top"] button[data-command-id="start-over"] {
-    background-color: var(--background-modifier-border);
-    color: var(--text-normal);
+    background-color: var(--background-modifier-error);  /* Changed to error color for visibility */
+    color: var(--text-on-accent);
     font-weight: bold;
+    height: 28px;  /* Fixed height */
+    width: auto;  /* Allow text width */
+    min-width: 30px;  /* Minimum width */
+    padding: 4px 8px;
+    margin-right: 10px;
+    pointer-events: auto !important;  /* Ensure clicks are registered */
 }
 
 .toolbar-container[data-toolbar-id="top"] button:hover:not(.disabled-button) {
@@ -42,9 +49,11 @@
 }
 
 /* Make the Start over button hover state more prominent */
-.toolbar-container[data-toolbar-id="top"] button[data-command-id="start-over"]:hover:not(.disabled-button) {
-    background-color: var(--text-accent);
-    color: var(--text-on-accent);
+.toolbar-container[data-toolbar-id="top"] button[data-command-id="start-over"]:hover {
+    background-color: var(--text-accent) !important;
+    color: var(--text-on-accent) !important;
+    transform: translateY(-1px);
+    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.2);
 }
 
 /* Fix for vertical scrolling issue */

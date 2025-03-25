@@ -131,55 +131,100 @@ export class ToolbarService {
             button.addClass('disabled-button');
         }
         
-        button.addEventListener('click', async (e) => {
-            console.log(`Button clicked for command: ${actualCommand.id}`, {
-                commandId: actualCommand.id,
-                hasView: !!context.view,
-                viewType: context.view?.constructor?.name,
-                hasGetCommandContext: typeof context.view?.getCommandContext === 'function'
-            });
-            e.preventDefault();
-            e.stopPropagation();
-            
-            // Get a fresh context from the view if possible
-            let currentContext = context;
-            if (context.view && typeof context.view.getCommandContext === 'function') {
+        // Special handling for the start-over command
+        if (actualCommand.id === 'start-over' && context.view) {
+            // For start-over, we add a direct event listener to ensure it works
+            button.addEventListener('click', async (e) => {
+                e.preventDefault();
+                e.stopPropagation();
+                console.log('Direct click handler for start-over button');
+                
                 try {
-                    currentContext = context.view.getCommandContext();
-                    console.log(`Got fresh context from view for command: ${actualCommand.id}`, {
+                    const view = context.view;
+                    if (view && typeof view.resetView === 'function') {
+                        new Notice('Resetting view...');
+                        await view.resetView();
+                    } else {
+                        console.error('View or resetView method not found', {
+                            hasView: !!view,
+                            viewType: view?.constructor?.name,
+                            hasResetMethod: typeof view?.resetView === 'function'
+                        });
+                        new Notice('Error: Could not reset view');
+                    }
+                } catch (error) {
+                    console.error('Error in start-over direct handler:', error);
+                    new Notice(`Error: ${error instanceof Error ? error.message : 'Unknown error'}`);
+                }
+            });
+        } else {
+            // Standard event handling for other commands
+            button.addEventListener('click', async (e) => {
+                console.log(`Button clicked for command: ${actualCommand.id}`, {
+                    commandId: actualCommand.id,
+                    hasView: !!context.view,
+                    viewType: context.view?.constructor?.name,
+                    hasGetCommandContext: typeof context.view?.getCommandContext === 'function'
+                });
+                e.preventDefault();
+                e.stopPropagation();
+                
+                // Store the original view reference to ensure it's preserved
+                const originalView = context.view;
+                
+                // Get a fresh context from the view if possible
+                let currentContext = context;
+                if (context.view && typeof context.view.getCommandContext === 'function') {
+                    try {
+                        currentContext = context.view.getCommandContext();
+                        console.log(`Got fresh context from view for command: ${actualCommand.id}`, {
+                            hasView: !!currentContext.view,
+                            viewType: currentContext.view?.constructor?.name,
+                            hasResetView: typeof currentContext.view?.resetView === 'function'
+                        });
+                    } catch (error) {
+                        console.error(`Error getting fresh context from view: ${error}`);
+                    }
+                }
+                
+                // CRITICAL: Always ensure the view reference is preserved correctly
+                if (!currentContext.view || typeof currentContext.view.resetView !== 'function') {
+                    currentContext.view = originalView;
+                    console.log('Fixed view reference in context', {
                         hasView: !!currentContext.view,
                         viewType: currentContext.view?.constructor?.name,
                         hasResetView: typeof currentContext.view?.resetView === 'function'
                     });
-                } catch (error) {
-                    console.error(`Error getting fresh context from view: ${error}`);
                 }
-            }
-            
-            // Ensure the view reference is preserved
-            if (!currentContext.view && context.view) {
-                currentContext.view = context.view;
-                console.log('Preserved original view reference in context');
-            }
-            
-            // Check if the command is enabled with the current context
-            const currentlyEnabled = actualCommand.isEnabled(currentContext);
-            console.log(`Command ${actualCommand.id} currentlyEnabled: ${currentlyEnabled}`);
-            
-            if (!currentlyEnabled) {
-                console.log(`Command ${actualCommand.id} is disabled, not executing`);
-                return;
-            }
-            
-            try {
-                console.log(`Executing command: ${actualCommand.id}`);
-                await actualCommand.execute(currentContext);
-                console.log(`Command ${actualCommand.id} executed successfully`);
-            } catch (error) {
-                console.error(`Error executing command ${actualCommand.id}:`, error);
-                new Notice(`Error: ${error instanceof Error ? error.message : 'Unknown error'}`);
-            }
-        });
+                
+                // Check if the command is enabled with the current context
+                const currentlyEnabled = actualCommand.isEnabled(currentContext);
+                console.log(`Command ${actualCommand.id} currentlyEnabled: ${currentlyEnabled}`);
+                
+                if (!currentlyEnabled) {
+                    console.log(`Command ${actualCommand.id} is disabled, not executing`);
+                    return;
+                }
+                
+                try {
+                    console.log(`Executing command: ${actualCommand.id}`, {
+                        commandContext: {
+                            hasView: !!currentContext.view,
+                            viewType: currentContext.view?.constructor?.name,
+                            hasPlugin: !!currentContext.plugin,
+                            hasContent: !!currentContext.content
+                        }
+                    });
+                    
+                    await actualCommand.execute(currentContext);
+                    
+                    console.log(`Command ${actualCommand.id} executed successfully`);
+                } catch (error) {
+                    console.error(`Error executing command ${actualCommand.id}:`, error);
+                    new Notice(`Error: ${error instanceof Error ? error.message : 'Unknown error'}`);
+                }
+            });
+        }
         
         return button;
     }

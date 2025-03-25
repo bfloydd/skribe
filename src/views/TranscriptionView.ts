@@ -215,23 +215,45 @@ export class TranscriptionView extends ItemView {
         });
         titleEl.setText('Skribe');
 
-        // Create context for toolbar
-        const context = {
-            plugin: this.plugin,
-            view: this,
-            content: this.content,
-            videoUrl: this.videoUrl,
-            activeTab: this.activeTab,
-            chatMessages: this.chatState.messages,
-            onClearChat: () => {
-                this.chatState.messages = [];
-                this.renderChatMessages(this.chatContainer);
+        // Create LEFT button that doesn't use toolbar service
+        const leftStartOverButton = header.createEl('button', {
+            cls: 'clickable-icon left-restart-button',
+            attr: { 
+                'aria-label': 'Start over (left)',
+                'title': 'Start over (left)'
             }
-        };
-
-        // Create top toolbar (always present)
-        this.plugin.toolbarService.createToolbar(header, 'top', context);
+        });
         
+        // Position the LEFT button
+        leftStartOverButton.style.position = 'absolute';
+        leftStartOverButton.style.left = '10px';
+        leftStartOverButton.style.top = '5px';
+        leftStartOverButton.style.backgroundColor = 'var(--background-modifier-error)';
+        leftStartOverButton.style.color = 'var(--text-on-accent)';
+        leftStartOverButton.style.padding = '4px 8px';
+        leftStartOverButton.style.borderRadius = '4px';
+        leftStartOverButton.style.fontWeight = 'bold';
+        leftStartOverButton.style.cursor = 'pointer';
+        leftStartOverButton.style.zIndex = '200'; // Higher than toolbar
+        
+        setIcon(leftStartOverButton, 'rotate-ccw');
+        
+        // Add direct click handler for LEFT button
+        leftStartOverButton.addEventListener('click', (e) => {
+            e.preventDefault();
+            e.stopPropagation();
+            console.log('LEFT button clicked (completely direct implementation)');
+            
+            try {
+                // Show immediate feedback
+                new Notice('LEFT button clicked! Resetting view directly...');
+                this.resetView();
+            } catch (error) {
+                console.error('Error resetting view from LEFT button:', error);
+                new Notice(`Error: ${error instanceof Error ? error.message : 'Unknown error'}`);
+            }
+        });
+
         // Add a direct "Start over" button that doesn't rely on the toolbar system
         const directStartOverButton = header.createEl('button', {
             cls: 'clickable-icon direct-start-over-button',
@@ -684,37 +706,31 @@ export class TranscriptionView extends ItemView {
      * Reset the view to its initial empty state
      */
     public resetView(): void {
-        console.log('TranscriptionView: Resetting view to initial state', {
-            contentBefore: this.content ? this.content.substring(0, 50) + '...' : 'empty',
-            videoUrlBefore: this.videoUrl,
-            activeTabBefore: this.activeTab,
-            hasChatMessages: this.chatState.messages.length > 0,
-            hasSummary: !!this.summaryContent
-        });
+        console.log('TranscriptionView: resetView called');
+        new Notice('Resetting view...');
         
-        // Reset all state variables
-        this.content = '';
-        this.videoUrl = '';
-        this.chatState = { messages: [] };
-        this.summaryContent = '';
-        this.activeTab = 'transcript';
-        
-        // Clear any audio player
-        if (this.audioPlayer) {
-            console.log('TranscriptionView: Stopping audio player');
-            this.audioPlayer.stop();
-            this.audioPlayer = null;
+        try {
+            // Clear state directly
+            this.content = '';
+            this.videoUrl = '';
+            this.chatState = { messages: [] };
+            this.summaryContent = '';
+            this.activeTab = 'transcript';
+            
+            if (this.audioPlayer) {
+                this.audioPlayer.stop();
+                this.audioPlayer = null;
+            }
+            
+            // Simple refresh
+            this.refresh();
+            
+            // Success message
+            new Notice('View reset successful!');
+        } catch (error) {
+            console.error('Reset error:', error);
+            new Notice(`Reset error: ${error instanceof Error ? error.message : 'Unknown error'}`);
         }
-        
-        console.log('TranscriptionView: About to refresh view');
-        
-        // Refresh the view to show the welcome screen
-        this.refresh();
-        
-        console.log('TranscriptionView: View has been reset');
-        
-        // Notify user
-        new Notice('Starting over');
     }
 
     /**
@@ -900,9 +916,10 @@ export class TranscriptionView extends ItemView {
      * This ensures that toolbar commands always have the latest state
      */
     public getCommandContext(): CommandContext {
+        // Return a fresh context with the latest state
         return {
             plugin: this.plugin,
-            view: this,
+            view: this,  // Make sure this reference is correctly maintained
             content: this.content,
             videoUrl: this.videoUrl,
             activeTab: this.activeTab,
