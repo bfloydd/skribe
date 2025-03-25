@@ -325,16 +325,38 @@ const chatCommands: ToolbarCommand[] = [
     {
         id: 'clear-chat',
         icon: 'trash',
-        tooltip: 'Clear chat history',
+        tooltip: 'Clear chat contents',
         isEnabled: (context: CommandContext) => {
             return context.activeTab === 'chat' && 
                    Array.isArray(context.chatMessages) && 
                    context.chatMessages.length > 0;
         },
         execute: (context: CommandContext) => {
-            if (context.onClearChat && typeof context.onClearChat === 'function') {
-                context.onClearChat();
-                new Notice('Chat history cleared');
+            try {
+                // Simply empty the chat messages array without any other actions
+                if (context.chatState && Array.isArray(context.chatState.messages)) {
+                    context.chatState.messages = [];
+                    
+                    // Refresh the view if possible
+                    if (context.view && typeof context.view.renderChatMessages === 'function') {
+                        context.view.renderChatMessages();
+                    }
+                    
+                    new Notice('Chat contents cleared');
+                } else if (Array.isArray(context.chatMessages)) {
+                    // Empty the array directly if chatState is not available
+                    context.chatMessages.length = 0;
+                    
+                    // Force a refresh if possible
+                    if (context.view && typeof context.view.refresh === 'function') {
+                        context.view.refresh();
+                    }
+                    
+                    new Notice('Chat contents cleared');
+                }
+            } catch (error) {
+                console.error('Clear chat error:', error);
+                new Notice(`Clear error: ${error instanceof Error ? error.message : 'Unknown error'}`);
             }
         }
     }
