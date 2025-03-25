@@ -1,7 +1,7 @@
 import { Notice } from 'obsidian';
 import { ToolbarCommand, CommandContext } from '../types';
 import type SkribePlugin from '../../main';
-import { TranscriptionView } from '../views/TranscriptionView';
+import { SkribeView } from '../views/SkribeView';
 
 /**
  * Common commands that can be shared across different toolbars
@@ -30,7 +30,7 @@ export const CommonCommands: ToolbarCommand[] = [
             if (!context.content || !context.view) return;
             
             // Use the view's public methods or fallback to generic implementation
-            if (context.view instanceof TranscriptionView) {
+            if (context.view instanceof SkribeView) {
                 // Since saveTranscript is private, we'll use a generic approach
                 const plugin = context.plugin as SkribePlugin;
                 
@@ -129,70 +129,68 @@ export const CommonCommands: ToolbarCommand[] = [
                 viewType: context.view?.constructor.name
             });
             
-            // Check if we're in a TranscriptionView
-            if (context.view && context.view.constructor.name === 'TranscriptionView') {
-                console.log('format-ai: Calling enhanceWithAI directly on TranscriptionView');
-                
-                // Call the enhanceWithAI method directly
+            // Check if we're in a SkribeView
+            if (context.view && context.view.constructor.name === 'SkribeView') {
+                console.log('format-ai: Calling enhanceWithAI directly on SkribeView');
                 await context.view.enhanceWithAI();
-            } else {
-                console.log('format-ai: Not a TranscriptionView, using fallback approach');
+                return;
+            }
+            console.log('format-ai: Not a SkribeView, using fallback approach');
+            
+            if (!context.content) {
+                console.error('format-ai: No content available');
+                new Notice('No content available for AI enhancement');
+                return;
+            }
+            
+            if (!context.plugin?.settings?.openaiApiKey) {
+                console.error('format-ai: No OpenAI API key set');
+                new Notice('Please set your OpenAI API key in settings');
+                return;
+            }
+            
+            // Show a persistent notification while processing
+            console.log('format-ai: Showing Summarizing notice');
+            const loadingNotice = new Notice('Summarizing...', 0);
+            const plugin = context.plugin;
+            
+            try {
+                // Use the OpenAI service's reformatText method
+                const formattedContent = await plugin.openaiService.reformatText(context.content);
+                console.log('Received formatted content, length:', formattedContent?.length);
                 
-                if (!context.content) {
-                    console.error('format-ai: No content available');
-                    new Notice('No content available for AI enhancement');
-                    return;
+                if (!formattedContent) {
+                    throw new Error('Received empty response from OpenAI');
                 }
                 
-                if (!context.plugin?.settings?.openaiApiKey) {
-                    console.error('format-ai: No OpenAI API key set');
-                    new Notice('Please set your OpenAI API key in settings');
-                    return;
-                }
+                const timestamp = new Date().toISOString().replace(/[:.]/g, '-');
+                const filename = `${plugin.settings.transcriptFolder}/summary-${timestamp}.md`;
                 
-                // Show a persistent notification while processing
-                console.log('format-ai: Showing Summarizing notice');
-                const loadingNotice = new Notice('Summarizing...', 0);
-                const plugin = context.plugin;
+                // Add metadata at the top of the file
+                const fileContent = [
+                    '---',
+                    'type: summary',
+                    `created: ${new Date().toISOString()}`,
+                    `video_url: ${context.videoUrl || ''}`,
+                    '---',
+                    '',
+                    formattedContent
+                ].join('\n');
                 
-                try {
-                    // Use the OpenAI service's reformatText method
-                    const formattedContent = await plugin.openaiService.reformatText(context.content);
-                    console.log('Received formatted content, length:', formattedContent?.length);
-                    
-                    if (!formattedContent) {
-                        throw new Error('Received empty response from OpenAI');
-                    }
-                    
-                    const timestamp = new Date().toISOString().replace(/[:.]/g, '-');
-                    const filename = `${plugin.settings.transcriptFolder}/summary-${timestamp}.md`;
-                    
-                    // Add metadata at the top of the file
-                    const fileContent = [
-                        '---',
-                        'type: summary',
-                        `created: ${new Date().toISOString()}`,
-                        `video_url: ${context.videoUrl || ''}`,
-                        '---',
-                        '',
-                        formattedContent
-                    ].join('\n');
-                    
-                    // Create the file
-                    const file = await plugin.app.vault.create(filename, fileContent);
-                    
-                    // Open the file in a new tab
-                    await plugin.app.workspace.getLeaf(true).openFile(file);
-                    
-                    // Hide the loading notice and show success
-                    loadingNotice.hide();
-                    new Notice('Summary created and opened in new tab');
-                } catch (error) {
-                    console.error('AI formatting error:', error);
-                    // Hide the loading notice and show error
-                    loadingNotice.hide();
-                    new Notice(`AI enhancement error: ${error instanceof Error ? error.message : 'Unknown error'}`);
-                }
+                // Create the file
+                const file = await plugin.app.vault.create(filename, fileContent);
+                
+                // Open the file in a new tab
+                await plugin.app.workspace.getLeaf(true).openFile(file);
+                
+                // Hide the loading notice and show success
+                loadingNotice.hide();
+                new Notice('Summary created and opened in new tab');
+            } catch (error) {
+                console.error('AI formatting error:', error);
+                // Hide the loading notice and show error
+                loadingNotice.hide();
+                new Notice(`AI enhancement error: ${error instanceof Error ? error.message : 'Unknown error'}`);
             }
         }
     }

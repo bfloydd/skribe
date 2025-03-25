@@ -2,7 +2,7 @@ import { Plugin, Notice, MarkdownView, WorkspaceLeaf, Menu, Editor, setIcon } fr
 import { SkribeSettings, DEFAULT_SETTINGS } from './src/types';
 import { YouTubeService } from './src/services/YouTubeService';
 import { OpenAIService } from './src/services/OpenAIService';
-import { TranscriptionView, VIEW_TYPE_TRANSCRIPTION } from './src/views/TranscriptionView';
+import { SkribeView, VIEW_TYPE_SKRIBE } from './src/views/SkribeView';
 import { URLInputModal } from './src/ui/URLInputModal';
 import { SettingsTab } from './src/settings/SettingsTab';
 import { ToolbarService } from './src/services/ToolbarService';
@@ -11,7 +11,7 @@ import { ToolbarConfigs } from './src/services/ToolbarConfigs';
 
 export default class SkribePlugin extends Plugin {
     settings: SkribeSettings;
-    view: TranscriptionView;
+    view: SkribeView;
     youtubeService: YouTubeService;
     openaiService: OpenAIService;
     toolbarService: ToolbarService;
@@ -67,8 +67,8 @@ export default class SkribePlugin extends Plugin {
 
     private initializeView() {
         this.registerView(
-            VIEW_TYPE_TRANSCRIPTION,
-            (leaf: WorkspaceLeaf) => new TranscriptionView(leaf, this)
+            VIEW_TYPE_SKRIBE,
+            (leaf: WorkspaceLeaf) => new SkribeView(leaf, this)
         );
     }
 
@@ -130,8 +130,8 @@ export default class SkribePlugin extends Plugin {
     private async activateView() {
         const { workspace } = this.app;
         
-        // Try to find existing TranscriptionView
-        let existingView = workspace.getLeavesOfType(VIEW_TYPE_TRANSCRIPTION)[0];
+        // Try to find existing SkribeView
+        let existingView = workspace.getLeavesOfType(VIEW_TYPE_SKRIBE)[0];
         let leaf: WorkspaceLeaf;
 
         if (existingView) {
@@ -143,11 +143,11 @@ export default class SkribePlugin extends Plugin {
         }
         
         await leaf.setViewState({
-            type: VIEW_TYPE_TRANSCRIPTION,
+            type: VIEW_TYPE_SKRIBE,
             active: true,
         });
 
-        this.view = leaf.view as TranscriptionView;
+        this.view = leaf.view as SkribeView;
         return this.view;
     }
 

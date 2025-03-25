@@ -22,7 +22,7 @@ const topToolbarCommands: ToolbarCommand[] = [
             }
 
             try {
-                // Ensure we're working with the TranscriptionView instance
+                // Ensure we're working with the SkribeView instance
                 const view = context.view;
                 if (typeof view.resetView === 'function') {
                     await view.resetView();

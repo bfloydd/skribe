@@ -4,9 +4,9 @@ import { OpenAIService } from '../services/OpenAIService';
 import { AudioPlayer } from '../services/AudioPlayer';
 import { ChatMessage, ChatState, CommandContext } from '../types';
 
-export const VIEW_TYPE_TRANSCRIPTION = "transcription-view";
+export const VIEW_TYPE_SKRIBE = "skribe-view";
 
-export class TranscriptionView extends ItemView {
+export class SkribeView extends ItemView {
     content: string;
     plugin: SkribePlugin;
     contentEl: HTMLElement;
@@ -44,11 +44,15 @@ export class TranscriptionView extends ItemView {
     }
 
     getViewType() {
-        return VIEW_TYPE_TRANSCRIPTION;
+        return VIEW_TYPE_SKRIBE;
     }
 
     getDisplayText() {
-        return "Video Transcription";
+        return "Skribe";
+    }
+
+    getMobileDisplayText() {
+        return "Skribe";
     }
 
     setContent(content: string, videoUrl?: string, videoTitle?: string) {
@@ -339,7 +343,7 @@ export class TranscriptionView extends ItemView {
     }
 
     private async renderTranscriptContent() {
-        console.log('TranscriptionView: renderTranscriptContent called');
+        console.log('SkribeView: renderTranscriptContent called');
         
         // Create transcript toolbar container at the top
         const transcriptToolbarContainer = this.transcriptContainer.createDiv({
@@ -349,7 +353,7 @@ export class TranscriptionView extends ItemView {
         // Create toolbar with transcript commands
         const toolbarContext = this.getCommandContext();
         
-        console.log('TranscriptionView: Creating transcript toolbar with context', {
+        console.log('SkribeView: Creating transcript toolbar with context', {
             hasContent: !!toolbarContext.content,
             contentLength: toolbarContext.content?.length,
             hasPlugin: !!toolbarContext.plugin,
@@ -590,16 +594,16 @@ export class TranscriptionView extends ItemView {
      */
     public async enhanceWithAI(): Promise<void> {
         // Add clear console message with distinctive styling
-        console.log('%c TranscriptionView.enhanceWithAI called!', 'background: #007700; color: white; font-size: 20px; padding: 5px;');
+        console.log('%c SkribeView.enhanceWithAI called!', 'background: #007700; color: white; font-size: 20px; padding: 5px;');
         
         if (!this.content) {
-            console.error('TranscriptionView: No content to enhance');
+            console.error('SkribeView: No content to enhance');
             new Notice('No content to enhance with AI');
             return;
         }
         
         if (!this.plugin.settings.openaiApiKey) {
-            console.error('TranscriptionView: No OpenAI API key set');
+            console.error('SkribeView: No OpenAI API key set');
             new Notice('Please set your OpenAI API key in settings');
             return;
         }
@@ -608,9 +612,9 @@ export class TranscriptionView extends ItemView {
         const loadingNotice = new Notice('Summarizing...', 0);
         
         try {
-            console.log('TranscriptionView: Calling reformatText with content length:', this.content.length);
+            console.log('SkribeView: Calling reformatText with content length:', this.content.length);
             const formattedContent = await this.plugin.openaiService.reformatText(this.content);
-            console.log('TranscriptionView: Received formatted content, length:', formattedContent?.length);
+            console.log('SkribeView: Received formatted content, length:', formattedContent?.length);
             
             if (!formattedContent) {
                 throw new Error('Received empty response from OpenAI');
@@ -622,7 +626,7 @@ export class TranscriptionView extends ItemView {
             // Hide the loading notice
             loadingNotice.hide();
         } catch (error) {
-            console.error('TranscriptionView: Error enhancing with AI:', error);
+            console.error('SkribeView: Error enhancing with AI:', error);
             loadingNotice.hide();
             new Notice(`AI enhancement error: ${error instanceof Error ? error.message : 'Unknown error'}`);
         }
@@ -655,13 +659,13 @@ export class TranscriptionView extends ItemView {
     }
     
     public setSummaryContent(content: string) {
-        console.log('TranscriptionView: setSummaryContent called', {
+        console.log('SkribeView: setSummaryContent called', {
             contentLength: content?.length,
             activeTabBefore: this.activeTab
         });
         
         if (!content) {
-            console.error('TranscriptionView: Empty content provided to setSummaryContent');
+            console.error('SkribeView: Empty content provided to setSummaryContent');
             new Notice('Cannot display empty summary');
             return;
         }
@@ -699,9 +703,9 @@ export class TranscriptionView extends ItemView {
                 this
             );
             
-            console.log('TranscriptionView: Summary content set and displayed successfully');
+            console.log('SkribeView: Summary content set and displayed successfully');
         } catch (error) {
-            console.error('TranscriptionView: Error setting summary content', error);
+            console.error('SkribeView: Error setting summary content', error);
             new Notice(`Error displaying summary: ${error instanceof Error ? error.message : 'Unknown error'}`);
         }
     }
@@ -711,7 +715,7 @@ export class TranscriptionView extends ItemView {
      * This ensures consistent tab switching behavior across the plugin
      */
     private switchToTab(tabName: 'transcript' | 'revised' | 'summary' | 'chat') {
-        console.log(`TranscriptionView: Switching to ${tabName} tab`);
+        console.log(`SkribeView: Switching to ${tabName} tab`);
         
         // Update active tab
         this.activeTab = tabName;
@@ -835,13 +839,13 @@ export class TranscriptionView extends ItemView {
      * Set content for the revised tab
      */
     public setRevisedContent(content: string) {
-        console.log('TranscriptionView: setRevisedContent called', {
+        console.log('SkribeView: setRevisedContent called', {
             contentLength: content?.length,
             activeTabBefore: this.activeTab
         });
         
         if (!content) {
-            console.error('TranscriptionView: Empty content provided to setRevisedContent');
+            console.error('SkribeView: Empty content provided to setRevisedContent');
             new Notice('Cannot display empty revised content');
             return;
         }
@@ -879,9 +883,9 @@ export class TranscriptionView extends ItemView {
                 this
             );
             
-            console.log('TranscriptionView: Revised content set and displayed successfully');
+            console.log('SkribeView: Revised content set and displayed successfully');
         } catch (error) {
-            console.error('TranscriptionView: Error setting revised content', error);
+            console.error('SkribeView: Error setting revised content', error);
             new Notice(`Error displaying revised content: ${error instanceof Error ? error.message : 'Unknown error'}`);
         }
     }
@@ -893,16 +897,16 @@ export class TranscriptionView extends ItemView {
      */
     public async createRevisedContent(): Promise<void> {
         // Add clear console message with distinctive styling
-        console.log('%c TranscriptionView.createRevisedContent called!', 'background: #000077; color: white; font-size: 20px; padding: 5px;');
+        console.log('%c SkribeView.createRevisedContent called!', 'background: #000077; color: white; font-size: 20px; padding: 5px;');
         
         if (!this.content) {
-            console.error('TranscriptionView: No content to revise');
+            console.error('SkribeView: No content to revise');
             new Notice('No content to revise');
             return;
         }
         
         if (!this.plugin.settings.openaiApiKey) {
-            console.error('TranscriptionView: No OpenAI API key set');
+            console.error('SkribeView: No OpenAI API key set');
             new Notice('Please set your OpenAI API key in settings');
             return;
         }
@@ -911,12 +915,12 @@ export class TranscriptionView extends ItemView {
         const loadingNotice = new Notice('Creating revised version...', 0);
         
         try {
-            console.log('TranscriptionView: Creating revised content for transcript with length:', this.content.length);
+            console.log('SkribeView: Creating revised content for transcript with length:', this.content.length);
             
             // Use the specialized method for creating revised transcripts
             const revisedContent = await this.plugin.openaiService.createRevisedTranscript(this.content);
             
-            console.log('TranscriptionView: Received revised content, length:', revisedContent?.length);
+            console.log('SkribeView: Received revised content, length:', revisedContent?.length);
             
             if (!revisedContent) {
                 throw new Error('Received empty response from OpenAI');
@@ -928,7 +932,7 @@ export class TranscriptionView extends ItemView {
             // Hide the loading notice
             loadingNotice.hide();
         } catch (error) {
-            console.error('TranscriptionView: Error creating revised content:', error);
+            console.error('SkribeView: Error creating revised content:', error);
             loadingNotice.hide();
             new Notice(`Revision error: ${error instanceof Error ? error.message : 'Unknown error'}`);
         }
@@ -940,7 +944,7 @@ export class TranscriptionView extends ItemView {
      */
     public resetView(): void {
         // Add clear console message
-        console.log('%c TranscriptionView.resetView called!', 'background: #770000; color: white; padding: 2px;');
+        console.log('%c SkribeView.resetView called!', 'background: #770000; color: white; padding: 2px;');
         
         try {
             // Clear state directly
@@ -971,7 +975,7 @@ export class TranscriptionView extends ItemView {
      * Clean up resources and references
      */
     public onClose(): Promise<void> {
-        console.log('TranscriptionView: onClose called');
+        console.log('SkribeView: onClose called');
         
         // Clean up event listeners
         this.registerDomEvent(window, 'resize', () => {
@@ -986,7 +990,7 @@ export class TranscriptionView extends ItemView {
             this.plugin.toolbarService.cleanupViewReferences('summary');
             this.plugin.toolbarService.cleanupViewReferences('chat');
             
-            console.log('TranscriptionView: Cleaned up view references in ToolbarService');
+            console.log('SkribeView: Cleaned up view references in ToolbarService');
         }
         
         return Promise.resolve();
