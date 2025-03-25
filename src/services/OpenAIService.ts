@@ -203,4 +203,102 @@ export class OpenAIService {
             }
         }
     }
+
+    /**
+     * Create a revised version of the transcript with better grammar and formatting
+     */
+    public async createRevisedTranscript(content: string): Promise<string> {
+        if (!this.apiKey) {
+            console.error('OpenAIService: API key not set');
+            throw new Error('OpenAI API key not set');
+        }
+        
+        console.log('OpenAIService: Creating revised transcript');
+        console.log('OpenAIService: Content length:', content.length);
+        
+        try {
+            console.log('OpenAIService: Sending request to OpenAI');
+            
+            try {
+                const response = await requestUrl({
+                    url: 'https://api.openai.com/v1/chat/completions',
+                    method: 'POST',
+                    headers: {
+                        'Authorization': `Bearer ${this.apiKey}`,
+                        'Content-Type': 'application/json'
+                    },
+                    body: JSON.stringify({
+                        model: "gpt-3.5-turbo",
+                        messages: [
+                            {
+                                role: "system",
+                                content: `You are an expert editor. Your task is to improve the following transcript by:
+                                1. Fixing grammar, punctuation, and spelling errors
+                                2. Creating proper paragraphs with logical breaks
+                                3. Removing filler words, stutters, and repetitions
+                                4. Maintaining the original meaning and information
+                                5. Preserving important terminology
+                                6. Making the text more readable and polished
+                                
+                                DO NOT add any new information or change the meaning of the content.
+                                DO NOT add summaries, titles, or annotations.
+                                DO NOT introduce facts that aren't in the original transcript.
+                                DO focus on creating a clean, grammatically correct, and well-formatted version of the original.`
+                            },
+                            {
+                                role: "user",
+                                content: content
+                            }
+                        ],
+                        temperature: 0.3
+                    })
+                });
+                
+                console.log('OpenAIService: Received response from OpenAI', {
+                    status: response.status,
+                    statusText: response.status,
+                    responseLength: response.text?.length
+                });
+                
+                if (response.status !== 200) {
+                    console.error('OpenAIService: API Error', {
+                        status: response.status,
+                        statusText: response.status,
+                        response: response.text
+                    });
+                    throw new Error(`OpenAI API Error: ${response.status} - ${response.text}`);
+                }
+                
+                const result = JSON.parse(response.text);
+                if (result.choices && result.choices.length > 0) {
+                    const revisedText = result.choices[0].message.content;
+                    console.log('OpenAIService: Revised text length:', revisedText?.length);
+                    
+                    if (!revisedText) {
+                        console.error('OpenAIService: Empty response from OpenAI');
+                        throw new Error('Received empty response from OpenAI');
+                    }
+                    
+                    // Ensure we have a valid string to return
+                    return revisedText;
+                } else {
+                    console.error('OpenAIService: No valid choices in response', result);
+                    throw new Error('No valid response from OpenAI');
+                }
+            } catch (requestError) {
+                console.error('OpenAIService: Request error', requestError);
+                
+                if (requestError.status === 401) {
+                    throw new Error('Invalid OpenAI API key. Please check your API key in settings.');
+                } else if (requestError.status === 429) {
+                    throw new Error('OpenAI API rate limit exceeded. Please try again later.');
+                } else {
+                    throw new Error(`OpenAI API Error: ${requestError.message || 'Unknown error'}`);
+                }
+            }
+        } catch (error) {
+            console.error('Error in createRevisedTranscript:', error);
+            throw error;
+        }
+    }
 } 

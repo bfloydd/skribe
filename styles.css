@@ -126,6 +126,10 @@
     background-color: rgba(var(--interactive-accent-rgb), 0.05);
 }
 
+.toolbar-container[data-toolbar-id="revised"] {
+    background-color: rgba(var(--green-rgb), 0.05);
+}
+
 .toolbar-container[data-toolbar-id="chat"] {
     background-color: rgba(var(--text-accent-rgb), 0.05);
 }
@@ -565,4 +569,25 @@ div.nav-folder-content.markdown-preview-view {
     max-width: 128px;
     height: auto;
     object-fit: contain;
+}
+
+/* Revised content styling */
+.revised-content {
+    font-family: var(--font-text);
+    line-height: 1.6;
+    padding: 0 16px;
+}
+
+.revised-content p {
+    margin-bottom: 1em;
+}
+
+.revised-content h1, 
+.revised-content h2, 
+.revised-content h3, 
+.revised-content h4, 
+.revised-content h5, 
+.revised-content h6 {
+    margin-top: 1.5em;
+    margin-bottom: 0.5em;
 }

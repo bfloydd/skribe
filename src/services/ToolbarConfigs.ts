@@ -246,6 +246,53 @@ const summaryCommands: ToolbarCommand[] = [
 ];
 
 /**
+ * Revised-specific commands
+ */
+const revisedCommands: ToolbarCommand[] = [
+    // Reference common commands
+    createCommonCommandReference('copy'),
+    createCommonCommandReference('save'),
+    
+    // Revised-specific commands
+    {
+        id: 'regenerate-revised',
+        icon: 'refresh-cw',
+        tooltip: 'Regenerate revised content',
+        isEnabled: (context: CommandContext) => {
+            return !!context.content && 
+                   !!context.plugin?.settings?.openaiApiKey;
+        },
+        execute: async (context: CommandContext) => {
+            if (!context.content) return;
+            
+            try {
+                const plugin = context.plugin as SkribePlugin;
+                
+                if (!plugin.settings.openaiApiKey) {
+                    new Notice('Please set your OpenAI API key in settings');
+                    return;
+                }
+
+                new Notice('Regenerating revised content...');
+                
+                // Use the createRevisedTranscript method for better grammar and formatting
+                const newContent = await plugin.openaiService.createRevisedTranscript(context.content);
+                
+                // Update the content
+                if (typeof context.view.setRevisedContent === 'function') {
+                    context.view.setRevisedContent(newContent);
+                }
+                
+                new Notice('Revised content regenerated');
+            } catch (error) {
+                console.error('Revised content regeneration error:', error);
+                new Notice(`Revised content error: ${error instanceof Error ? error.message : 'Unknown error'}`);
+            }
+        }
+    }
+];
+
+/**
  * Toolbar configurations for different tab types
  */
 export const ToolbarConfigs: ToolbarConfig[] = [
@@ -258,6 +305,11 @@ export const ToolbarConfigs: ToolbarConfig[] = [
         id: 'transcript',
         name: 'Transcript Toolbar',
         commands: transcriptCommands
+    },
+    {
+        id: 'revised',
+        name: 'Revised Toolbar',
+        commands: revisedCommands
     },
     {
         id: 'chat',

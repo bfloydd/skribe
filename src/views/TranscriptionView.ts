@@ -13,11 +13,13 @@ export class TranscriptionView extends ItemView {
     private audioPlayer: AudioPlayer | null = null;
     private videoUrl: string = '';
     private chatState: ChatState = { messages: [] };
-    private activeTab: 'transcript' | 'chat' | 'summary' = 'transcript';
+    private activeTab: 'transcript' | 'revised' | 'chat' | 'summary' = 'transcript';
     private transcriptContainer: HTMLElement;
+    private revisedContainer: HTMLElement;
     private chatContainer: HTMLElement;
     private summaryContainer: HTMLElement;
     private summaryContent: string = '';
+    private revisedContent: string = '';
     private welcomeMessages: string[] = [
         'Hello, Skribe!',
         'Hire a Skribe',
@@ -174,6 +176,13 @@ export class TranscriptionView extends ItemView {
         this.transcriptContainer.style.overflowY = 'auto';
         this.transcriptContainer.style.display = this.activeTab === 'transcript' ? 'block' : 'none';
 
+        // Create revised container
+        this.revisedContainer = contentWrapper.createDiv({
+            cls: 'revised-container markdown-preview-view'
+        });
+        this.revisedContainer.style.overflowY = 'auto';
+        this.revisedContainer.style.display = this.activeTab === 'revised' ? 'block' : 'none';
+
         // Create chat container
         this.chatContainer = contentWrapper.createDiv({
             cls: 'chat-container'
@@ -190,6 +199,11 @@ export class TranscriptionView extends ItemView {
         // Render transcript content
         if (this.content) {
             await this.renderTranscriptContent();
+        }
+
+        // Render revised content if available
+        if (this.revisedContent) {
+            await this.renderRevisedContent();
         }
 
         // Render chat interface
@@ -283,6 +297,9 @@ export class TranscriptionView extends ItemView {
         // Transcript tab
         const transcriptTab = this.createTabItem(tabsContainer, 'Transcript', this.activeTab === 'transcript');
         
+        // Revised tab
+        const revisedTab = this.createTabItem(tabsContainer, 'Revised', this.activeTab === 'revised');
+        
         // Chat tab
         const chatTab = this.createTabItem(tabsContainer, 'Chat', this.activeTab === 'chat');
         
@@ -290,14 +307,20 @@ export class TranscriptionView extends ItemView {
         const summaryTab = this.createTabItem(tabsContainer, 'Summary', this.activeTab === 'summary');
         
         // Add click handlers
-        chatTab.addEventListener('click', () => {
-            this.switchToTab('chat');
+        transcriptTab.addEventListener('click', () => {
+            this.switchToTab('transcript');
             // Refresh the view to update toolbars
             this.refresh();
         });
         
-        transcriptTab.addEventListener('click', () => {
-            this.switchToTab('transcript');
+        revisedTab.addEventListener('click', () => {
+            this.switchToTab('revised');
+            // Refresh the view to update toolbars
+            this.refresh();
+        });
+        
+        chatTab.addEventListener('click', () => {
+            this.switchToTab('chat');
             // Refresh the view to update toolbars
             this.refresh();
         });
@@ -375,6 +398,28 @@ export class TranscriptionView extends ItemView {
             e.stopPropagation();
             console.log('Direct enhance button clicked');
             await this.enhanceWithAI();
+        });
+        
+        // Add a button to create revised content
+        const createRevisedButton = transcriptToolbarContainer.createEl('button', {
+            cls: 'clickable-icon toolbar-button',
+            attr: { 
+                'aria-label': 'Create Revised Version',
+                'title': 'Create Revised Version'
+            }
+        });
+        setIcon(createRevisedButton, 'file-plus');
+        
+        // Style the button to match other toolbar buttons
+        createRevisedButton.style.color = 'var(--text-normal)';
+        createRevisedButton.style.padding = '4px';
+        createRevisedButton.style.margin = '0 4px';
+        
+        createRevisedButton.addEventListener('click', async (e) => {
+            e.preventDefault();
+            e.stopPropagation();
+            console.log('Create revised button clicked');
+            await this.createRevisedContent();
         });
         
         // Create transcript content
@@ -678,6 +723,7 @@ export class TranscriptionView extends ItemView {
             this.videoUrl = '';
             this.chatState = { messages: [] };
             this.summaryContent = '';
+            this.revisedContent = '';
             this.activeTab = 'transcript';
             
             if (this.audioPlayer) {
@@ -831,7 +877,7 @@ export class TranscriptionView extends ItemView {
      * Helper method to switch tabs programmatically
      * This ensures consistent tab switching behavior across the plugin
      */
-    private switchToTab(tabName: 'transcript' | 'chat' | 'summary') {
+    private switchToTab(tabName: 'transcript' | 'revised' | 'chat' | 'summary') {
         console.log(`TranscriptionView: Switching to ${tabName} tab`);
         
         // Update active tab
@@ -840,6 +886,9 @@ export class TranscriptionView extends ItemView {
         // Update container visibility
         if (this.transcriptContainer) {
             this.transcriptContainer.style.display = tabName === 'transcript' ? 'block' : 'none';
+        }
+        if (this.revisedContainer) {
+            this.revisedContainer.style.display = tabName === 'revised' ? 'block' : 'none';
         }
         if (this.chatContainer) {
             this.chatContainer.style.display = tabName === 'chat' ? 'block' : 'none';
@@ -889,5 +938,148 @@ export class TranscriptionView extends ItemView {
                 this.renderChatMessages(this.chatContainer);
             }
         };
+    }
+
+    /**
+     * Render content in the revised tab
+     */
+    private async renderRevisedContent() {
+        // Create revised toolbar container at the top
+        const revisedToolbarContainer = this.revisedContainer.createDiv({
+            cls: 'revised-toolbar-container'
+        });
+        
+        // Create toolbar with revised commands
+        const toolbarContext = {
+            plugin: this.plugin,
+            view: this,
+            content: this.revisedContent,
+            videoUrl: this.videoUrl,
+            activeTab: this.activeTab
+        };
+        
+        // Create revised toolbar
+        this.plugin.toolbarService.createToolbar(revisedToolbarContainer, 'revised', toolbarContext);
+        
+        // Create revised content div
+        const revisedContentEl = this.revisedContainer.createDiv({
+            cls: 'revised-content'
+        });
+        
+        // Render markdown content
+        await MarkdownRenderer.renderMarkdown(
+            this.revisedContent,
+            revisedContentEl,
+            this.app.workspace.getActiveFile()?.path || '',
+            this
+        );
+    }
+    
+    /**
+     * Set content for the revised tab
+     */
+    public setRevisedContent(content: string) {
+        console.log('TranscriptionView: setRevisedContent called', {
+            contentLength: content?.length,
+            activeTabBefore: this.activeTab
+        });
+        
+        if (!content) {
+            console.error('TranscriptionView: Empty content provided to setRevisedContent');
+            new Notice('Cannot display empty revised content');
+            return;
+        }
+        
+        this.revisedContent = content;
+        
+        // Switch to revised tab
+        this.switchToTab('revised');
+        
+        // We need to completely refresh the revised container rather than the whole view
+        this.revisedContainer.empty();
+        
+        try {
+            // Create revised toolbar container at the top
+            const revisedToolbarContainer = this.revisedContainer.createDiv({
+                cls: 'revised-toolbar-container'
+            });
+            
+            // Create toolbar with revised commands
+            const toolbarContext = {
+                plugin: this.plugin,
+                view: this,
+                content: this.revisedContent,
+                videoUrl: this.videoUrl,
+                activeTab: this.activeTab
+            };
+            
+            // Create revised toolbar
+            this.plugin.toolbarService.createToolbar(revisedToolbarContainer, 'revised', toolbarContext);
+            
+            // Create revised content div
+            const revisedContentEl = this.revisedContainer.createDiv({
+                cls: 'revised-content'
+            });
+            
+            // Render markdown content immediately
+            MarkdownRenderer.renderMarkdown(
+                this.revisedContent,
+                revisedContentEl,
+                this.app.workspace.getActiveFile()?.path || '',
+                this
+            );
+            
+            console.log('TranscriptionView: Revised content set and displayed successfully');
+        } catch (error) {
+            console.error('TranscriptionView: Error setting revised content', error);
+            new Notice(`Error displaying revised content: ${error instanceof Error ? error.message : 'Unknown error'}`);
+        }
+    }
+
+    /**
+     * Create a revised version of the transcript
+     * This applies grammar corrections and formatting to make the raw transcript more readable
+     */
+    public async createRevisedContent() {
+        console.log('TranscriptionView: createRevisedContent called');
+        
+        if (!this.content) {
+            console.error('TranscriptionView: No content to revise');
+            new Notice('No content to revise');
+            return;
+        }
+        
+        if (!this.plugin.settings.openaiApiKey) {
+            console.error('TranscriptionView: No OpenAI API key set');
+            new Notice('Please set your OpenAI API key in settings');
+            return;
+        }
+        
+        // Show a persistent notification while processing
+        const loadingNotice = new Notice('Creating revised version...', 0);
+        
+        try {
+            console.log('TranscriptionView: Creating revised content for transcript with length:', this.content.length);
+            
+            // Use the specialized method for creating revised transcripts
+            const revisedContent = await this.plugin.openaiService.createRevisedTranscript(this.content);
+            
+            console.log('TranscriptionView: Received revised content, length:', revisedContent?.length);
+            
+            if (!revisedContent) {
+                throw new Error('Received empty response from OpenAI');
+            }
+            
+            // Set the revised content
+            this.setRevisedContent(revisedContent);
+            
+            // Hide the loading notice and show success
+            loadingNotice.hide();
+            new Notice('Revised version created successfully');
+        } catch (error) {
+            console.error('TranscriptionView: Error creating revised content:', error);
+            loadingNotice.hide();
+            new Notice(`Revision error: ${error instanceof Error ? error.message : 'Unknown error'}`);
+        }
     }
 } 
