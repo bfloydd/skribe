@@ -2,58 +2,52 @@
 
 /* Top toolbar styling */
 .toolbar-container[data-toolbar-id="top"] {
-    display: flex;
-    justify-content: flex-start;
-    gap: 8px;
-    padding: 4px 0;
-    margin-top: 4px;
-    transition: all 0.3s ease;
-    background-color: transparent;
     position: absolute;
-    left: 10px;  /* Position to the left */
+    left: 10px;
     top: 5px;
-    z-index: 100;  /* Ensure it's on top */
+    z-index: 100;
+    justify-content: flex-start;
 }
 
-.toolbar-container[data-toolbar-id="top"] button {
+.toolbar-container button {
     background-color: var(--background-secondary);
     border: none;
     border-radius: 4px;
-    padding: 4px 8px;
+    padding: 6px 10px;
     cursor: pointer;
     display: flex;
     align-items: center;
     justify-content: center;
     color: var(--text-normal);
     transition: all 0.2s ease;
+    margin: 0 4px;
+    height: 28px;
+    min-width: 28px;
 }
 
-/* Make the Start over button more prominent */
-.toolbar-container[data-toolbar-id="top"] button[data-command-id="start-over"] {
-    background-color: var(--background-modifier-error);  /* Changed to error color for visibility */
-    color: var(--text-on-accent);
-    font-weight: bold;
-    height: 28px;  /* Fixed height */
-    width: auto;  /* Allow text width */
-    min-width: 30px;  /* Minimum width */
-    padding: 4px 8px;
-    margin-right: 10px;
-    pointer-events: auto !important;  /* Ensure clicks are registered */
-}
-
-.toolbar-container[data-toolbar-id="top"] button:hover:not(.disabled-button) {
+.toolbar-container button:hover:not(.disabled-button) {
     background-color: var(--background-modifier-hover);
     color: var(--text-accent);
     transform: translateY(-1px);
     box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
 }
 
-/* Make the Start over button hover state more prominent */
-.toolbar-container[data-toolbar-id="top"] button[data-command-id="start-over"]:hover {
-    background-color: var(--text-accent) !important;
-    color: var(--text-on-accent) !important;
-    transform: translateY(-1px);
-    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.2);
+.toolbar-container button.active {
+    background-color: var(--background-modifier-active-hover);
+    color: var(--text-accent);
+}
+
+/* Make the Start over button more prominent */
+.toolbar-container button[data-command-id="start-over"] {
+    background-color: var(--background-modifier-error);
+    color: var(--text-on-accent);
+    font-weight: bold;
+    margin-right: 10px;
+}
+
+.toolbar-container button[data-command-id="start-over"]:hover {
+    background-color: var(--text-accent);
+    color: var(--text-on-accent);
 }
 
 /* Fix for vertical scrolling issue */
@@ -82,33 +76,12 @@
 .toolbar-container {
     display: flex;
     justify-content: center;
-    gap: 8px;
-    padding: 4px 0;
-    margin-top: 4px;
-    transition: all 0.3s ease;
-}
-
-.toolbar-container button {
-    background-color: transparent;
-    border: none;
-    border-radius: 4px;
-    padding: 4px 8px;
-    cursor: pointer;
-    display: flex;
     align-items: center;
-    justify-content: center;
-    color: var(--text-normal);
-    transition: all 0.2s ease;
-}
-
-.toolbar-container button:hover:not(.disabled-button) {
-    background-color: var(--background-modifier-hover);
-    color: var(--text-accent);
-}
-
-.toolbar-container button.active {
-    background-color: var(--background-modifier-active-hover);
-    color: var(--text-accent);
+    gap: 8px;
+    padding: 8px 0;
+    margin: 0;
+    transition: all 0.3s ease;
+    background-color: transparent;
 }
 
 .toolbar-container button svg {
@@ -447,15 +420,12 @@ div.nav-folder-content.markdown-preview-view {
 /* Chat toolbar at bottom */
 .chat-toolbar-container {
     position: absolute;
-    bottom: 60px; /* Increased to make room for input */
+    bottom: 60px;
     left: 0;
     right: 0;
-    display: flex;
-    justify-content: center;
-    padding: 8px 0;
-    background-color: var(--background-primary);
     border-top: 1px solid var(--background-modifier-border);
-    z-index: 10;
+    border-bottom: none;
+    margin-bottom: 0;
 }
 
 .chat-toolbar-container .toolbar-container {
@@ -485,6 +455,7 @@ div.nav-folder-content.markdown-preview-view {
     border-bottom: 1px solid var(--background-modifier-border);
     margin-bottom: 10px;
     z-index: 10;
+    width: 100%;
 }
 
 .transcript-toolbar-container .toolbar-container {
@@ -526,6 +497,7 @@ div.nav-folder-content.markdown-preview-view {
     border-bottom: 1px solid var(--background-modifier-border);
     margin-bottom: 10px;
     z-index: 10;
+    width: 100%;
 }
 
 .summary-toolbar-container .toolbar-container {
@@ -590,4 +562,31 @@ div.nav-folder-content.markdown-preview-view {
 .revised-content h6 {
     margin-top: 1.5em;
     margin-bottom: 0.5em;
+}
+
+/* Tab-specific toolbar containers with consistent styling */
+.transcript-toolbar-container,
+.revised-toolbar-container,
+.summary-toolbar-container,
+.chat-toolbar-container {
+    display: flex;
+    justify-content: center;
+    padding: 8px 0;
+    background-color: var(--background-primary);
+    border-bottom: 1px solid var(--background-modifier-border);
+    margin-bottom: 10px;
+    z-index: 10;
+    width: 100%;
+}
+
+.disabled-button-style {
+    opacity: 0.5;
+    cursor: pointer !important;
+    /* Make it look disabled but still clickable */
+}
+
+/* Override any native disabled styling from Obsidian */
+button:not([disabled]) {
+    pointer-events: auto !important;
+    cursor: pointer !important;
 }

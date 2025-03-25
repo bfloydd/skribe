@@ -229,44 +229,19 @@ export class TranscriptionView extends ItemView {
         });
         titleEl.setText('Skribe');
 
-        // Only show restart button if we have content
+        // Only show top toolbar if we have content
         if (this.content) {
-            // Create restart button positioned on the right
-            const restartButton = header.createEl('button', {
-                cls: 'clickable-icon restart-button',
-                attr: { 
-                    'aria-label': 'Start over',
-                    'title': 'Start over'
-                }
-            });
-            
-            // Position the button at the top right
-            restartButton.style.position = 'absolute';
-            restartButton.style.right = '10px';
-            restartButton.style.top = '5px';
-            restartButton.style.backgroundColor = 'var(--background-modifier-border)';
-            restartButton.style.color = 'var(--text-normal)';
-            restartButton.style.padding = '4px 8px';
-            restartButton.style.borderRadius = '4px';
-            restartButton.style.fontWeight = 'bold';
-            restartButton.style.cursor = 'pointer';
-            restartButton.style.zIndex = '100';
-            
-            setIcon(restartButton, 'rotate-ccw');
-            
-            // Add direct click handler
-            restartButton.addEventListener('click', (e) => {
-                e.preventDefault();
-                e.stopPropagation();
-                console.log('Restart button clicked');
-                
-                try {
-                    this.resetView();
-                } catch (error) {
-                    console.error('Error resetting view:', error);
-                    new Notice(`Error: ${error instanceof Error ? error.message : 'Unknown error'}`);
-                }
-            });
+            // Create the top toolbar using the ToolbarService
+            const toolbarContext = {
+                plugin: this.plugin,
+                view: this,
+                content: this.content,
+                videoUrl: this.videoUrl,
+                activeTab: this.activeTab
+            };
+
+            // Use the ToolbarService to create a consistent top toolbar
+            this.plugin.toolbarService.createToolbar(header, 'top', toolbarContext);
         }
 
         return header;
@@ -357,14 +332,8 @@ export class TranscriptionView extends ItemView {
             cls: 'transcript-toolbar-container'
         });
         
-        // Create toolbar with transcript commands but exclude the format-ai command
-        const toolbarContext = {
-            plugin: this.plugin,
-            view: this,
-            content: this.content,
-            videoUrl: this.videoUrl,
-            activeTab: this.activeTab
-        };
+        // Create toolbar with transcript commands
+        const toolbarContext = this.getCommandContext();
         
         console.log('TranscriptionView: Creating transcript toolbar with context', {
             hasContent: !!toolbarContext.content,
@@ -374,81 +343,32 @@ export class TranscriptionView extends ItemView {
             view: toolbarContext.view?.constructor.name
         });
         
-        // Create transcript toolbar with all commands EXCEPT format-ai
-        // We'll add our own direct button instead
+        // Create transcript toolbar using the ToolbarService
         this.plugin.toolbarService.createToolbar(transcriptToolbarContainer, 'transcript', toolbarContext);
         
-        // Add a direct enhance button that works reliably
-        const directEnhanceButton = transcriptToolbarContainer.createEl('button', {
-            cls: 'clickable-icon toolbar-button',
-            attr: { 
-                'aria-label': 'Enhance with AI',
-                'title': 'Enhance with AI'
-            }
-        });
-        setIcon(directEnhanceButton, 'wand');
-        
-        // Style the button to match other toolbar buttons
-        directEnhanceButton.style.color = 'var(--text-normal)';
-        directEnhanceButton.style.padding = '4px';
-        directEnhanceButton.style.margin = '0 4px';
-        
-        directEnhanceButton.addEventListener('click', async (e) => {
-            e.preventDefault();
-            e.stopPropagation();
-            console.log('Direct enhance button clicked');
-            await this.enhanceWithAI();
-        });
-        
-        // Add a button to create revised content
-        const createRevisedButton = transcriptToolbarContainer.createEl('button', {
-            cls: 'clickable-icon toolbar-button',
-            attr: { 
-                'aria-label': 'Create Revised Version',
-                'title': 'Create Revised Version'
-            }
-        });
-        setIcon(createRevisedButton, 'edit');
-        
-        // Style the button to match other toolbar buttons
-        createRevisedButton.style.color = 'var(--text-normal)';
-        createRevisedButton.style.padding = '4px';
-        createRevisedButton.style.margin = '0 4px';
-        
-        createRevisedButton.addEventListener('click', async (e) => {
-            e.preventDefault();
-            e.stopPropagation();
-            console.log('Create revised button clicked');
-            await this.createRevisedContent();
-        });
-        
-        // Create transcript content
-        const transcriptContent = this.transcriptContainer.createDiv({
+        // Create content div
+        const transcriptContentEl = this.transcriptContainer.createDiv({
             cls: 'transcript-content'
         });
         
-        // Format the transcript into paragraphs
+        // Create paragraphs from the content
         const paragraphs = this.content.split('. ').filter(p => p.trim());
         
+        // Render paragraphs
         paragraphs.forEach(paragraph => {
-            const p = transcriptContent.createDiv({
+            const p = transcriptContentEl.createEl('p', {
                 cls: 'transcript-paragraph'
             });
-            p.setText(paragraph.trim() + '.');
+            p.textContent = paragraph.trim() + '.';
         });
     }
 
     private renderChatInterface() {
-        // Create chat messages container
+        // Render chat messages if any
         const chatMessagesContainer = this.chatContainer.createDiv({
             cls: 'chat-messages-container'
         });
         
-        // Let CSS handle the styling
-        chatMessagesContainer.style.backgroundColor = 'var(--background-secondary)';
-        chatMessagesContainer.style.borderRadius = '5px';
-
-        // Render existing messages
         this.renderChatMessages(chatMessagesContainer);
         
         // Create chat toolbar container
@@ -456,35 +376,10 @@ export class TranscriptionView extends ItemView {
             cls: 'chat-toolbar-container'
         });
         
-        // Create toolbar with chat commands
-        const toolbarContext = {
-            plugin: this.plugin,
-            view: this,
-            content: this.content,
-            videoUrl: this.videoUrl,
-            activeTab: this.activeTab,
-            chatMessages: this.chatState.messages,
-            onClearChat: () => {
-                this.chatState.messages = [];
-                this.renderChatMessages(chatMessagesContainer);
-                
-                // Update toolbar state after clearing chat
-                const chatToolbarContainer = this.chatContainer.querySelector('.chat-toolbar-container') as HTMLElement;
-                if (chatToolbarContainer) {
-                    const updatedContext = {
-                        plugin: this.plugin,
-                        view: this,
-                        content: this.content,
-                        videoUrl: this.videoUrl,
-                        activeTab: this.activeTab,
-                        chatMessages: this.chatState.messages,
-                        onClearChat: () => {} // Prevent infinite recursion
-                    };
-                    this.plugin.toolbarService.updateToolbarState(chatToolbarContainer, updatedContext);
-                }
-            }
-        };
+        // Get fresh command context for the toolbar
+        const toolbarContext = this.getCommandContext();
         
+        // Create chat toolbar with standard context
         this.plugin.toolbarService.createToolbar(chatToolbarContainer, 'chat', toolbarContext);
 
         // Create chat input container
@@ -531,34 +426,7 @@ export class TranscriptionView extends ItemView {
             // Update toolbar state after user message
             const chatToolbarContainer = this.chatContainer.querySelector('.chat-toolbar-container') as HTMLElement;
             if (chatToolbarContainer) {
-                const toolbarContext = {
-                    plugin: this.plugin,
-                    view: this,
-                    content: this.content,
-                    videoUrl: this.videoUrl,
-                    activeTab: this.activeTab,
-                    chatMessages: this.chatState.messages,
-                    onClearChat: () => {
-                        this.chatState.messages = [];
-                        this.renderChatMessages(chatMessagesContainer);
-                        
-                        // Update toolbar state after clearing chat
-                        const chatToolbarContainer = this.chatContainer.querySelector('.chat-toolbar-container') as HTMLElement;
-                        if (chatToolbarContainer) {
-                            const updatedContext = {
-                                plugin: this.plugin,
-                                view: this,
-                                content: this.content,
-                                videoUrl: this.videoUrl,
-                                activeTab: this.activeTab,
-                                chatMessages: this.chatState.messages,
-                                onClearChat: () => {} // Prevent infinite recursion
-                            };
-                            this.plugin.toolbarService.updateToolbarState(chatToolbarContainer, updatedContext);
-                        }
-                    }
-                };
-                this.plugin.toolbarService.updateToolbarState(chatToolbarContainer, toolbarContext);
+                this.plugin.toolbarService.updateToolbarState(chatToolbarContainer, this.getCommandContext());
             }
 
             // Get AI response
@@ -587,19 +455,7 @@ export class TranscriptionView extends ItemView {
                 // Update toolbar state after assistant message
                 const chatToolbarContainer = this.chatContainer.querySelector('.chat-toolbar-container') as HTMLElement;
                 if (chatToolbarContainer) {
-                    const toolbarContext = {
-                        plugin: this.plugin,
-                        view: this,
-                        content: this.content,
-                        videoUrl: this.videoUrl,
-                        activeTab: this.activeTab,
-                        chatMessages: this.chatState.messages,
-                        onClearChat: () => {
-                            this.chatState.messages = [];
-                            this.renderChatMessages(chatMessagesContainer);
-                        }
-                    };
-                    this.plugin.toolbarService.updateToolbarState(chatToolbarContainer, toolbarContext);
+                    this.plugin.toolbarService.updateToolbarState(chatToolbarContainer, this.getCommandContext());
                 }
             } catch (error) {
                 new Notice('Failed to get response: ' + error.message);
@@ -712,39 +568,13 @@ export class TranscriptionView extends ItemView {
     }
 
     /**
-     * Reset the view to its initial empty state
-     */
-    public resetView(): void {
-        console.log('TranscriptionView: resetView called');
-        
-        try {
-            // Clear state directly
-            this.content = '';
-            this.videoUrl = '';
-            this.chatState = { messages: [] };
-            this.summaryContent = '';
-            this.revisedContent = '';
-            this.activeTab = 'transcript';
-            
-            if (this.audioPlayer) {
-                this.audioPlayer.stop();
-                this.audioPlayer = null;
-            }
-            
-            // Simple refresh
-            this.refresh();
-        } catch (error) {
-            console.error('Reset error:', error);
-            new Notice(`Error: ${error instanceof Error ? error.message : 'Unknown error'}`);
-        }
-    }
-
-    /**
-     * Public method to enhance transcript with AI
+     * Public method to enhance transcript with AI (create summary)
      * This can be called directly from the toolbar button
      */
-    public async enhanceWithAI() {
-        console.log('TranscriptionView: enhanceWithAI called directly');
+    public async enhanceWithAI(): Promise<void> {
+        // Add clear console message with distinctive styling
+        console.log('%c TranscriptionView.enhanceWithAI called!', 'background: #007700; color: white; font-size: 20px; padding: 5px;');
+        // new Notice('Enhancing with AI...');
         
         if (!this.content) {
             console.error('TranscriptionView: No content to enhance');
@@ -789,14 +619,8 @@ export class TranscriptionView extends ItemView {
             cls: 'summary-toolbar-container'
         });
         
-        // Create toolbar with summary commands
-        const toolbarContext = {
-            plugin: this.plugin,
-            view: this,
-            content: this.summaryContent,
-            videoUrl: this.videoUrl,
-            activeTab: this.activeTab
-        };
+        // Create toolbar with summary commands using the standard context
+        const toolbarContext = this.getCommandContext();
         
         // Create summary toolbar
         this.plugin.toolbarService.createToolbar(summaryToolbarContainer, 'summary', toolbarContext);
@@ -841,14 +665,8 @@ export class TranscriptionView extends ItemView {
                 cls: 'summary-toolbar-container'
             });
             
-            // Create toolbar with summary commands
-            const toolbarContext = {
-                plugin: this.plugin,
-                view: this,
-                content: this.summaryContent,
-                videoUrl: this.videoUrl,
-                activeTab: this.activeTab
-            };
+            // Create toolbar with summary commands using the standard context
+            const toolbarContext = this.getCommandContext();
             
             // Create summary toolbar
             this.plugin.toolbarService.createToolbar(summaryToolbarContainer, 'summary', toolbarContext);
@@ -925,11 +743,22 @@ export class TranscriptionView extends ItemView {
      * This ensures that toolbar commands always have the latest state
      */
     public getCommandContext(): CommandContext {
+        // Determine which content to use based on the active tab
+        let tabContent = this.content;
+        if (this.activeTab === 'revised' && this.revisedContent) {
+            tabContent = this.revisedContent;
+        } else if (this.activeTab === 'summary' && this.summaryContent) {
+            tabContent = this.summaryContent;
+        }
+        
         // Return a fresh context with the latest state
         return {
             plugin: this.plugin,
             view: this,  // Make sure this reference is correctly maintained
-            content: this.content,
+            content: tabContent,
+            originalContent: this.content,  // Always include the original transcript
+            revisedContent: this.revisedContent,
+            summaryContent: this.summaryContent,
             videoUrl: this.videoUrl,
             activeTab: this.activeTab,
             chatMessages: this.chatState.messages,
@@ -949,14 +778,8 @@ export class TranscriptionView extends ItemView {
             cls: 'revised-toolbar-container'
         });
         
-        // Create toolbar with revised commands
-        const toolbarContext = {
-            plugin: this.plugin,
-            view: this,
-            content: this.revisedContent,
-            videoUrl: this.videoUrl,
-            activeTab: this.activeTab
-        };
+        // Create toolbar with revised commands using the standard context
+        const toolbarContext = this.getCommandContext();
         
         // Create revised toolbar
         this.plugin.toolbarService.createToolbar(revisedToolbarContainer, 'revised', toolbarContext);
@@ -1004,14 +827,8 @@ export class TranscriptionView extends ItemView {
                 cls: 'revised-toolbar-container'
             });
             
-            // Create toolbar with revised commands
-            const toolbarContext = {
-                plugin: this.plugin,
-                view: this,
-                content: this.revisedContent,
-                videoUrl: this.videoUrl,
-                activeTab: this.activeTab
-            };
+            // Create toolbar with revised commands using the standard context
+            const toolbarContext = this.getCommandContext();
             
             // Create revised toolbar
             this.plugin.toolbarService.createToolbar(revisedToolbarContainer, 'revised', toolbarContext);
@@ -1039,9 +856,12 @@ export class TranscriptionView extends ItemView {
     /**
      * Create a revised version of the transcript
      * This applies grammar corrections and formatting to make the raw transcript more readable
+     * Can be called directly from toolbar buttons
      */
-    public async createRevisedContent() {
-        console.log('TranscriptionView: createRevisedContent called');
+    public async createRevisedContent(): Promise<void> {
+        // Add clear console message with distinctive styling
+        console.log('%c TranscriptionView.createRevisedContent called!', 'background: #000077; color: white; font-size: 20px; padding: 5px;');
+        // new Notice('Creating revised content...');
         
         if (!this.content) {
             console.error('TranscriptionView: No content to revise');
@@ -1081,5 +901,63 @@ export class TranscriptionView extends ItemView {
             loadingNotice.hide();
             new Notice(`Revision error: ${error instanceof Error ? error.message : 'Unknown error'}`);
         }
+    }
+
+    /**
+     * Reset the view to its initial empty state
+     * Can be called directly from toolbar buttons
+     */
+    public resetView(): void {
+        // Add clear console message
+        console.log('%c TranscriptionView.resetView called!', 'background: #770000; color: white; padding: 2px;');
+        
+        try {
+            // Clear state directly
+            this.content = '';
+            this.videoUrl = '';
+            this.chatState = { messages: [] };
+            this.summaryContent = '';
+            this.revisedContent = '';
+            this.activeTab = 'transcript';
+            
+            if (this.audioPlayer) {
+                this.audioPlayer.stop();
+                this.audioPlayer = null;
+            }
+            
+            // Simple refresh
+            this.refresh();
+            
+            new Notice('View reset successfully');
+        } catch (error) {
+            console.error('Reset error:', error);
+            new Notice(`Error: ${error instanceof Error ? error.message : 'Unknown error'}`);
+        }
+    }
+
+    /**
+     * Obsidian lifecycle method called when the view is closed
+     * Clean up resources and references
+     */
+    public onClose(): Promise<void> {
+        console.log('TranscriptionView: onClose called');
+        
+        // Clean up event listeners
+        this.registerDomEvent(window, 'resize', () => {
+            // This will be automatically removed by Obsidian
+        });
+        
+        // Clean up references in the ToolbarService to prevent memory leaks
+        if (this.plugin && this.plugin.toolbarService) {
+            // Clean up view references for all toolbar types
+            this.plugin.toolbarService.cleanupViewReferences('transcript');
+            this.plugin.toolbarService.cleanupViewReferences('revised');
+            this.plugin.toolbarService.cleanupViewReferences('summary');
+            this.plugin.toolbarService.cleanupViewReferences('chat');
+            
+            console.log('TranscriptionView: Cleaned up view references in ToolbarService');
+        }
+        
+        return Promise.resolve();
     }
 } 

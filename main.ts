@@ -41,7 +41,7 @@ export default class SkribePlugin extends Plugin {
         
         // Register toolbar configurations
         ToolbarConfigs.forEach(config => {
-            this.toolbarService.registerToolbar(config);
+            this.toolbarService.registerToolbarConfig(config);
         });
     }
 

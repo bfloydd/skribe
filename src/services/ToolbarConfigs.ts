@@ -45,8 +45,6 @@ const transcriptCommands: ToolbarCommand[] = [
     // Reference common commands
     createCommonCommandReference('copy'),
     createCommonCommandReference('save'),
-    // Note: The "Enhance with AI" button is implemented directly in TranscriptionView.ts
-    // instead of using the common format-ai command to ensure reliable operation
     
     // Transcript-specific commands
     {
@@ -54,8 +52,18 @@ const transcriptCommands: ToolbarCommand[] = [
         icon: 'play-circle',
         tooltip: 'Play/Pause transcript with TTS',
         isEnabled: (context: CommandContext) => {
-            return !!context.content && 
-                   !!context.plugin?.settings?.openaiApiKey;
+            const hasContent = !!context.content;
+            const hasApiKey = !!context.plugin?.settings?.openaiApiKey;
+            
+            if (!hasContent) {
+                return false; // Disabled if no content
+            }
+            
+            if (!hasApiKey) {
+                return false; // Disabled if no API key
+            }
+            
+            return true;
         },
         execute: async (context: CommandContext) => {
             if (!context.content) return;
@@ -74,6 +82,110 @@ const transcriptCommands: ToolbarCommand[] = [
             } catch (error) {
                 console.error('TTS error:', error);
                 new Notice(`TTS error: ${error instanceof Error ? error.message : 'Unknown error'}`);
+            }
+        }
+    },
+    // Enhance with AI (create summary) button
+    {
+        id: 'enhance-ai',
+        icon: 'wand',
+        tooltip: 'Enhance with AI (create summary)',
+        isEnabled: (context: CommandContext) => {
+            const hasContent = !!context.content;
+            const hasApiKey = !!context.plugin?.settings?.openaiApiKey;
+            
+            // Simply return if both conditions are met
+            return hasContent && hasApiKey;
+        },
+        execute: async (context: CommandContext) => {
+            console.log('%c [TOOLBAR CONFIG] Executing enhance-ai command', 'background: #00ff00; color: black; padding: 4px;');
+            
+            if (!context.content) {
+                new Notice('No content to enhance');
+                return;
+            }
+            
+            if (!context.plugin?.settings?.openaiApiKey) {
+                new Notice('Please set your OpenAI API key in settings');
+                try {
+                    // Try to open settings
+                    (context.plugin.app as any).setting?.open();
+                    (context.plugin.app as any).setting?.openTabById('skribe');
+                } catch (error) {
+                    console.error('Could not open settings:', error);
+                }
+                return;
+            }
+            
+            if (!context.view) {
+                new Notice('View not found');
+                return;
+            }
+            
+            try {
+                console.log('%c Calling view.enhanceWithAI directly', 'background: #007700; color: white; padding: 2px;');
+                
+                // Direct call
+                if (typeof context.view.enhanceWithAI === 'function') {
+                    context.view.enhanceWithAI();
+                } else {
+                    throw new Error('enhanceWithAI method not found on view');
+                }
+            } catch (error) {
+                console.error('AI enhancement error:', error);
+                new Notice(`AI enhancement error: ${error instanceof Error ? error.message : 'Unknown error'}`);
+            }
+        }
+    },
+    // Create revised version button
+    {
+        id: 'create-revised',
+        icon: 'edit',
+        tooltip: 'Create Revised Version',
+        isEnabled: (context: CommandContext) => {
+            const hasContent = !!context.content;
+            const hasApiKey = !!context.plugin?.settings?.openaiApiKey;
+            
+            // Simply return if both conditions are met
+            return hasContent && hasApiKey;
+        },
+        execute: async (context: CommandContext) => {
+            console.log('%c [TOOLBAR CONFIG] Executing create-revised command', 'background: #0000ff; color: white; padding: 4px;');
+            
+            if (!context.content) {
+                new Notice('No content to revise');
+                return;
+            }
+            
+            if (!context.plugin?.settings?.openaiApiKey) {
+                new Notice('Please set your OpenAI API key in settings');
+                try {
+                    // Try to open settings
+                    (context.plugin.app as any).setting?.open();
+                    (context.plugin.app as any).setting?.openTabById('skribe');
+                } catch (error) {
+                    console.error('Could not open settings:', error);
+                }
+                return;
+            }
+            
+            if (!context.view) {
+                new Notice('View not found');
+                return;
+            }
+            
+            try {
+                console.log('%c Calling view.createRevisedContent directly', 'background: #000077; color: white; padding: 2px;');
+                
+                // Direct call
+                if (typeof context.view.createRevisedContent === 'function') {
+                    context.view.createRevisedContent();
+                } else {
+                    throw new Error('createRevisedContent method not found on view');
+                }
+            } catch (error) {
+                console.error('Create revised error:', error);
+                new Notice(`Create revised error: ${error instanceof Error ? error.message : 'Unknown error'}`);
             }
         }
     }

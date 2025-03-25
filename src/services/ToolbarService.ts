@@ -10,6 +10,9 @@ export class ToolbarService {
     private toolbarConfigs: Map<string, ToolbarConfig> = new Map();
     private commonCommands: Map<string, ToolbarCommand> = new Map();
 
+    // CRITICAL: Map to store strong references to view instances
+    private viewRefs: Map<string, any> = new Map();
+
     private constructor() {}
 
     /**
@@ -39,7 +42,7 @@ export class ToolbarService {
     /**
      * Register a toolbar configuration
      */
-    public registerToolbar(config: ToolbarConfig): void {
+    public registerToolbarConfig(config: ToolbarConfig): void {
         this.toolbarConfigs.set(config.id, config);
     }
 
@@ -64,27 +67,38 @@ export class ToolbarService {
         container: HTMLElement, 
         toolbarId: string, 
         context: CommandContext
-    ): HTMLElement {
-        const toolbarConfig = this.toolbarConfigs.get(toolbarId);
+    ): void {
+        console.log(`Creating toolbar: ${toolbarId}`);
         
-        if (!toolbarConfig) {
-            console.error(`Toolbar configuration not found for ID: ${toolbarId}`);
-            return container;
+        // Clear existing contents
+        container.empty();
+        
+        // Set toolbar ID for later reference
+        container.setAttribute('data-toolbar-id', toolbarId);
+        
+        // Get the toolbar config
+        const config = this.toolbarConfigs.get(toolbarId);
+        
+        if (!config) {
+            console.error(`Toolbar config not found for: ${toolbarId}`);
+            return;
         }
-
-        const buttonContainer = container.createDiv({
-            cls: 'nav-buttons-container toolbar-container',
-            attr: {
-                'data-toolbar-id': toolbarId
-            }
+        
+        // CRITICAL: Store a strong reference to the view instance with a unique ID
+        // This is the key to making buttons work later
+        if (context.view) {
+            const viewInstanceId = `view_${toolbarId}_${Date.now()}`;
+            this.viewRefs.set(viewInstanceId, context.view);
+            container.setAttribute('data-view-id', viewInstanceId);
+            console.log(`Stored view reference with ID: ${viewInstanceId}`, context.view);
+        } else {
+            console.warn(`No view instance found in context for toolbar: ${toolbarId}`);
+        }
+        
+        // Create buttons for commands
+        config.commands.forEach(command => {
+            this.createCommandButton(container, command, context);
         });
-
-        // Create buttons for each command in the toolbar
-        toolbarConfig.commands.forEach(command => {
-            this.createCommandButton(buttonContainer, command, context);
-        });
-
-        return buttonContainer;
     }
 
     /**
@@ -96,6 +110,16 @@ export class ToolbarService {
         context: CommandContext
     ): HTMLElement {
         console.log(`Creating button for command: ${command.id}`);
+        
+        // CRITICAL: Get the view instance ID and retrieve the strong reference
+        const viewInstanceId = container.getAttribute('data-view-id');
+        const viewRef = viewInstanceId ? this.viewRefs.get(viewInstanceId) : null;
+        
+        if (viewRef) {
+            console.log(`Retrieved view reference for command ${command.id} from ID: ${viewInstanceId}`);
+        } else {
+            console.warn(`No view reference found for command: ${command.id}`);
+        }
         
         // Check if this is a reference to a common command
         let actualCommand = command;
@@ -113,118 +137,75 @@ export class ToolbarService {
         }
 
         const isEnabled = actualCommand.isEnabled(context);
-        console.log(`Command ${actualCommand.id} isEnabled: ${isEnabled}`);
         
+        // Debug logging for why buttons may be disabled
+        if (!isEnabled) {
+            console.log(`Command ${actualCommand.id} is DISABLED. Context:`, {
+                hasContent: !!context.content,
+                contentLength: context.content?.length,
+                activeTab: context.activeTab,
+                hasPlugin: !!context.plugin, 
+                hasApiKey: !!context.plugin?.settings?.openaiApiKey,
+                commandId: actualCommand.id
+            });
+        } else {
+            console.log(`Command ${actualCommand.id} is ENABLED`);
+        }
+        
+        // Create button with Obsidian's DOM API
         const button = container.createEl('button', {
-            cls: 'clickable-icon toolbar-button',
+            cls: `clickable-icon toolbar-button ${!isEnabled ? 'disabled-button-style' : ''}`,
             attr: { 
                 'aria-label': actualCommand.tooltip,
                 'title': actualCommand.tooltip,
                 'data-command-id': actualCommand.id,
-                'disabled': !isEnabled
+                // Critical: Don't set disabled attribute even if logically disabled
+                // This prevents browsers from blocking click events
+                // 'disabled': !isEnabled
             }
         });
         
+        console.log(`Button created for ${actualCommand.id}, classNames: ${button.className}, disabled: ${button.hasAttribute('disabled')}`);
+        
+        // Set the icon
         setIcon(button, actualCommand.icon);
         
-        if (!isEnabled) {
-            button.addClass('disabled-button');
-        }
-        
-        // Special handling for the start-over command
-        if (actualCommand.id === 'start-over' && context.view) {
-            // For start-over, we add a direct event listener to ensure it works
-            button.addEventListener('click', async (e) => {
-                e.preventDefault();
-                e.stopPropagation();
-                console.log('Direct click handler for start-over button');
-                
-                try {
-                    const view = context.view;
-                    if (view && typeof view.resetView === 'function') {
-                        new Notice('Resetting view...');
-                        await view.resetView();
-                    } else {
-                        console.error('View or resetView method not found', {
-                            hasView: !!view,
-                            viewType: view?.constructor?.name,
-                            hasResetMethod: typeof view?.resetView === 'function'
-                        });
-                        new Notice('Error: Could not reset view');
+        // Add click handler with the viewRef captured in its closure
+        // Using function() instead of arrow function to maintain proper this binding
+        button.addEventListener('click', function(e) {
+            e.preventDefault();
+            e.stopPropagation();
+            
+            console.log(`%c TOOLBAR BUTTON CLICKED: ${actualCommand.id}`, 'background: #444; color: white; font-size: 14px; padding: 3px;');
+            
+            try {
+                // Direct method calling using the strong viewRef - this is key to making it work
+                if (viewRef) {
+                    // Handle special commands with direct method calls
+                    if (actualCommand.id === 'enhance-ai' && typeof viewRef.enhanceWithAI === 'function') {
+                        console.log(`Directly calling enhanceWithAI on view instance`);
+                        viewRef.enhanceWithAI();
+                        return;
+                    } 
+                    else if (actualCommand.id === 'create-revised' && typeof viewRef.createRevisedContent === 'function') {
+                        console.log(`Directly calling createRevisedContent on view instance`);
+                        viewRef.createRevisedContent();
+                        return;
                     }
-                } catch (error) {
-                    console.error('Error in start-over direct handler:', error);
-                    new Notice(`Error: ${error instanceof Error ? error.message : 'Unknown error'}`);
-                }
-            });
-        } else {
-            // Standard event handling for other commands
-            button.addEventListener('click', async (e) => {
-                console.log(`Button clicked for command: ${actualCommand.id}`, {
-                    commandId: actualCommand.id,
-                    hasView: !!context.view,
-                    viewType: context.view?.constructor?.name,
-                    hasGetCommandContext: typeof context.view?.getCommandContext === 'function'
-                });
-                e.preventDefault();
-                e.stopPropagation();
-                
-                // Store the original view reference to ensure it's preserved
-                const originalView = context.view;
-                
-                // Get a fresh context from the view if possible
-                let currentContext = context;
-                if (context.view && typeof context.view.getCommandContext === 'function') {
-                    try {
-                        currentContext = context.view.getCommandContext();
-                        console.log(`Got fresh context from view for command: ${actualCommand.id}`, {
-                            hasView: !!currentContext.view,
-                            viewType: currentContext.view?.constructor?.name,
-                            hasResetView: typeof currentContext.view?.resetView === 'function'
-                        });
-                    } catch (error) {
-                        console.error(`Error getting fresh context from view: ${error}`);
+                    else if (actualCommand.id === 'start-over' && typeof viewRef.resetView === 'function') {
+                        console.log(`Directly calling resetView on view instance`);
+                        viewRef.resetView();
+                        return;
                     }
                 }
                 
-                // CRITICAL: Always ensure the view reference is preserved correctly
-                if (!currentContext.view || typeof currentContext.view.resetView !== 'function') {
-                    currentContext.view = originalView;
-                    console.log('Fixed view reference in context', {
-                        hasView: !!currentContext.view,
-                        viewType: currentContext.view?.constructor?.name,
-                        hasResetView: typeof currentContext.view?.resetView === 'function'
-                    });
-                }
-                
-                // Check if the command is enabled with the current context
-                const currentlyEnabled = actualCommand.isEnabled(currentContext);
-                console.log(`Command ${actualCommand.id} currentlyEnabled: ${currentlyEnabled}`);
-                
-                if (!currentlyEnabled) {
-                    console.log(`Command ${actualCommand.id} is disabled, not executing`);
-                    return;
-                }
-                
-                try {
-                    console.log(`Executing command: ${actualCommand.id}`, {
-                        commandContext: {
-                            hasView: !!currentContext.view,
-                            viewType: currentContext.view?.constructor?.name,
-                            hasPlugin: !!currentContext.plugin,
-                            hasContent: !!currentContext.content
-                        }
-                    });
-                    
-                    await actualCommand.execute(currentContext);
-                    
-                    console.log(`Command ${actualCommand.id} executed successfully`);
-                } catch (error) {
-                    console.error(`Error executing command ${actualCommand.id}:`, error);
-                    new Notice(`Error: ${error instanceof Error ? error.message : 'Unknown error'}`);
-                }
-            });
-        }
+                // Fall back to execute if direct method call didn't happen
+                actualCommand.execute(context);
+            } catch (error) {
+                console.error(`Error handling button click for command ${actualCommand.id}:`, error);
+                new Notice(`Error: ${error instanceof Error ? error.message : 'Unknown error'}`);
+            }
+        });
         
         return button;
     }
@@ -269,7 +250,7 @@ export class ToolbarService {
         container: HTMLElement,
         context: CommandContext
     ): void {
-        console.log('ToolbarService: Updating toolbar state');
+        console.log('Updating toolbar state');
         
         // Find all buttons in the container
         const buttons = container.querySelectorAll('button[data-command-id]');
@@ -296,16 +277,47 @@ export class ToolbarService {
             
             if (!command) return;
             
-            // Update button state
+            // Only update visual state with CSS classes, don't use disabled attribute
             const isEnabled = command.isEnabled(context);
+            const buttonEl = button as HTMLElement;
             
             if (isEnabled) {
-                button.removeAttribute('disabled');
-                button.classList.remove('disabled-button');
+                // Remove any disabled attributes to ensure clickability
+                buttonEl.removeAttribute('disabled');
+                buttonEl.classList.remove('disabled-button-style');
+                buttonEl.style.pointerEvents = 'auto';
+                buttonEl.style.opacity = '1';
+                console.log(`Updated button ${commandId} to ENABLED state`);
             } else {
-                button.setAttribute('disabled', 'true');
-                button.classList.add('disabled-button');
+                // Don't set disabled, just style it to look disabled
+                buttonEl.classList.add('disabled-button-style');
+                // Still keep it clickable
+                buttonEl.style.pointerEvents = 'auto';
+                buttonEl.style.opacity = '0.5';
+                console.log(`Updated button ${commandId} to STYLED-DISABLED state (but still clickable)`);
             }
+        });
+    }
+
+    /**
+     * Clean up references when a view is destroyed
+     * This is important to prevent memory leaks
+     */
+    public cleanupViewReferences(toolbarId: string): void {
+        const prefix = `view_${toolbarId}_`;
+        const keysToRemove: string[] = [];
+        
+        // Find all keys that match the prefix
+        this.viewRefs.forEach((_, key) => {
+            if (key.startsWith(prefix)) {
+                keysToRemove.push(key);
+            }
+        });
+        
+        // Remove the references
+        keysToRemove.forEach(key => {
+            this.viewRefs.delete(key);
+            console.log(`Removed view reference: ${key}`);
         });
     }
 } 
