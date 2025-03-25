@@ -72,5 +72,11 @@ describe('YouTubeService', () => {
             const url = 'https://example.com/video';
             expect(youtubeService.cleanYouTubeUrl(url)).toEqual(url);
         });
+
+        it('should handle short youtu.be URLs with multiple parameters and keep only t parameter', () => {
+            const input = 'https://youtu.be/X2VGzVMSjPg?si=kepUNGcmp3dzr3Xb&xyz=lmnop&t=311';
+            const expected = 'https://youtu.be/X2VGzVMSjPg?t=311';
+            expect(youtubeService.cleanYouTubeUrl(input)).toEqual(expected);
+        });
     });
 }); 
