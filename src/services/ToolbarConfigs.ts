@@ -85,6 +85,58 @@ const transcriptCommands: ToolbarCommand[] = [
             }
         }
     },
+    // Create revised version button
+    {
+        id: 'create-revised',
+        icon: 'file-text',
+        tooltip: 'Create Revised Version',
+        isEnabled: (context: CommandContext) => {
+            const hasContent = !!context.content;
+            const hasApiKey = !!context.plugin?.settings?.openaiApiKey;
+            
+            // Simply return if both conditions are met
+            return hasContent && hasApiKey;
+        },
+        execute: async (context: CommandContext) => {
+            console.log('%c [TOOLBAR CONFIG] Executing create-revised command', 'background: #0000ff; color: white; padding: 4px;');
+            
+            if (!context.content) {
+                new Notice('No content to revise');
+                return;
+            }
+            
+            if (!context.plugin?.settings?.openaiApiKey) {
+                new Notice('Please set your OpenAI API key in settings');
+                try {
+                    // Try to open settings
+                    (context.plugin.app as any).setting?.open();
+                    (context.plugin.app as any).setting?.openTabById('skribe');
+                } catch (error) {
+                    console.error('Could not open settings:', error);
+                }
+                return;
+            }
+            
+            if (!context.view) {
+                new Notice('View not found');
+                return;
+            }
+            
+            try {
+                console.log('%c Calling view.createRevisedContent directly', 'background: #000077; color: white; padding: 2px;');
+                
+                // Direct call
+                if (typeof context.view.createRevisedContent === 'function') {
+                    context.view.createRevisedContent();
+                } else {
+                    throw new Error('createRevisedContent method not found on view');
+                }
+            } catch (error) {
+                console.error('Create revised error:', error);
+                new Notice(`Create revised error: ${error instanceof Error ? error.message : 'Unknown error'}`);
+            }
+        }
+    },
     // Enhance with AI (create summary) button
     {
         id: 'enhance-ai',
@@ -134,58 +186,6 @@ const transcriptCommands: ToolbarCommand[] = [
             } catch (error) {
                 console.error('AI enhancement error:', error);
                 new Notice(`AI enhancement error: ${error instanceof Error ? error.message : 'Unknown error'}`);
-            }
-        }
-    },
-    // Create revised version button
-    {
-        id: 'create-revised',
-        icon: 'edit',
-        tooltip: 'Create Revised Version',
-        isEnabled: (context: CommandContext) => {
-            const hasContent = !!context.content;
-            const hasApiKey = !!context.plugin?.settings?.openaiApiKey;
-            
-            // Simply return if both conditions are met
-            return hasContent && hasApiKey;
-        },
-        execute: async (context: CommandContext) => {
-            console.log('%c [TOOLBAR CONFIG] Executing create-revised command', 'background: #0000ff; color: white; padding: 4px;');
-            
-            if (!context.content) {
-                new Notice('No content to revise');
-                return;
-            }
-            
-            if (!context.plugin?.settings?.openaiApiKey) {
-                new Notice('Please set your OpenAI API key in settings');
-                try {
-                    // Try to open settings
-                    (context.plugin.app as any).setting?.open();
-                    (context.plugin.app as any).setting?.openTabById('skribe');
-                } catch (error) {
-                    console.error('Could not open settings:', error);
-                }
-                return;
-            }
-            
-            if (!context.view) {
-                new Notice('View not found');
-                return;
-            }
-            
-            try {
-                console.log('%c Calling view.createRevisedContent directly', 'background: #000077; color: white; padding: 2px;');
-                
-                // Direct call
-                if (typeof context.view.createRevisedContent === 'function') {
-                    context.view.createRevisedContent();
-                } else {
-                    throw new Error('createRevisedContent method not found on view');
-                }
-            } catch (error) {
-                console.error('Create revised error:', error);
-                new Notice(`Create revised error: ${error instanceof Error ? error.message : 'Unknown error'}`);
             }
         }
     }
@@ -519,7 +519,7 @@ const revisedCommands: ToolbarCommand[] = [
     },
     {
         id: 'regenerate-revised',
-        icon: 'edit-2',
+        icon: 'refresh-cw',
         tooltip: 'Regenerate revised content',
         isEnabled: (context: CommandContext) => {
             return !!context.content && 
