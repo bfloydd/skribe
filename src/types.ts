@@ -51,6 +51,7 @@ export interface CommandContext {
     view: any;
     content?: string;
     videoUrl?: string;
+    videoTitle?: string;
     activeTab?: string;
     [key: string]: any; // Allow for additional context properties
 }

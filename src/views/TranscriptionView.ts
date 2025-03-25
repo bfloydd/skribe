@@ -766,6 +766,7 @@ export class TranscriptionView extends ItemView {
             revisedContent: this.revisedContent,
             summaryContent: this.summaryContent,
             videoUrl: this.videoUrl,
+            videoTitle: this.videoTitle,
             activeTab: this.activeTab,
             chatMessages: this.chatState.messages,
             onClearChat: () => {

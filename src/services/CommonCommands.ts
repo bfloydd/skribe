@@ -33,31 +33,71 @@ export const CommonCommands: ToolbarCommand[] = [
             if (context.view instanceof TranscriptionView) {
                 // Since saveTranscript is private, we'll use a generic approach
                 const plugin = context.plugin as SkribePlugin;
-                const timestamp = new Date().toISOString().replace(/[:.]/g, '-');
-                const filename = `${plugin.settings.transcriptFolder}/transcript-${timestamp}.md`;
                 
-                // Add metadata at the top of the file
+                // Extract video title and URL from the context
+                const videoTitle = context.videoTitle || 'Untitled Video';
+                const videoUrl = context.videoUrl || '';
+                
+                // Format the date to yyyy-mm-dd hh:mm format
+                const now = new Date();
+                const dateStr = now.toISOString().split('T')[0];
+                const timeStr = now.toTimeString().split(' ')[0].replace(/:/g, '');
+                
+                // Get first 20 chars of title (or less if title is shorter)
+                const titlePrefix = videoTitle.replace(/[\\/:*?"<>|]/g, '-').substring(0, 20);
+                
+                // Try to extract v parameter from YouTube URL
+                let vParam = '';
+                if (videoUrl) {
+                    const match = videoUrl.match(/[?&]v=([^&]+)/);
+                    if (match && match[1]) {
+                        vParam = match[1];
+                    }
+                }
+                
+                // Determine content type suffix based on active tab
+                let contentTypeSuffix = '';
+                const activeTab = context.activeTab || 'transcript';
+                if (activeTab === 'revised') {
+                    contentTypeSuffix = ' revised';
+                } else if (activeTab === 'summary') {
+                    contentTypeSuffix = ' summary';
+                } else if (activeTab === 'transcript') {
+                    contentTypeSuffix = ' transcript';
+                }
+                
+                // Create filename
+                const filename = `${plugin.settings.transcriptFolder}/${dateStr} ${timeStr} ${titlePrefix}${vParam ? ' ' + vParam : ''}${contentTypeSuffix}.md`;
+                
+                // Add metadata and content including title and link at the top
                 const fileContent = [
                     '---',
-                    'type: transcript',
-                    `created: ${new Date().toISOString()}`,
+                    `type: ${activeTab}`,
+                    `created: ${now.toISOString()}`,
+                    videoTitle ? `title: "${videoTitle}"` : '',
+                    videoUrl ? `source: "${videoUrl}"` : '',
                     '---',
                     '',
-                    '# Video Transcript',
+                    videoTitle ? `# ${videoTitle}${contentTypeSuffix ? ' - ' + activeTab.charAt(0).toUpperCase() + activeTab.slice(1) : ''}` : `# Video ${contentTypeSuffix ? activeTab.charAt(0).toUpperCase() + activeTab.slice(1) : 'Transcript'}`,
+                    '',
+                    videoUrl ? `Source: [${videoUrl}](${videoUrl})` : '',
                     '',
                     context.content
-                ].join('\n');
+                ].filter(line => line !== '').join('\n');
                 
                 await plugin.app.vault.create(filename, fileContent);
-                new Notice(`Transcript saved to ${filename}`);
+                new Notice(`${activeTab.charAt(0).toUpperCase() + activeTab.slice(1)} saved to ${filename}`);
             } else {
                 // Generic save implementation
                 const plugin = context.plugin as SkribePlugin;
-                const timestamp = new Date().toISOString().replace(/[:.]/g, '-');
-                const filename = `${plugin.settings.transcriptFolder}/content-${timestamp}.md`;
+                const now = new Date();
+                const dateStr = now.toISOString().split('T')[0];
+                const timeStr = now.toTimeString().split(' ')[0].replace(/:/g, '');
+                const contentType = context.activeTab || 'content';
+                const filename = `${plugin.settings.transcriptFolder}/${dateStr} ${timeStr} generic ${contentType}.md`;
                 
                 await plugin.app.vault.create(filename, context.content);
-                new Notice(`Content saved to ${filename}`);
+                new Notice(`${contentType.charAt(0).toUpperCase() + contentType.slice(1)} saved to ${filename}`);
             }
         }
     },

@@ -210,8 +210,30 @@ const chatCommands: ToolbarCommand[] = [
             
             try {
                 const plugin = context.plugin as SkribePlugin;
-                const timestamp = new Date().toISOString().replace(/[:.]/g, '-');
-                const filename = `${plugin.settings.transcriptFolder}/chat-export-${timestamp}.md`;
+                
+                // Extract video title and URL from the context
+                const videoTitle = context.videoTitle || 'Untitled Video';
+                const videoUrl = context.videoUrl || '';
+                
+                // Format the date to yyyy-mm-dd hh:mm format
+                const now = new Date();
+                const dateStr = now.toISOString().split('T')[0];
+                const timeStr = now.toTimeString().split(' ')[0].replace(/:/g, '');
+                
+                // Get first 20 chars of title (or less if title is shorter)
+                const titlePrefix = videoTitle.replace(/[\\/:*?"<>|]/g, '-').substring(0, 20);
+                
+                // Try to extract v parameter from YouTube URL
+                let vParam = '';
+                if (videoUrl) {
+                    const match = videoUrl.match(/[?&]v=([^&]+)/);
+                    if (match && match[1]) {
+                        vParam = match[1];
+                    }
+                }
+                
+                // Create filename
+                const filename = `${plugin.settings.transcriptFolder}/${dateStr} ${timeStr} ${titlePrefix}${vParam ? ' ' + vParam : ''} chat.md`;
                 
                 // Format chat messages as markdown
                 const chatContent = context.chatMessages.map((msg: { role: string; content: string }) => {
@@ -223,13 +245,17 @@ const chatCommands: ToolbarCommand[] = [
                 const fileContent = [
                     '---',
                     'type: chat-export',
-                    `created: ${new Date().toISOString()}`,
+                    `created: ${now.toISOString()}`,
+                    videoTitle ? `title: "${videoTitle}"` : '',
+                    videoUrl ? `source: "${videoUrl}"` : '',
                     '---',
                     '',
-                    '# Chat Export',
+                    videoTitle ? `# ${videoTitle} - Chat Export` : '# Chat Export',
+                    '',
+                    videoUrl ? `Source: [${videoUrl}](${videoUrl})` : '',
                     '',
                     chatContent
-                ].join('\n');
+                ].filter(line => line !== '').join('\n');
                 
                 await plugin.app.vault.create(filename, fileContent);
                 new Notice(`Chat exported to ${filename}`);
