@@ -279,14 +279,14 @@ div.nav-folder-content.markdown-preview-view {
     padding: 10px;
     background-color: var(--background-secondary);
     border-radius: 5px;
-    margin-bottom: 60px !important; /* Make room for toolbar */
-    max-height: calc(100% - 90px); /* Adjusted from 120px to match new header size */
+    margin-top: 40px !important; /* Make room for top toolbar */
+    max-height: calc(100% - 140px); /* Adjusted to account for top toolbar */
     overflow-y: auto;
     position: absolute;
     top: 0;
     left: 0;
     right: 0;
-    bottom: 100px; /* Leave space for toolbar and input */
+    bottom: 60px; /* Leave space for input */
 }
 
 .chat-message {
@@ -432,12 +432,13 @@ div.nav-folder-content.markdown-preview-view {
 /* Chat toolbar at bottom */
 .chat-toolbar-container {
     position: absolute;
-    bottom: 60px;
+    top: 0;
     left: 0;
     right: 0;
-    border-top: 1px solid var(--background-modifier-border);
-    border-bottom: none;
-    margin-bottom: 0;
+    border-bottom: 1px solid var(--background-modifier-border);
+    border-top: none;
+    margin-top: 0;
+    z-index: 10;
 }
 
 .chat-toolbar-container .toolbar-container {

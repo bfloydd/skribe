@@ -377,14 +377,7 @@ export class TranscriptionView extends ItemView {
     }
 
     private renderChatInterface() {
-        // Render chat messages if any
-        const chatMessagesContainer = this.chatContainer.createDiv({
-            cls: 'chat-messages-container'
-        });
-        
-        this.renderChatMessages(chatMessagesContainer);
-        
-        // Create chat toolbar container
+        // Create chat toolbar container first (moved to top)
         const chatToolbarContainer = this.chatContainer.createDiv({
             cls: 'chat-toolbar-container'
         });
@@ -394,7 +387,14 @@ export class TranscriptionView extends ItemView {
         
         // Create chat toolbar with standard context
         this.plugin.toolbarService.createToolbar(chatToolbarContainer, 'chat', toolbarContext);
-
+        
+        // Render chat messages if any
+        const chatMessagesContainer = this.chatContainer.createDiv({
+            cls: 'chat-messages-container'
+        });
+        
+        this.renderChatMessages(chatMessagesContainer);
+        
         // Create chat input container
         const chatInputContainer = this.chatContainer.createDiv({
             cls: 'chat-input-container'
@@ -405,7 +405,7 @@ export class TranscriptionView extends ItemView {
             cls: 'chat-input',
             attr: {
                 type: 'text',
-                placeholder: 'Ask a question about the video transcript...'
+                placeholder: 'Ask a question about the content...'
             }
         });
         
@@ -488,7 +488,7 @@ export class TranscriptionView extends ItemView {
         if (this.chatState.messages.length === 0) {
             const emptyMessage = container.createDiv({
                 cls: 'empty-chat-message',
-                text: 'Ask a question about the video transcript...'
+                text: 'Ask a question about the content...'
             });
             emptyMessage.style.textAlign = 'center';
             emptyMessage.style.color = 'var(--text-muted)';
