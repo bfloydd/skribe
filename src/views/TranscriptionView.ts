@@ -18,6 +18,16 @@ export class TranscriptionView extends ItemView {
     private chatContainer: HTMLElement;
     private summaryContainer: HTMLElement;
     private summaryContent: string = '';
+    private welcomeMessages: string[] = [
+        'Hello, Skribe!',
+        'Hire a Skribe',
+        'Skribe a Video'
+    ];
+
+    private getRandomWelcomeMessage(): string {
+        const randomIndex = Math.floor(Math.random() * this.welcomeMessages.length);
+        return this.welcomeMessages[randomIndex];
+    }
 
     constructor(leaf: WorkspaceLeaf, plugin: SkribePlugin) {
         super(leaf);
@@ -85,8 +95,10 @@ export class TranscriptionView extends ItemView {
             logo.style.height = 'auto';
             logo.style.marginBottom = '20px';
             
+            // Get a new random message each time
+            const message = this.getRandomWelcomeMessage();
             const promptMessage = promptContainer.createEl('div', {
-                text: 'Skribe a Video',
+                text: message,
                 cls: 'empty-state-message'
             });
             
@@ -250,24 +262,7 @@ export class TranscriptionView extends ItemView {
             console.log('Direct start over button clicked');
             
             try {
-                // Reset all state variables
-                this.content = '';
-                this.videoUrl = '';
-                this.chatState = { messages: [] };
-                this.summaryContent = '';
-                this.activeTab = 'transcript';
-                
-                // Clear any audio player
-                if (this.audioPlayer) {
-                    this.audioPlayer.stop();
-                    this.audioPlayer = null;
-                }
-                
-                // Refresh the view to show the welcome screen
-                this.refresh();
-                
-                new Notice('Starting over');
-                console.log('View has been reset directly');
+                this.resetView();
             } catch (error) {
                 console.error('Error resetting view directly:', error);
                 new Notice(`Error: ${error instanceof Error ? error.message : 'Unknown error'}`);
