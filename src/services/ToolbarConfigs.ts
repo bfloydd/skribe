@@ -372,6 +372,55 @@ const summaryCommands: ToolbarCommand[] = [
     
     // Summary-specific commands
     {
+        id: 'append',
+        icon: 'arrow-down',
+        tooltip: 'Append content to current note',
+        isEnabled: (context: CommandContext) => {
+            return context.activeTab === 'summary' && 
+                   !!context.summaryContent &&
+                   !!context.plugin?.app.workspace.getActiveFile();
+        },
+        execute: async (context: CommandContext) => {
+            if (!context.summaryContent) return;
+            
+            try {
+                const plugin = context.plugin as SkribePlugin;
+                
+                // Get active file if any
+                const activeFile = plugin.app.workspace.getActiveFile();
+                
+                if (!activeFile) {
+                    new Notice('No active file to append to. Please open a note first.');
+                    return;
+                }
+                
+                // Create content with a proper horizontal rule and changed header text
+                const timestamp = new Date().toLocaleString();
+                const appendContent = [
+                    '',
+                    '',
+                    '---',
+                    '',
+                    '## Summary Append - ' + timestamp,
+                    '',
+                    context.summaryContent,
+                    ''
+                ].join('\n');
+                
+                // Read existing file content
+                const existingContent = await plugin.app.vault.read(activeFile);
+                
+                // Append new content
+                await plugin.app.vault.modify(activeFile, existingContent + appendContent);
+                
+                new Notice(`Summary appended to ${activeFile.name}`);
+            } catch (error) {
+                console.error('Append error:', error);
+                new Notice(`Append error: ${error instanceof Error ? error.message : 'Unknown error'}`);
+            }
+        }
+    },
+    {
         id: 'regenerate-summary',
         icon: 'refresh-cw',
         tooltip: 'Regenerate summary',
@@ -419,6 +468,55 @@ const revisedCommands: ToolbarCommand[] = [
     createCommonCommandReference('save'),
     
     // Revised-specific commands
+    {
+        id: 'append',
+        icon: 'arrow-down',
+        tooltip: 'Append content to current note',
+        isEnabled: (context: CommandContext) => {
+            return context.activeTab === 'revised' && 
+                   !!context.revisedContent &&
+                   !!context.plugin?.app.workspace.getActiveFile();
+        },
+        execute: async (context: CommandContext) => {
+            if (!context.revisedContent) return;
+            
+            try {
+                const plugin = context.plugin as SkribePlugin;
+                
+                // Get active file if any
+                const activeFile = plugin.app.workspace.getActiveFile();
+                
+                if (!activeFile) {
+                    new Notice('No active file to append to. Please open a note first.');
+                    return;
+                }
+                
+                // Create content with a proper horizontal rule and changed header text
+                const timestamp = new Date().toLocaleString();
+                const appendContent = [
+                    '',
+                    '',
+                    '---',
+                    '',
+                    '## Revised Transcript Append - ' + timestamp,
+                    '',
+                    context.revisedContent,
+                    ''
+                ].join('\n');
+                
+                // Read existing file content
+                const existingContent = await plugin.app.vault.read(activeFile);
+                
+                // Append new content
+                await plugin.app.vault.modify(activeFile, existingContent + appendContent);
+                
+                new Notice(`Revised transcript appended to ${activeFile.name}`);
+            } catch (error) {
+                console.error('Append error:', error);
+                new Notice(`Append error: ${error instanceof Error ? error.message : 'Unknown error'}`);
+            }
+        }
+    },
     {
         id: 'regenerate-revised',
         icon: 'edit-2',
