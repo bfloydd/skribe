@@ -168,7 +168,6 @@ export default class SkribePlugin extends Plugin {
             const transcript = await this.youtubeService.getTranscript(videoId);
             const view = await this.activateView();
             view.setContent(transcript, url);
-            new Notice('Transcript loaded successfully');
         } catch (error) {
             new Notice(error instanceof Error ? error.message : 'Unknown error occurred');
             console.error('Skribe Transcript Error:', error);

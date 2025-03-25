@@ -431,7 +431,7 @@ export class TranscriptionView extends ItemView {
 
             // Get AI response
             try {
-                new Notice('Getting response...');
+                // Notice removed
                 
                 // Use the OpenAI service to get a response
                 const response = await this.plugin.openaiService.chatWithTranscript(
@@ -574,7 +574,6 @@ export class TranscriptionView extends ItemView {
     public async enhanceWithAI(): Promise<void> {
         // Add clear console message with distinctive styling
         console.log('%c TranscriptionView.enhanceWithAI called!', 'background: #007700; color: white; font-size: 20px; padding: 5px;');
-        // new Notice('Enhancing with AI...');
         
         if (!this.content) {
             console.error('TranscriptionView: No content to enhance');
@@ -603,9 +602,8 @@ export class TranscriptionView extends ItemView {
             // Set the summary content - this method will also switch to the summary tab
             this.setSummaryContent(formattedContent);
             
-            // Hide the loading notice and show success
+            // Hide the loading notice
             loadingNotice.hide();
-            new Notice('Summary created successfully');
         } catch (error) {
             console.error('TranscriptionView: Error enhancing with AI:', error);
             loadingNotice.hide();
@@ -861,7 +859,6 @@ export class TranscriptionView extends ItemView {
     public async createRevisedContent(): Promise<void> {
         // Add clear console message with distinctive styling
         console.log('%c TranscriptionView.createRevisedContent called!', 'background: #000077; color: white; font-size: 20px; padding: 5px;');
-        // new Notice('Creating revised content...');
         
         if (!this.content) {
             console.error('TranscriptionView: No content to revise');
@@ -893,9 +890,8 @@ export class TranscriptionView extends ItemView {
             // Set the revised content
             this.setRevisedContent(revisedContent);
             
-            // Hide the loading notice and show success
+            // Hide the loading notice
             loadingNotice.hide();
-            new Notice('Revised version created successfully');
         } catch (error) {
             console.error('TranscriptionView: Error creating revised content:', error);
             loadingNotice.hide();
