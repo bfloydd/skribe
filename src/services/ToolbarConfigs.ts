@@ -141,7 +141,7 @@ const transcriptCommands: ToolbarCommand[] = [
     {
         id: 'enhance-ai',
         icon: 'wand',
-        tooltip: 'Enhance with AI (create summary)',
+        tooltip: 'Generate Summary',
         isEnabled: (context: CommandContext) => {
             const hasContent = !!context.content;
             const hasApiKey = !!context.plugin?.settings?.openaiApiKey;
