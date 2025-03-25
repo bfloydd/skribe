@@ -671,7 +671,6 @@ export class TranscriptionView extends ItemView {
      */
     public resetView(): void {
         console.log('TranscriptionView: resetView called');
-        new Notice('Resetting view...');
         
         try {
             // Clear state directly
@@ -688,12 +687,9 @@ export class TranscriptionView extends ItemView {
             
             // Simple refresh
             this.refresh();
-            
-            // Success message
-            new Notice('View reset successful!');
         } catch (error) {
             console.error('Reset error:', error);
-            new Notice(`Reset error: ${error instanceof Error ? error.message : 'Unknown error'}`);
+            new Notice(`Error: ${error instanceof Error ? error.message : 'Unknown error'}`);
         }
     }
 
