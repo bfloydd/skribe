@@ -138,9 +138,26 @@ export default class SkribePlugin extends Plugin {
             // Use existing leaf if view already exists
             leaf = existingView;
         } else {
-            // Create new leaf if no view exists
-            leaf = workspace.getRightLeaf(false) || workspace.getLeaf();
+            // Create a new leaf in the right sidebar
+            let rightLeaf = this.app.workspace.getRightLeaf(false);
+            
+            // If we couldn't get a leaf in the right sidebar, try to create one
+            if (!rightLeaf || rightLeaf.getViewState().type === 'empty') {
+                // Open right sidebar if it's not already open
+                if (this.app.workspace.rightSplit.collapsed) {
+                    this.app.workspace.rightSplit.expand();
+                }
+                
+                // Get or create a leaf in the right sidebar
+                rightLeaf = this.app.workspace.getRightLeaf(true);
+            }
+            
+            // Fallback to a generic leaf if we couldn't create one in the sidebar
+            leaf = rightLeaf || workspace.getLeaf();
         }
+        
+        // Reveal the leaf in case it's in a collapsed sidebar
+        workspace.revealLeaf(leaf);
         
         await leaf.setViewState({
             type: VIEW_TYPE_SKRIBE,
