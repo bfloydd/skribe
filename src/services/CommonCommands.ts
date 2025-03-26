@@ -87,7 +87,7 @@ export const CommonCommands: ToolbarCommand[] = [
                 ].filter(line => line !== '').join('\n');
                 
                 await plugin.app.vault.create(filename, fileContent);
-                new Notice(`${activeTab.charAt(0).toUpperCase() + activeTab.slice(1)} saved to ${filename}`);
+                new Notice(`${activeTab.charAt(0).toUpperCase() + activeTab.slice(1)} saved`);
             } else {
                 // Generic save implementation
                 const plugin = context.plugin as SkribePlugin;
