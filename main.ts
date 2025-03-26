@@ -63,6 +63,12 @@ export default class SkribePlugin extends Plugin {
             name: 'Replace selected URL with link to Skribe-note',
             callback: () => this.handleReplaceCommand()
         });
+
+        this.addCommand({
+            id: 'open-skribe',
+            name: 'Skribe: Open',
+            callback: () => this.activateView()
+        });
     }
 
     private initializeView() {
