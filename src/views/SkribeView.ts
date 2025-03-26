@@ -237,7 +237,7 @@ export class SkribeView extends ItemView {
         const titleEl = titleContainer.createEl('span', {
             cls: 'view-header-title'
         });
-        titleEl.setText('Skribe');
+        // titleEl.setText('Skribe');
 
         // Only show top toolbar if we have content
         if (this.content) {
