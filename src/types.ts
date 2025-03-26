@@ -4,6 +4,8 @@ export interface SkribeSettings {
     openaiApiKey: string;
     model: string;
     voice: string;
+    includeTimestampInFilename: boolean;
+    includeContentTypeInFilename: boolean;
 }
 
 export const DEFAULT_SETTINGS: SkribeSettings = {
@@ -11,7 +13,9 @@ export const DEFAULT_SETTINGS: SkribeSettings = {
     transcriptFolder: 'Transcripts',
     openaiApiKey: '',
     model: 'gpt-4o',
-    voice: 'alloy'
+    voice: 'alloy',
+    includeTimestampInFilename: true,
+    includeContentTypeInFilename: false
 }
 
 export interface TranscriptSegment {

@@ -26,6 +26,31 @@ export class SettingsTab extends PluginSettingTab {
                 }));
 
         new Setting(containerEl)
+            .setName('Include Timestamp in Filename')
+            .setDesc('Add date/time suffix to saved transcript filenames')
+            .addToggle(toggle => toggle
+                .setValue(Boolean(this.plugin.settings.includeTimestampInFilename))
+                .onChange(async (value) => {
+                    console.log('Toggle changed to:', value);
+                    this.plugin.settings.includeTimestampInFilename = value === true;
+                    await this.plugin.saveSettings();
+                    console.log('After saving, setting is:', this.plugin.settings.includeTimestampInFilename);
+                    console.log('Type is:', typeof this.plugin.settings.includeTimestampInFilename);
+                }));
+
+        new Setting(containerEl)
+            .setName('Include Content Type in Filename')
+            .setDesc('Add content type (transcript/revised/summary) suffix to filenames')
+            .addToggle(toggle => toggle
+                .setValue(Boolean(this.plugin.settings.includeContentTypeInFilename))
+                .onChange(async (value) => {
+                    console.log('Content type toggle changed to:', value);
+                    this.plugin.settings.includeContentTypeInFilename = value === true;
+                    await this.plugin.saveSettings();
+                    console.log('After saving, includeContentTypeInFilename is:', this.plugin.settings.includeContentTypeInFilename);
+                }));
+
+        new Setting(containerEl)
             .setName('OpenAI API Key')
             .setDesc('API key for OpenAI services (required for text reformatting)')
             .addText(text => text

@@ -553,8 +553,49 @@ export class SkribeView extends ItemView {
                 await this.app.vault.createFolder(folderPath);
             }
 
-            const timestamp = new Date().toISOString().replace(/[:.]/g, '-');
-            const filename = `${folderPath}/transcript-${timestamp}.md`;
+            // Create filename with timestamp based on settings
+            let filename = '';
+            if (this.plugin.settings.includeTimestampInFilename === true) {
+                // With timestamp
+                const timestamp = new Date().toISOString().replace(/[:.]/g, '-');
+                
+                // Determine if we should include content type suffix
+                if (this.plugin.settings.includeContentTypeInFilename === true) {
+                    filename = `${folderPath}/transcript-${timestamp}.md`;
+                } else {
+                    filename = `${folderPath}/${timestamp}.md`;
+                }
+            } else {
+                // Without timestamp
+                // Determine if we should include content type suffix
+                if (this.plugin.settings.includeContentTypeInFilename === true) {
+                    filename = `${folderPath}/transcript.md`;
+                } else {
+                    filename = `${folderPath}/content.md`;
+                }
+                
+                // Check if file exists and add number suffix if needed
+                const exists = await this.app.vault.adapter.exists(filename);
+                if (exists) {
+                    let counter = 1;
+                    let newFilename = '';
+                    
+                    // Determine appropriate suffix format based on settings
+                    if (this.plugin.settings.includeContentTypeInFilename === true) {
+                        do {
+                            newFilename = `${folderPath}/transcript-${counter}.md`;
+                            counter++;
+                        } while (await this.app.vault.adapter.exists(newFilename));
+                    } else {
+                        do {
+                            newFilename = `${folderPath}/content-${counter}.md`;
+                            counter++;
+                        } while (await this.app.vault.adapter.exists(newFilename));
+                    }
+                    
+                    filename = newFilename;
+                }
+            }
 
             await this.app.vault.create(filename, this.formatTranscript());
             new Notice(`Transcript saved to ${filename}`);

@@ -234,7 +234,33 @@ const chatCommands: ToolbarCommand[] = [
                 }
                 
                 // Create filename
-                const filename = `${plugin.settings.transcriptFolder}/${dateStr} ${timeStr} ${titlePrefix}${vParam ? ' ' + vParam : ''} chat.md`;
+                let filename = '';
+                // Add content type suffix if setting is enabled
+                let contentTypeSuffix = '';
+                if (plugin.settings.includeContentTypeInFilename === true) {
+                    contentTypeSuffix = ' chat';
+                }
+
+                if (plugin.settings.includeTimestampInFilename === true) {
+                    // With timestamp
+                    filename = `${plugin.settings.transcriptFolder}/${dateStr} ${timeStr} ${titlePrefix}${vParam ? ' ' + vParam : ''}${contentTypeSuffix}.md`;
+                } else {
+                    // Without timestamp
+                    filename = `${plugin.settings.transcriptFolder}/${titlePrefix}${vParam ? ' ' + vParam : ''}${contentTypeSuffix}.md`;
+                    
+                    // Check if file exists and add number suffix if needed
+                    const exists = await plugin.app.vault.adapter.exists(filename);
+                    if (exists) {
+                        let counter = 1;
+                        let newFilename = '';
+                        do {
+                            newFilename = `${plugin.settings.transcriptFolder}/${titlePrefix}${vParam ? ' ' + vParam : ''}${contentTypeSuffix}-${counter}.md`;
+                            counter++;
+                        } while (await plugin.app.vault.adapter.exists(newFilename));
+                        
+                        filename = newFilename;
+                    }
+                }
                 
                 // Format chat messages as markdown
                 const chatContent = context.chatMessages.map((msg: { role: string; content: string }) => {

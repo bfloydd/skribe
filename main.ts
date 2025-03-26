@@ -126,7 +126,33 @@ export default class SkribePlugin extends Plugin {
     }
 
     async loadSettings() {
-        this.settings = Object.assign({}, DEFAULT_SETTINGS, await this.loadData());
+        try {
+            // Load data from disk
+            const data = await this.loadData();
+            console.log('Raw data loaded:', JSON.stringify(data));
+            
+            // Apply defaults
+            this.settings = Object.assign({}, DEFAULT_SETTINGS, data);
+            
+            // Handle boolean conversion explicitly
+            if ('includeTimestampInFilename' in data) {
+                // Use the exact value from the data file
+                const rawValue = data.includeTimestampInFilename;
+                console.log('Raw value from data file:', rawValue, 'of type', typeof rawValue);
+                
+                // Store as strict boolean (only true if it's exactly true)
+                this.settings.includeTimestampInFilename = rawValue === true;
+            }
+            
+            // Log the final settings
+            console.log('Final loaded settings:', JSON.stringify(this.settings));
+            console.log('includeTimestampInFilename is now:', this.settings.includeTimestampInFilename);
+            console.log('Type is:', typeof this.settings.includeTimestampInFilename);
+        } catch (error) {
+            console.error('Error loading settings:', error);
+            // Fall back to defaults on error
+            this.settings = Object.assign({}, DEFAULT_SETTINGS);
+        }
     }
 
     async saveSettings() {
@@ -228,6 +254,7 @@ export default class SkribePlugin extends Plugin {
             
             // Replace the selection with a wikilink to the new file
             const fileName = filePath.split('/').pop();
+            console.log('Generated filename:', fileName);
             const wikilink = `[[${fileName}]]`;
             markdownView.editor.replaceSelection(wikilink);
             
@@ -239,6 +266,9 @@ export default class SkribePlugin extends Plugin {
     }
 
     private async saveTranscriptToFile(content: string, title?: string): Promise<string> {
+        // Force reload settings to ensure we have the latest values
+        await this.loadSettings();
+        
         const folder = this.settings.transcriptFolder;
         const folderPath = folder.replace(/^\/+|\/+$/g, '');
         
@@ -253,9 +283,43 @@ export default class SkribePlugin extends Plugin {
             .map(p => p.trim() + '.')
             .join('\n\n');
 
-        const timestamp = new Date().toISOString().replace(/[:.]/g, '-');
-        const safeTitle = title ? title.replace(/[\\/:*?"<>|]/g, '-').substring(0, 50) : '';
-        const filename = `${folderPath}/transcript-${safeTitle ? safeTitle + '-' : ''}${timestamp}.md`;
+        // Log current settings state
+        console.log('Settings object:', JSON.stringify(this.settings));
+        console.log('includeTimestampInFilename setting:', this.settings.includeTimestampInFilename);
+        console.log('Type of setting:', typeof this.settings.includeTimestampInFilename);
+        
+        // Always use strict boolean comparison
+        const useTimestamp = this.settings.includeTimestampInFilename === true;
+        console.log('Should use timestamp?', useTimestamp);
+        
+        // Generate clean title for filename
+        const safeTitle = title ? title.replace(/[\\/:*?"<>|]/g, '-').substring(0, 50) : 'untitled';
+        
+        // Create filename based on settings
+        let filename = '';
+        if (useTimestamp) {
+            // Format: transcript-Title-timestamp.md (with timestamp)
+            const timestamp = new Date().toISOString().replace(/[:.]/g, '-');
+            
+            // Determine if we should include content type suffix
+            if (this.settings.includeContentTypeInFilename === true) {
+                filename = `${folderPath}/transcript-${safeTitle}-${timestamp}.md`;
+            } else {
+                filename = `${folderPath}/${safeTitle}-${timestamp}.md`;
+            }
+            console.log('Using timestamp in filename');
+        } else {
+            // Format without timestamp
+            // Determine if we should include content type suffix
+            if (this.settings.includeContentTypeInFilename === true) {
+                filename = `${folderPath}/transcript-${safeTitle}.md`;
+            } else {
+                filename = `${folderPath}/${safeTitle}.md`;
+            }
+            console.log('Not using timestamp in filename');
+        }
+        
+        console.log('Final filename that will be created:', filename);
 
         // Add metadata at the top of the file
         const fileContent = [
@@ -270,8 +334,31 @@ export default class SkribePlugin extends Plugin {
             formattedContent
         ].filter(line => line !== '').join('\n');
 
-        await this.app.vault.create(filename, fileContent);
-        return filename;
+        try {
+            // Check if file already exists without timestamp
+            if (!useTimestamp) {
+                const exists = await this.app.vault.adapter.exists(filename);
+                if (exists) {
+                    // If file exists and we're not using timestamps, add a numeric suffix
+                    let counter = 1;
+                    let newFilename = '';
+                    do {
+                        newFilename = `${folderPath}/transcript-${safeTitle}-${counter}.md`;
+                        counter++;
+                    } while (await this.app.vault.adapter.exists(newFilename));
+                    
+                    filename = newFilename;
+                    console.log('File exists, using numbered suffix instead:', filename);
+                }
+            }
+            
+            // Create the file and return the path
+            await this.app.vault.create(filename, fileContent);
+            return filename;
+        } catch (error) {
+            console.error('Error creating file:', error);
+            throw error;
+        }
     }
 
     private initializeRibbonIcon() {

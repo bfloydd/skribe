@@ -58,28 +58,50 @@ export const CommonCommands: ToolbarCommand[] = [
                 
                 // Determine content type suffix based on active tab
                 let contentTypeSuffix = '';
-                const activeTab = context.activeTab || 'transcript';
-                if (activeTab === 'revised') {
-                    contentTypeSuffix = ' revised';
-                } else if (activeTab === 'summary') {
-                    contentTypeSuffix = ' summary';
-                } else if (activeTab === 'transcript') {
-                    contentTypeSuffix = ' transcript';
+                if (plugin.settings.includeContentTypeInFilename === true) {
+                    const activeTab = context.activeTab || 'transcript';
+                    if (activeTab === 'revised') {
+                        contentTypeSuffix = ' revised';
+                    } else if (activeTab === 'summary') {
+                        contentTypeSuffix = ' summary';
+                    } else if (activeTab === 'transcript') {
+                        contentTypeSuffix = ' transcript';
+                    }
                 }
                 
                 // Create filename
-                const filename = `${plugin.settings.transcriptFolder}/${dateStr} ${timeStr} ${titlePrefix}${vParam ? ' ' + vParam : ''}${contentTypeSuffix}.md`;
+                let filename = '';
+                if (plugin.settings.includeTimestampInFilename === true) {
+                    // With timestamp
+                    filename = `${plugin.settings.transcriptFolder}/${dateStr} ${timeStr} ${titlePrefix}${vParam ? ' ' + vParam : ''}${contentTypeSuffix}.md`;
+                } else {
+                    // Without timestamp
+                    filename = `${plugin.settings.transcriptFolder}/${titlePrefix}${vParam ? ' ' + vParam : ''}${contentTypeSuffix}.md`;
+                    
+                    // Check if file exists and add number suffix if needed
+                    const exists = await plugin.app.vault.adapter.exists(filename);
+                    if (exists) {
+                        let counter = 1;
+                        let newFilename = '';
+                        do {
+                            newFilename = `${plugin.settings.transcriptFolder}/${titlePrefix}${vParam ? ' ' + vParam : ''}${contentTypeSuffix}-${counter}.md`;
+                            counter++;
+                        } while (await plugin.app.vault.adapter.exists(newFilename));
+                        
+                        filename = newFilename;
+                    }
+                }
                 
                 // Add metadata and content including title and link at the top
                 const fileContent = [
                     '---',
-                    `type: ${activeTab}`,
+                    `type: ${context.activeTab || 'transcript'}`,
                     `created: ${now.toISOString()}`,
                     videoTitle ? `title: "${videoTitle}"` : '',
                     cleanVideoUrl ? `source: "${cleanVideoUrl}"` : '',
                     '---',
                     '',
-                    videoTitle ? `# ${videoTitle}${contentTypeSuffix ? ' - ' + activeTab.charAt(0).toUpperCase() + activeTab.slice(1) : ''}` : `# Video ${contentTypeSuffix ? activeTab.charAt(0).toUpperCase() + activeTab.slice(1) : 'Transcript'}`,
+                    videoTitle ? `# ${videoTitle}${contentTypeSuffix ? ' - ' + (context.activeTab || 'transcript').charAt(0).toUpperCase() + (context.activeTab || 'transcript').slice(1) : ''}` : `# Video ${contentTypeSuffix ? (context.activeTab || 'transcript').charAt(0).toUpperCase() + (context.activeTab || 'transcript').slice(1) : 'Transcript'}`,
                     '',
                     cleanVideoUrl ? `Source: [${cleanVideoUrl}](${cleanVideoUrl})` : '',
                     '',
@@ -87,7 +109,7 @@ export const CommonCommands: ToolbarCommand[] = [
                 ].filter(line => line !== '').join('\n');
                 
                 await plugin.app.vault.create(filename, fileContent);
-                new Notice(`${activeTab.charAt(0).toUpperCase() + activeTab.slice(1)} saved`);
+                new Notice(`${(context.activeTab || 'transcript').charAt(0).toUpperCase() + (context.activeTab || 'transcript').slice(1)} saved`);
             } else {
                 // Generic save implementation
                 const plugin = context.plugin as SkribePlugin;
@@ -95,7 +117,35 @@ export const CommonCommands: ToolbarCommand[] = [
                 const dateStr = now.toISOString().split('T')[0];
                 const timeStr = now.toTimeString().split(' ')[0].replace(/:/g, '');
                 const contentType = context.activeTab || 'content';
-                const filename = `${plugin.settings.transcriptFolder}/${dateStr} ${timeStr} generic ${contentType}.md`;
+                
+                // Add content type suffix if setting is enabled
+                let contentTypeSuffix = '';
+                if (plugin.settings.includeContentTypeInFilename === true) {
+                    contentTypeSuffix = ` ${contentType}`;
+                }
+                
+                // Create filename
+                let filename = '';
+                if (plugin.settings.includeTimestampInFilename === true) {
+                    // With timestamp
+                    filename = `${plugin.settings.transcriptFolder}/${dateStr} ${timeStr} generic${contentTypeSuffix}.md`;
+                } else {
+                    // Without timestamp
+                    filename = `${plugin.settings.transcriptFolder}/generic${contentTypeSuffix}.md`;
+                    
+                    // Check if file exists and add number suffix if needed
+                    const exists = await plugin.app.vault.adapter.exists(filename);
+                    if (exists) {
+                        let counter = 1;
+                        let newFilename = '';
+                        do {
+                            newFilename = `${plugin.settings.transcriptFolder}/generic${contentTypeSuffix}-${counter}.md`;
+                            counter++;
+                        } while (await plugin.app.vault.adapter.exists(newFilename));
+                        
+                        filename = newFilename;
+                    }
+                }
                 
                 await plugin.app.vault.create(filename, context.content);
                 new Notice(`${contentType.charAt(0).toUpperCase() + contentType.slice(1)} saved to ${filename}`);
@@ -163,8 +213,41 @@ export const CommonCommands: ToolbarCommand[] = [
                     throw new Error('Received empty response from OpenAI');
                 }
                 
-                const timestamp = new Date().toISOString().replace(/[:.]/g, '-');
-                const filename = `${plugin.settings.transcriptFolder}/summary-${timestamp}.md`;
+                // Create AI Summary file
+                const date = new Date();
+                const dateStr = date.toISOString().split('T')[0];
+                const timeStr = date.toTimeString().split(' ')[0].replace(/:/g, '-');
+                const titlePrefix = context.title || 'summary';
+                const vParam = context.vParam || '';
+
+                // Add content type suffix if setting is enabled
+                let contentTypeSuffix = '';
+                if (plugin.settings.includeContentTypeInFilename === true) {
+                    contentTypeSuffix = ' ai summary';
+                }
+                
+                // Create filename
+                let filename = '';
+                if (plugin.settings.includeTimestampInFilename === true) {
+                    // With timestamp
+                    filename = `${plugin.settings.transcriptFolder}/${dateStr} ${timeStr} ${titlePrefix}${vParam ? ' ' + vParam : ''}${contentTypeSuffix}.md`;
+                } else {
+                    // Without timestamp
+                    filename = `${plugin.settings.transcriptFolder}/${titlePrefix}${vParam ? ' ' + vParam : ''}${contentTypeSuffix}.md`;
+                    
+                    // Check if file exists and add number suffix if needed
+                    const exists = await plugin.app.vault.adapter.exists(filename);
+                    if (exists) {
+                        let counter = 1;
+                        let newFilename = '';
+                        do {
+                            newFilename = `${plugin.settings.transcriptFolder}/${titlePrefix}${vParam ? ' ' + vParam : ''}${contentTypeSuffix}-${counter}.md`;
+                            counter++;
+                        } while (await plugin.app.vault.adapter.exists(newFilename));
+                        
+                        filename = newFilename;
+                    }
+                }
                 
                 // Add metadata at the top of the file
                 const fileContent = [
