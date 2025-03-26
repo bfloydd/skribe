@@ -79,6 +79,7 @@
     flex: 1;
     height: calc(100% - 90px); /* Account for header and tabs */
     overflow: hidden;
+    min-height: 0; /* Crucial for flex child scrolling */
 }
 
 /* Ensure all content containers have proper positioning context */
@@ -345,18 +346,27 @@ div.nav-folder-content.markdown-preview-view {
     margin-top: 0;
 }
 
+/* Chat container layout */
+.chat-container {
+    position: relative;
+    display: flex;
+    flex-direction: column;
+    height: 100%;
+    overflow: hidden;
+}
+
 /* Chat messages container */
 .chat-messages-container {
+    position: relative;
     display: flex;
     flex-direction: column;
     gap: 10px;
-    padding: 10px 0;
+    padding: 10px 0 60px 0; /* Add bottom padding to make room for input */
     background-color: var(--background-secondary);
     border-radius: 5px;
-    margin-top: 10px !important;
-    flex: 1;
     overflow-y: auto;
-    max-height: calc(100% - 60px);
+    height: 100%; /* Take full height */
+    margin-bottom: 0;
 }
 
 /* Chat message styles */
@@ -364,6 +374,9 @@ div.nav-folder-content.markdown-preview-view {
     padding: 10px;
     border-radius: 5px;
     max-width: 80%;
+    word-wrap: break-word;
+    overflow-wrap: break-word;
+    margin: 0 10px;
 }
 
 .user-message {
@@ -379,7 +392,7 @@ div.nav-folder-content.markdown-preview-view {
 
 /* Chat input container */
 .chat-input-container {
-    position: sticky;
+    position: fixed;
     bottom: 0;
     left: 0;
     right: 0;
@@ -388,8 +401,14 @@ div.nav-folder-content.markdown-preview-view {
     z-index: 99;
     display: flex;
     gap: 10px;
-    margin-top: auto;
     border-top: 1px solid var(--background-modifier-border);
+    box-shadow: 0 -2px 5px rgba(0, 0, 0, 0.05);
+    height: 50px; /* Set a fixed height */
+}
+
+/* Adjust for status bar in Obsidian */
+.workspace-leaf-content[data-type="skribe-view"] .chat-input-container {
+    bottom: var(--status-bar-height, 22px); /* Use Obsidian's status bar height */
 }
 
 .chat-input {
@@ -399,12 +418,6 @@ div.nav-folder-content.markdown-preview-view {
     border: 1px solid var(--background-modifier-border);
     background-color: var(--background-primary);
     color: var(--text-normal);
-}
-
-/* Adjust chat container to make room for the toolbar */
-.chat-container {
-    position: relative;
-    padding-bottom: 100px; /* Increased to make room for toolbar and input */
 }
 
 .chat-send-button {
