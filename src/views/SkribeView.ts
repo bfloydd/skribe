@@ -184,27 +184,26 @@ export class SkribeView extends ItemView {
         this.transcriptContainer = contentWrapper.createDiv({
             cls: 'nav-folder-content markdown-preview-view transcript-container'
         });
-        this.transcriptContainer.style.overflowY = 'auto';
-        this.transcriptContainer.style.display = this.activeTab === 'transcript' ? 'block' : 'none';
-
+        
         // Create revised container
         this.revisedContainer = contentWrapper.createDiv({
             cls: 'revised-container markdown-preview-view'
         });
-        this.revisedContainer.style.overflowY = 'auto';
-        this.revisedContainer.style.display = this.activeTab === 'revised' ? 'block' : 'none';
         
         // Create summary container
         this.summaryContainer = contentWrapper.createDiv({
             cls: 'summary-container markdown-preview-view'
         });
-        this.summaryContainer.style.overflowY = 'auto';
-        this.summaryContainer.style.display = this.activeTab === 'summary' ? 'block' : 'none';
 
         // Create chat container
         this.chatContainer = contentWrapper.createDiv({
             cls: 'chat-container'
         });
+        
+        // Set initial visibility based on active tab
+        this.transcriptContainer.style.display = this.activeTab === 'transcript' ? 'block' : 'none';
+        this.revisedContainer.style.display = this.activeTab === 'revised' ? 'block' : 'none';
+        this.summaryContainer.style.display = this.activeTab === 'summary' ? 'block' : 'none';
         this.chatContainer.style.display = this.activeTab === 'chat' ? 'block' : 'none';
 
         // Render transcript content

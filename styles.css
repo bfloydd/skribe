@@ -72,16 +72,40 @@
     overflow: hidden;
 }
 
+/* Content wrapper takes remaining height */
+.skribe-content-wrapper {
+    display: flex;
+    flex-direction: column;
+    flex: 1;
+    height: calc(100% - 90px); /* Account for header and tabs */
+    overflow: hidden;
+}
+
+/* Ensure all content containers have proper positioning context */
+.transcript-container, 
+.revised-container,
+.summary-container,
+.chat-container {
+    position: relative !important;
+    height: 100%;
+    overflow-y: auto;
+    display: flex;
+    flex-direction: column;
+    padding: 0;
+}
+
 /* Toolbar styling */
 .toolbar-container {
     display: flex;
-    justify-content: center;
+    flex-direction: row;
+    justify-content: flex-start;
     align-items: center;
     gap: 8px;
-    padding: 8px 0;
+    padding: 8px 10px;
     margin: 0;
     transition: all 0.3s ease;
     background-color: transparent;
+    width: 100%;
 }
 
 .toolbar-container button svg {
@@ -257,38 +281,85 @@ div.nav-folder-content.markdown-preview-view {
     font-weight: bold;
 }
 
-/* Chat interface */
-.skribe-content-wrapper {
+/* Tab-specific toolbar containers with consistent styling */
+.transcript-toolbar-container,
+.revised-toolbar-container,
+.summary-toolbar-container,
+.chat-toolbar-container {
+    position: sticky !important;
+    top: 0;
+    left: 0;
+    right: 0;
+    z-index: 100 !important;
+    border-bottom: 1px solid var(--background-modifier-border);
+    background-color: var(--background-primary);
+    width: 100%;
+    padding: 5px 0;
+    box-shadow: 0 2px 5px rgba(0, 0, 0, 0.05);
     display: flex;
-    flex-direction: column;
-    height: calc(100% - 90px); /* Adjusted from 120px to account for smaller header */
-    overflow: hidden; /* Prevent wrapper from scrolling */
+    flex-direction: row;
+    backdrop-filter: blur(10px);
 }
 
-.transcript-container, .chat-container {
-    flex: 1;
-    overflow-y: auto;
-    height: 100%; /* Ensure containers take full height */
-    position: relative; /* Ensure positioning context for absolute elements */
+/* Content areas with proper spacing */
+.transcript-content,
+.revised-content,
+.summary-content,
+.chat-messages-container {
+    padding: 10px 0;
+    padding-top: 0;
+    margin-top: 0;
 }
 
+/* Transcript content specific */
+.transcript-content {
+    padding: 0;
+    margin-top: 0;
+}
+
+/* Revised content styling */
+.revised-content {
+    font-family: var(--font-text);
+    line-height: 1.6;
+    padding: 0;
+    margin-top: 0;
+}
+
+.revised-content p {
+    margin-bottom: 1em;
+}
+
+.revised-content h1, 
+.revised-content h2, 
+.revised-content h3, 
+.revised-content h4, 
+.revised-content h5, 
+.revised-content h6 {
+    margin-top: 1.5em;
+    margin-bottom: 0.5em;
+}
+
+/* Summary content */
+.summary-content {
+    padding: 0;
+    margin-top: 0;
+}
+
+/* Chat messages container */
 .chat-messages-container {
     display: flex;
     flex-direction: column;
     gap: 10px;
-    padding: 10px;
+    padding: 10px 0;
     background-color: var(--background-secondary);
     border-radius: 5px;
-    margin-top: 40px !important; /* Make room for top toolbar */
-    max-height: calc(100% - 140px); /* Adjusted to account for top toolbar */
+    margin-top: 10px !important;
+    flex: 1;
     overflow-y: auto;
-    position: absolute;
-    top: 0;
-    left: 0;
-    right: 0;
-    bottom: 60px; /* Leave space for input */
+    max-height: calc(100% - 60px);
 }
 
+/* Chat message styles */
 .chat-message {
     padding: 10px;
     border-radius: 5px;
@@ -306,18 +377,19 @@ div.nav-folder-content.markdown-preview-view {
     background-color: var(--background-primary);
 }
 
-/* Chat input at the very bottom */
+/* Chat input container */
 .chat-input-container {
-    position: absolute;
-    bottom: 10px;
+    position: sticky;
+    bottom: 0;
     left: 0;
     right: 0;
-    padding: 0 10px;
-    z-index: 11; /* Ensure input is above toolbar */
+    padding: 10px;
+    background-color: var(--background-primary);
+    z-index: 99;
     display: flex;
     gap: 10px;
-    margin: 0 auto;
-    width: calc(100% - 20px);
+    margin-top: auto;
+    border-top: 1px solid var(--background-modifier-border);
 }
 
 .chat-input {
@@ -429,16 +501,9 @@ div.nav-folder-content.markdown-preview-view {
     pointer-events: none;
 }
 
-/* Chat toolbar at bottom */
+/* Chat toolbar styles */
 .chat-toolbar-container {
-    position: absolute;
-    top: 0;
-    left: 0;
-    right: 0;
-    border-bottom: 1px solid var(--background-modifier-border);
-    border-top: none;
-    margin-top: 0;
-    z-index: 10;
+    /* Position now handled by common styles */
 }
 
 .chat-toolbar-container .toolbar-container {
@@ -459,16 +524,9 @@ div.nav-folder-content.markdown-preview-view {
     box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
 }
 
-/* Transcript toolbar at top */
+/* Transcript toolbar styles */
 .transcript-toolbar-container {
-    display: flex;
-    justify-content: center;
-    padding: 8px 0;
-    background-color: var(--background-primary);
-    border-bottom: 1px solid var(--background-modifier-border);
-    margin-bottom: 10px;
-    z-index: 10;
-    width: 100%;
+    /* Position now handled by common styles */
 }
 
 .transcript-toolbar-container .toolbar-container {
@@ -490,27 +548,21 @@ div.nav-folder-content.markdown-preview-view {
 }
 
 .transcript-content {
-    padding: 0 10px;
+    padding: 0;
+    margin-top: 50px; /* Make room for the fixed toolbar */
 }
 
 /* Summary container styling */
 .summary-container {
-    padding: 0 10px;
+    padding: 0;
     height: 100%;
     overflow-y: auto;
     position: relative;
 }
 
-/* Summary toolbar at top */
+/* Summary toolbar styles */
 .summary-toolbar-container {
-    display: flex;
-    justify-content: center;
-    padding: 8px 0;
-    background-color: var(--background-primary);
-    border-bottom: 1px solid var(--background-modifier-border);
-    margin-bottom: 10px;
-    z-index: 10;
-    width: 100%;
+    /* Position now handled by common styles */
 }
 
 .summary-toolbar-container .toolbar-container {
@@ -532,12 +584,8 @@ div.nav-folder-content.markdown-preview-view {
 }
 
 .summary-content {
-    padding: 0 10px;
-}
-
-/* Style for the summary tab toolbar */
-.toolbar-container[data-toolbar-id="summary"] {
-    background-color: rgba(var(--text-normal-rgb), 0.05);
+    padding: 0;
+    margin-top: 50px; /* Make room for the fixed toolbar */
 }
 
 /* Empty state styles */
@@ -556,40 +604,27 @@ div.nav-folder-content.markdown-preview-view {
     object-fit: contain;
 }
 
-/* Revised content styling */
-.revised-content {
-    font-family: var(--font-text);
-    line-height: 1.6;
-    padding: 0 16px;
+/* Revised toolbar styles */
+.revised-toolbar-container {
+    /* Position now handled by common styles */
 }
 
-.revised-content p {
-    margin-bottom: 1em;
+.revised-toolbar-container .toolbar-container {
+    margin-top: 0;
+    background-color: transparent !important;
 }
 
-.revised-content h1, 
-.revised-content h2, 
-.revised-content h3, 
-.revised-content h4, 
-.revised-content h5, 
-.revised-content h6 {
-    margin-top: 1.5em;
-    margin-bottom: 0.5em;
+.revised-toolbar-container button {
+    background-color: var(--background-secondary);
+    margin: 0 4px;
+    padding: 6px 10px;
+    border-radius: 4px;
 }
 
-/* Tab-specific toolbar containers with consistent styling */
-.transcript-toolbar-container,
-.revised-toolbar-container,
-.summary-toolbar-container,
-.chat-toolbar-container {
-    display: flex;
-    justify-content: center;
-    padding: 8px 0;
-    background-color: var(--background-primary);
-    border-bottom: 1px solid var(--background-modifier-border);
-    margin-bottom: 10px;
-    z-index: 10;
-    width: 100%;
+.revised-toolbar-container button:hover:not(.disabled-button) {
+    background-color: var(--background-modifier-hover);
+    transform: translateY(-1px);
+    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
 }
 
 .disabled-button-style {
@@ -602,4 +637,74 @@ div.nav-folder-content.markdown-preview-view {
 button:not([disabled]) {
     pointer-events: auto !important;
     cursor: pointer !important;
+}
+
+/* Adjust content containers to account for toolbar spacing */
+.transcript-content,
+.revised-content,
+.summary-content,
+.chat-messages-container {
+    margin-top: 10px;
+}
+
+/* Tab-specific toolbar styling with solid backgrounds */
+.chat-toolbar-container .toolbar-container,
+.transcript-toolbar-container .toolbar-container,
+.summary-toolbar-container .toolbar-container,
+.revised-toolbar-container .toolbar-container {
+    margin: 0;
+    padding: 8px 10px;
+    display: flex;
+    flex-direction: row;
+    align-items: center;
+    width: 100%;
+    background-color: var(--background-primary) !important;
+}
+
+/* Ensure consistent button styling across all toolbars */
+.toolbar-container button,
+.chat-toolbar-container button,
+.transcript-toolbar-container button,
+.summary-toolbar-container button,
+.revised-toolbar-container button {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    background-color: var(--background-secondary);
+    margin: 0 4px;
+    padding: 6px 10px;
+    border-radius: 4px;
+    flex-shrink: 0;
+    height: 28px;
+    min-width: 28px;
+}
+
+/* Tab-specific background colors for toolbars */
+.transcript-toolbar-container {
+    background-color: var(--background-primary);
+    border-bottom: 2px solid rgba(var(--interactive-accent-rgb), 0.3);
+}
+
+.revised-toolbar-container {
+    background-color: var(--background-primary);
+    border-bottom: 2px solid rgba(var(--green-rgb), 0.3);
+}
+
+.summary-toolbar-container {
+    background-color: var(--background-primary);
+    border-bottom: 2px solid rgba(var(--text-normal-rgb), 0.3);
+}
+
+.chat-toolbar-container {
+    background-color: var(--background-primary);
+    border-bottom: 2px solid rgba(var(--text-accent-rgb), 0.3);
+}
+
+/* Ensure toolbar buttons stay in a row */
+.toolbar-container button {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    flex-shrink: 0;
+    margin: 0 4px;
 }
