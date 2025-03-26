@@ -100,7 +100,7 @@ export class SkribeView extends ItemView {
             const logo = logoContainer.createEl('img', {
                 cls: 'empty-state-logo',
                 attr: {
-                    src: this.app.vault.adapter.getResourcePath('.obsidian/plugins/skribe/logo.png'),
+                    src: this.plugin.app.vault.adapter.getResourcePath(this.plugin.manifest.dir + '/logo.png'),
                     alt: 'Skribe Logo'
                 }
             });
