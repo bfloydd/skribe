@@ -410,7 +410,7 @@ export class SkribeView extends ItemView {
             cls: 'chat-input',
             attr: {
                 type: 'text',
-                placeholder: 'Ask a question about the content...'
+                placeholder: 'Ask a question...'
             }
         });
         
@@ -496,7 +496,7 @@ export class SkribeView extends ItemView {
         if (this.chatState.messages.length === 0) {
             const emptyMessage = container.createDiv({
                 cls: 'empty-chat-message',
-                text: 'Ask a question about the content...'
+                text: 'Ask a question...'
             });
             emptyMessage.style.textAlign = 'center';
             emptyMessage.style.color = 'var(--text-muted)';
