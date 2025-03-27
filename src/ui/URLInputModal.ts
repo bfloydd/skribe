@@ -47,9 +47,11 @@ export class URLInputModal extends Modal {
         
         // Create the button with styling
         const buttonEl = inputContainer.createEl("button", {
-            text: "Go!",
             cls: 'skribe-modal-button'
         });
+        
+        // Set the send icon (right-facing arrow)
+        setIcon(buttonEl, 'arrow-right');
         
         // Add CSS styles inline for consistency
         contentEl.style.padding = "15px";

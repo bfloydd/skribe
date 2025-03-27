@@ -139,9 +139,12 @@ export class SkribeView extends ItemView {
             
             // Create get transcript button
             const getButton = inputContainer.createEl('button', {
-                cls: 'empty-state-get-button',
-                text: 'Go!'
+                cls: 'empty-state-get-button'
             });
+            
+            // Add send icon
+            setIcon(getButton, 'arrow-right');
+            
             getButton.style.padding = '8px 16px';
             getButton.style.borderRadius = '4px';
             getButton.style.backgroundColor = 'var(--interactive-accent)';
@@ -149,6 +152,9 @@ export class SkribeView extends ItemView {
             getButton.style.cursor = 'pointer';
             getButton.style.border = 'none';
             getButton.style.fontWeight = 'bold';
+            getButton.style.display = 'flex';
+            getButton.style.justifyContent = 'center';
+            getButton.style.alignItems = 'center';
             
             // Handle get transcript button click
             const handleGetTranscript = () => {
@@ -418,9 +424,11 @@ export class SkribeView extends ItemView {
         
         // Create send button
         const sendButton = chatInputContainer.createEl('button', {
-            cls: 'chat-send-button',
-            text: 'Send'
+            cls: 'chat-send-button'
         });
+        
+        // Add send icon
+        setIcon(sendButton, 'arrow-right');
         
         // Handle send button click
         const handleSend = async () => {
