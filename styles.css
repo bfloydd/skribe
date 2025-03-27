@@ -756,12 +756,38 @@ button:not([disabled]) {
     background-color: var(--background-secondary);
     transition: background-color 0.2s ease;
     border-left: 3px solid var(--interactive-accent);
+    cursor: grab;
+    user-select: none;
+    transition: transform 0.2s ease, box-shadow 0.2s ease;
 }
 
 .quip-item:hover {
     background-color: var(--background-secondary-alt);
     transform: translateY(-1px);
     box-shadow: 0 2px 4px rgba(0, 0, 0, 0.05);
+}
+
+.quip-item.dragging {
+    opacity: 0.5;
+    cursor: grabbing;
+    transform: scale(1.02);
+    box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+}
+
+.quip-item.drag-over {
+    border-top: 2px solid var(--interactive-accent);
+}
+
+.quip-item .drag-handle {
+    cursor: grab;
+    padding: 0 8px;
+    color: var(--text-muted);
+    display: flex;
+    align-items: center;
+}
+
+.quip-item .drag-handle:hover {
+    color: var(--text-accent);
 }
 
 .quip-text {

@@ -165,8 +165,21 @@ export class SettingsTab extends PluginSettingTab {
         
         this.plugin.settings.quips.forEach((quip, index) => {
             const quipItem = quipsList.createEl('div', {
-                cls: 'quip-item setting-item'
+                cls: 'quip-item setting-item',
+                attr: {
+                    'draggable': 'true',
+                    'data-index': index.toString()
+                }
             });
+            
+            // Add drag handle
+            const dragHandle = quipItem.createEl('div', {
+                cls: 'drag-handle',
+                attr: {
+                    'draggable': 'true'
+                }
+            });
+            dragHandle.innerHTML = '⋮⋮';
             
             const quipText = quipItem.createEl('div', {
                 text: quip,
@@ -175,6 +188,54 @@ export class SettingsTab extends PluginSettingTab {
             
             const controls = quipItem.createEl('div', {
                 cls: 'quip-controls setting-item-control'
+            });
+            
+            // Add drag and drop event listeners
+            quipItem.addEventListener('dragstart', (e) => {
+                e.dataTransfer?.setData('text/plain', index.toString());
+                quipItem.classList.add('dragging');
+            });
+            
+            quipItem.addEventListener('dragend', () => {
+                quipItem.classList.remove('dragging');
+            });
+            
+            quipItem.addEventListener('dragover', (e) => {
+                e.preventDefault();
+                const draggingItem = document.querySelector('.dragging');
+                if (draggingItem && draggingItem !== quipItem) {
+                    const rect = quipItem.getBoundingClientRect();
+                    const midY = rect.top + rect.height / 2;
+                    const dropPosition = e.clientY < midY ? 'before' : 'after';
+                    
+                    // Remove drag-over class from all items
+                    document.querySelectorAll('.quip-item').forEach(item => {
+                        item.classList.remove('drag-over');
+                    });
+                    
+                    // Add drag-over class to current item
+                    quipItem.classList.add('drag-over');
+                }
+            });
+            
+            quipItem.addEventListener('drop', async (e) => {
+                e.preventDefault();
+                quipItem.classList.remove('drag-over');
+                
+                const fromIndex = parseInt(e.dataTransfer?.getData('text/plain') || '0');
+                const toIndex = parseInt(quipItem.getAttribute('data-index') || '0');
+                
+                if (fromIndex === toIndex) return;
+                
+                // Reorder the quips array
+                const [movedQuip] = this.plugin.settings.quips.splice(fromIndex, 1);
+                this.plugin.settings.quips.splice(toIndex, 0, movedQuip);
+                
+                // Save the new order
+                await this.plugin.saveSettings();
+                
+                // Refresh the display
+                this.displayQuipsList();
             });
             
             new ButtonComponent(controls)
