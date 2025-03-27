@@ -163,41 +163,61 @@ export default class SkribePlugin extends Plugin {
         const { workspace } = this.app;
         
         // Try to find existing SkribeView
-        let existingView = workspace.getLeavesOfType(VIEW_TYPE_SKRIBE)[0];
-        let leaf: WorkspaceLeaf;
-
-        if (existingView) {
-            // Use existing leaf if view already exists
-            leaf = existingView;
-        } else {
-            // Create a new leaf in the right sidebar
-            let rightLeaf = this.app.workspace.getRightLeaf(false);
+        const existingLeaves = workspace.getLeavesOfType(VIEW_TYPE_SKRIBE);
+        let leaf: WorkspaceLeaf | null = null;
+        
+        // Check if we already have a SkribeView open anywhere
+        if (existingLeaves.length > 0) {
+            leaf = existingLeaves[0];
             
-            // If we couldn't get a leaf in the right sidebar, try to create one
-            if (!rightLeaf || rightLeaf.getViewState().type === 'empty') {
-                // Open right sidebar if it's not already open
-                if (this.app.workspace.rightSplit.collapsed) {
-                    this.app.workspace.rightSplit.expand();
-                }
-                
-                // Get or create a leaf in the right sidebar
-                rightLeaf = this.app.workspace.getRightLeaf(true);
+            // If it's not in the right sidebar, close it
+            if (leaf.getRoot() !== workspace.rightSplit) {
+                // Close this instance since it's not in the right sidebar
+                leaf.detach();
+                leaf = null;
             }
-            
-            // Fallback to a generic leaf if we couldn't create one in the sidebar
-            leaf = rightLeaf || workspace.getLeaf();
         }
         
-        // Reveal the leaf in case it's in a collapsed sidebar
+        // If no view exists or it wasn't in the right sidebar, create a new one
+        if (!leaf) {
+            // Make sure right sidebar is open
+            if (workspace.rightSplit.collapsed) {
+                workspace.rightSplit.expand();
+            }
+            
+            // Create a new leaf in the right sidebar
+            leaf = workspace.getRightLeaf(false);
+            
+            // If we failed to get a leaf, create one at any location
+            if (!leaf) {
+                leaf = workspace.getLeaf();
+            }
+        }
+        
+        // At this point leaf should never be null
+        if (!leaf) {
+            new Notice('Failed to create a leaf for Skribe view');
+            return null;
+        }
+        
+        // Reveal the leaf
         workspace.revealLeaf(leaf);
         
+        // Set the view state
         await leaf.setViewState({
             type: VIEW_TYPE_SKRIBE,
             active: true,
         });
 
-        this.view = leaf.view as SkribeView;
-        return this.view;
+        // Store the view reference and return it
+        if (leaf.view instanceof SkribeView) {
+            this.view = leaf.view;
+            return this.view;
+        }
+        
+        // If view creation failed, show an error
+        new Notice('Failed to open Skribe view');
+        return null;
     }
 
     private async handleTranscriptRequest(url: string) {
@@ -216,7 +236,11 @@ export default class SkribePlugin extends Plugin {
         try {
             const { transcript, title } = await this.youtubeService.getTranscript(videoId);
             const view = await this.activateView();
-            view.setContent(transcript, url, title);
+            if (view) {
+                view.setContent(transcript, url, title);
+            } else {
+                new Notice('Failed to open Skribe view');
+            }
         } catch (error) {
             new Notice(error instanceof Error ? error.message : 'Unknown error occurred');
             console.error('Skribe Transcript Error:', error);
