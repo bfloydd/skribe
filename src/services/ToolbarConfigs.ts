@@ -221,10 +221,14 @@ const chatCommands: ToolbarCommand[] = [
                 // Format the date to yyyy-mm-dd hh:mm format
                 const now = new Date();
                 const dateStr = now.toISOString().split('T')[0];
-                const timeStr = now.toTimeString().split(' ')[0].replace(/:/g, '');
+                const timeStr = now.toLocaleTimeString('en-US', { 
+                    hour12: false,
+                    hour: '2-digit',
+                    minute: '2-digit'
+                }).replace(':', '-');
                 
-                // Get first 20 chars of title (or less if title is shorter)
-                const titlePrefix = videoTitle.replace(/[\\/:*?"<>|]/g, '-').substring(0, 20);
+                // Get first 30 chars of title (or less if title is shorter)
+                const titlePrefix = videoTitle.replace(/[\\/:*?"<>|]/g, '-').substring(0, 30);
                 
                 // Try to extract v parameter from YouTube URL
                 let vParam = '';
@@ -243,23 +247,25 @@ const chatCommands: ToolbarCommand[] = [
 
                 if (plugin.settings.includeTimestampInFilename === true) {
                     // With timestamp
-                    filename = `${plugin.settings.transcriptFolder}/${dateStr} ${timeStr} ${titlePrefix}${vParam ? ' ' + vParam : ''}${contentTypeSuffix}.md`;
+                    filename = `${plugin.settings.transcriptFolder}/${dateStr}-${timeStr} ${titlePrefix}${vParam ? ' ' + vParam : ''}${contentTypeSuffix}.md`;
                 } else {
                     // Without timestamp
                     filename = `${plugin.settings.transcriptFolder}/${titlePrefix}${vParam ? ' ' + vParam : ''}${contentTypeSuffix}.md`;
+                }
+                
+                // Check if file exists and add number suffix if needed
+                const exists = await plugin.app.vault.adapter.exists(filename);
+                if (exists) {
+                    let counter = 1;
+                    let newFilename = '';
+                    do {
+                        // Remove the .md extension
+                        const baseFilename = filename.replace(/\.md$/, '');
+                        newFilename = `${baseFilename} (${counter}).md`;
+                        counter++;
+                    } while (await plugin.app.vault.adapter.exists(newFilename));
                     
-                    // Check if file exists and add number suffix if needed
-                    const exists = await plugin.app.vault.adapter.exists(filename);
-                    if (exists) {
-                        let counter = 1;
-                        let newFilename = '';
-                        do {
-                            newFilename = `${plugin.settings.transcriptFolder}/${titlePrefix}${vParam ? ' ' + vParam : ''}${contentTypeSuffix}-${counter}.md`;
-                            counter++;
-                        } while (await plugin.app.vault.adapter.exists(newFilename));
-                        
-                        filename = newFilename;
-                    }
+                    filename = newFilename;
                 }
                 
                 // Format chat messages as markdown
@@ -268,24 +274,28 @@ const chatCommands: ToolbarCommand[] = [
                     return `${role}: ${msg.content}`;
                 }).join('\n\n');
                 
-                // Add metadata
+                // Add metadata at the top of the file
                 const fileContent = [
                     '---',
                     'type: chat',
-                    `created: ${now.toISOString()}`,
+                    `created: ${new Date().toISOString()}`,
                     videoTitle ? `title: "${videoTitle}"` : '',
                     cleanVideoUrl ? `source: "${cleanVideoUrl}"` : '',
                     '---',
                     '',
-                    videoTitle ? `# ${videoTitle} - Chat Export` : '# Chat Export',
+                    videoTitle ? `# ${videoTitle} - Chat` : '# Video Chat',
                     '',
                     cleanVideoUrl ? `Source: [${cleanVideoUrl}](${cleanVideoUrl})` : '',
                     '',
                     chatContent
                 ].filter(line => line !== '').join('\n');
                 
-                await plugin.app.vault.create(filename, fileContent);
-                new Notice(`Chat exported to ${filename}`);
+                try {
+                    await plugin.createFileWithUniqueName(filename, fileContent);
+                    new Notice('Chat saved');
+                } catch (error) {
+                    new Notice(`Error saving chat: ${error.message}`);
+                }
             } catch (error) {
                 console.error('Export error:', error);
                 new Notice(`Export error: ${error instanceof Error ? error.message : 'Unknown error'}`);

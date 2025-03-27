@@ -646,7 +646,14 @@ export class SkribeView extends ItemView {
             let filename = '';
             if (this.plugin.settings.includeTimestampInFilename === true) {
                 // With timestamp
-                const timestamp = new Date().toISOString().replace(/[:.]/g, '-');
+                const now = new Date();
+                const dateStr = now.toISOString().split('T')[0];
+                const timeStr = now.toLocaleTimeString('en-US', { 
+                    hour12: false,
+                    hour: '2-digit',
+                    minute: '2-digit'
+                }).replace(':', '-');
+                const timestamp = `${dateStr}-${timeStr}`;
                 
                 // Determine if we should include content type suffix
                 if (this.plugin.settings.includeContentTypeInFilename === true) {
@@ -662,32 +669,11 @@ export class SkribeView extends ItemView {
                 } else {
                     filename = `${folderPath}/content.md`;
                 }
-                
-                // Check if file exists and add number suffix if needed
-                const exists = await this.app.vault.adapter.exists(filename);
-                if (exists) {
-                    let counter = 1;
-                    let newFilename = '';
-                    
-                    // Determine appropriate suffix format based on settings
-                    if (this.plugin.settings.includeContentTypeInFilename === true) {
-                        do {
-                            newFilename = `${folderPath}/transcript-${counter}.md`;
-                            counter++;
-                        } while (await this.app.vault.adapter.exists(newFilename));
-                    } else {
-                        do {
-                            newFilename = `${folderPath}/content-${counter}.md`;
-                            counter++;
-                        } while (await this.app.vault.adapter.exists(newFilename));
-                    }
-                    
-                    filename = newFilename;
-                }
             }
 
-            await this.app.vault.create(filename, this.formatTranscript());
-            new Notice(`Transcript saved to ${filename}`);
+            // Use the plugin's helper method to create the file
+            await this.plugin.createFileWithUniqueName(filename, this.formatTranscript());
+            new Notice(`Transcript saved`);
         } catch (error) {
             new Notice('Failed to save transcript: ' + error.message);
         }

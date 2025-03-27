@@ -44,10 +44,14 @@ export const CommonCommands: ToolbarCommand[] = [
                 // Format the date to yyyy-mm-dd hh:mm format
                 const now = new Date();
                 const dateStr = now.toISOString().split('T')[0];
-                const timeStr = now.toTimeString().split(' ')[0].replace(/:/g, '');
+                const timeStr = now.toLocaleTimeString('en-US', { 
+                    hour12: false,
+                    hour: '2-digit',
+                    minute: '2-digit'
+                }).replace(':', '-');
                 
-                // Get first 20 chars of title (or less if title is shorter)
-                const titlePrefix = videoTitle.replace(/[\\/:*?"<>|]/g, '-').substring(0, 20);
+                // Get first 30 chars of title (or less if title is shorter)
+                const titlePrefix = videoTitle.replace(/[\\/:*?"<>|]/g, '-').substring(0, 30);
                 
                 // Try to extract v parameter from YouTube URL
                 let vParam = '';
@@ -73,7 +77,7 @@ export const CommonCommands: ToolbarCommand[] = [
                 let filename = '';
                 if (plugin.settings.includeTimestampInFilename === true) {
                     // With timestamp
-                    filename = `${plugin.settings.transcriptFolder}/${dateStr} ${timeStr} ${titlePrefix}${vParam ? ' ' + vParam : ''}${contentTypeSuffix}.md`;
+                    filename = `${plugin.settings.transcriptFolder}/${dateStr}-${timeStr} ${titlePrefix}${vParam ? ' ' + vParam : ''}${contentTypeSuffix}.md`;
                 } else {
                     // Without timestamp
                     filename = `${plugin.settings.transcriptFolder}/${titlePrefix}${vParam ? ' ' + vParam : ''}${contentTypeSuffix}.md`;
@@ -84,7 +88,9 @@ export const CommonCommands: ToolbarCommand[] = [
                         let counter = 1;
                         let newFilename = '';
                         do {
-                            newFilename = `${plugin.settings.transcriptFolder}/${titlePrefix}${vParam ? ' ' + vParam : ''}${contentTypeSuffix}-${counter}.md`;
+                            // Remove the .md extension
+                            const baseFilename = filename.replace(/\.md$/, '');
+                            newFilename = `${baseFilename} (${counter}).md`;
                             counter++;
                         } while (await plugin.app.vault.adapter.exists(newFilename));
                         
@@ -108,14 +114,23 @@ export const CommonCommands: ToolbarCommand[] = [
                     context.content
                 ].filter(line => line !== '').join('\n');
                 
-                await plugin.app.vault.create(filename, fileContent);
-                new Notice(`${(context.activeTab || 'transcript').charAt(0).toUpperCase() + (context.activeTab || 'transcript').slice(1)} saved`);
+                // Create the file
+                try {
+                    await plugin.createFileWithUniqueName(filename, fileContent);
+                    new Notice(`${(context.activeTab || 'transcript').charAt(0).toUpperCase() + (context.activeTab || 'transcript').slice(1)} saved`);
+                } catch (error) {
+                    new Notice(`Error saving file: ${error.message}`);
+                }
             } else {
                 // Generic save implementation
                 const plugin = context.plugin as SkribePlugin;
                 const now = new Date();
                 const dateStr = now.toISOString().split('T')[0];
-                const timeStr = now.toTimeString().split(' ')[0].replace(/:/g, '');
+                const timeStr = now.toLocaleTimeString('en-US', { 
+                    hour12: false,
+                    hour: '2-digit',
+                    minute: '2-digit'
+                }).replace(':', '-');
                 const contentType = context.activeTab || 'content';
                 
                 // Add content type suffix if setting is enabled
@@ -128,27 +143,18 @@ export const CommonCommands: ToolbarCommand[] = [
                 let filename = '';
                 if (plugin.settings.includeTimestampInFilename === true) {
                     // With timestamp
-                    filename = `${plugin.settings.transcriptFolder}/${dateStr} ${timeStr} generic${contentTypeSuffix}.md`;
+                    filename = `${plugin.settings.transcriptFolder}/${dateStr}-${timeStr} generic${contentTypeSuffix}.md`;
                 } else {
                     // Without timestamp
                     filename = `${plugin.settings.transcriptFolder}/generic${contentTypeSuffix}.md`;
-                    
-                    // Check if file exists and add number suffix if needed
-                    const exists = await plugin.app.vault.adapter.exists(filename);
-                    if (exists) {
-                        let counter = 1;
-                        let newFilename = '';
-                        do {
-                            newFilename = `${plugin.settings.transcriptFolder}/generic${contentTypeSuffix}-${counter}.md`;
-                            counter++;
-                        } while (await plugin.app.vault.adapter.exists(newFilename));
-                        
-                        filename = newFilename;
-                    }
                 }
                 
-                await plugin.app.vault.create(filename, context.content);
-                new Notice(`${contentType.charAt(0).toUpperCase() + contentType.slice(1)} saved to ${filename}`);
+                try {
+                    await plugin.createFileWithUniqueName(filename, context.content);
+                    new Notice(`Content saved`);
+                } catch (error) {
+                    new Notice(`Error saving file: ${error.message}`);
+                }
             }
         }
     },
@@ -216,7 +222,11 @@ export const CommonCommands: ToolbarCommand[] = [
                 // Create AI Summary file
                 const date = new Date();
                 const dateStr = date.toISOString().split('T')[0];
-                const timeStr = date.toTimeString().split(' ')[0].replace(/:/g, '-');
+                const timeStr = date.toLocaleTimeString('en-US', { 
+                    hour12: false,
+                    hour: '2-digit',
+                    minute: '2-digit'
+                }).replace(':', '-');
                 const titlePrefix = context.title || 'summary';
                 const vParam = context.vParam || '';
 
@@ -230,7 +240,7 @@ export const CommonCommands: ToolbarCommand[] = [
                 let filename = '';
                 if (plugin.settings.includeTimestampInFilename === true) {
                     // With timestamp
-                    filename = `${plugin.settings.transcriptFolder}/${dateStr} ${timeStr} ${titlePrefix}${vParam ? ' ' + vParam : ''}${contentTypeSuffix}.md`;
+                    filename = `${plugin.settings.transcriptFolder}/${dateStr}-${timeStr} ${titlePrefix}${vParam ? ' ' + vParam : ''}${contentTypeSuffix}.md`;
                 } else {
                     // Without timestamp
                     filename = `${plugin.settings.transcriptFolder}/${titlePrefix}${vParam ? ' ' + vParam : ''}${contentTypeSuffix}.md`;
@@ -241,7 +251,9 @@ export const CommonCommands: ToolbarCommand[] = [
                         let counter = 1;
                         let newFilename = '';
                         do {
-                            newFilename = `${plugin.settings.transcriptFolder}/${titlePrefix}${vParam ? ' ' + vParam : ''}${contentTypeSuffix}-${counter}.md`;
+                            // Remove the .md extension
+                            const baseFilename = filename.replace(/\.md$/, '');
+                            newFilename = `${baseFilename} (${counter}).md`;
                             counter++;
                         } while (await plugin.app.vault.adapter.exists(newFilename));
                         
@@ -261,14 +273,19 @@ export const CommonCommands: ToolbarCommand[] = [
                 ].join('\n');
                 
                 // Create the file
-                const file = await plugin.app.vault.create(filename, fileContent);
-                
-                // Open the file in a new tab
-                await plugin.app.workspace.getLeaf(true).openFile(file);
-                
-                // Hide the loading notice and show success
-                loadingNotice.hide();
-                new Notice('Summary created and opened in new tab');
+                try {
+                    const file = await plugin.createFileWithUniqueName(filename, fileContent);
+                    
+                    // Open the file in a new tab
+                    await plugin.app.workspace.getLeaf(true).openFile(file);
+                    
+                    // Hide the loading notice and show success
+                    loadingNotice.hide();
+                    new Notice('Summary created!');
+                } catch (error) {
+                    loadingNotice.hide();
+                    new Notice(`Error saving file: ${error.message}`);
+                }
             } catch (error) {
                 console.error('AI formatting error:', error);
                 // Hide the loading notice and show error

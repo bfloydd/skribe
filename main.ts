@@ -317,13 +317,20 @@ export default class SkribePlugin extends Plugin {
         console.log('Should use timestamp?', useTimestamp);
         
         // Generate clean title for filename
-        const safeTitle = title ? title.replace(/[\\/:*?"<>|]/g, '-').substring(0, 50) : 'untitled';
+        const safeTitle = title ? title.replace(/[\\/:*?"<>|]/g, '-').substring(0, 30) : 'untitled';
         
         // Create filename based on settings
         let filename = '';
         if (useTimestamp) {
             // Format: transcript-Title-timestamp.md (with timestamp)
-            const timestamp = new Date().toISOString().replace(/[:.]/g, '-');
+            const now = new Date();
+            const dateStr = now.toISOString().split('T')[0];
+            const timeStr = now.toLocaleTimeString('en-US', { 
+                hour12: false,
+                hour: '2-digit',
+                minute: '2-digit'
+            }).replace(':', '-');
+            const timestamp = `${dateStr}-${timeStr}`;
             
             // Determine if we should include content type suffix
             if (this.settings.includeContentTypeInFilename === true) {
@@ -359,26 +366,8 @@ export default class SkribePlugin extends Plugin {
         ].filter(line => line !== '').join('\n');
 
         try {
-            // Check if file already exists without timestamp
-            if (!useTimestamp) {
-                const exists = await this.app.vault.adapter.exists(filename);
-                if (exists) {
-                    // If file exists and we're not using timestamps, add a numeric suffix
-                    let counter = 1;
-                    let newFilename = '';
-                    do {
-                        newFilename = `${folderPath}/transcript-${safeTitle}-${counter}.md`;
-                        counter++;
-                    } while (await this.app.vault.adapter.exists(newFilename));
-                    
-                    filename = newFilename;
-                    console.log('File exists, using numbered suffix instead:', filename);
-                }
-            }
-            
-            // Create the file and return the path
-            await this.app.vault.create(filename, fileContent);
-            return filename;
+            // Use the helper method to create the file with a unique name
+            return await this.createFileWithUniqueName(filename, fileContent);
         } catch (error) {
             console.error('Error creating file:', error);
             throw error;
@@ -391,5 +380,68 @@ export default class SkribePlugin extends Plugin {
             evt.stopPropagation();
             this.activateView();
         });
+    }
+
+    // Helper method to safely create a file with a unique name
+    public async createFileWithUniqueName(initialPath: string, content: string): Promise<string> {
+        // Normalize the path
+        const normalizedPath = initialPath.replace(/\\/g, '/');
+        
+        try {
+            // Check if file already exists
+            let fileExists = false;
+            try {
+                fileExists = await this.app.vault.adapter.exists(normalizedPath);
+            } catch (e) {
+                console.log('Error checking if file exists:', e);
+                // Assume it might exist if we can't check
+                fileExists = true;
+            }
+            
+            let finalPath = normalizedPath;
+            
+            // If file exists, add numbered suffix in parentheses
+            if (fileExists) {
+                let counter = 1;
+                let newPath = '';
+                
+                do {
+                    // Remove the .md extension for adding the suffix
+                    const basePath = normalizedPath.replace(/\.md$/, '');
+                    newPath = `${basePath} (${counter}).md`;
+                    counter++;
+                    
+                    try {
+                        fileExists = await this.app.vault.adapter.exists(newPath);
+                    } catch (e) {
+                        console.log('Error checking if numbered file exists:', e);
+                        fileExists = true; // Try the next number
+                    }
+                } while (fileExists);
+                
+                finalPath = newPath;
+            }
+            
+            // Final safety check before creating
+            try {
+                const finalExists = await this.app.vault.adapter.exists(finalPath);
+                if (finalExists) {
+                    // As a last resort, add a timestamp to ensure uniqueness
+                    const uniqueTimestamp = Date.now();
+                    const basePath = finalPath.replace(/\.md$/, '');
+                    finalPath = `${basePath}-${uniqueTimestamp}.md`;
+                }
+            } catch (e) {
+                console.log('Error in final existence check:', e);
+                // Continue with current path
+            }
+            
+            // Create the file and return the path
+            const file = await this.app.vault.create(finalPath, content);
+            return file.path;
+        } catch (error) {
+            console.error('Error creating file:', error);
+            throw error;
+        }
     }
 } 
