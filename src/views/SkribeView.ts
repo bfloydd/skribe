@@ -672,8 +672,8 @@ export class SkribeView extends ItemView {
             }
 
             // Use the plugin's helper method to create the file
-            await this.plugin.createFileWithUniqueName(filename, this.formatTranscript());
-            new Notice(`Transcript saved`);
+            await this.plugin.createFileWithUniqueName(filename, this.formatTranscript(), true);
+            new Notice(`Transcript saved and opened`);
         } catch (error) {
             new Notice('Failed to save transcript: ' + error.message);
         }

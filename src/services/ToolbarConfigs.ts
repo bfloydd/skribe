@@ -291,8 +291,8 @@ const chatCommands: ToolbarCommand[] = [
                 ].filter(line => line !== '').join('\n');
                 
                 try {
-                    await plugin.createFileWithUniqueName(filename, fileContent);
-                    new Notice('Chat saved');
+                    const filePath = await plugin.createFileWithUniqueName(filename, fileContent, true);
+                    new Notice('Chat saved and opened');
                 } catch (error) {
                     new Notice(`Error saving chat: ${error.message}`);
                 }

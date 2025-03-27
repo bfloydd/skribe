@@ -367,7 +367,7 @@ export default class SkribePlugin extends Plugin {
 
         try {
             // Use the helper method to create the file with a unique name
-            return await this.createFileWithUniqueName(filename, fileContent);
+            return await this.createFileWithUniqueName(filename, fileContent, true);
         } catch (error) {
             console.error('Error creating file:', error);
             throw error;
@@ -383,7 +383,7 @@ export default class SkribePlugin extends Plugin {
     }
 
     // Helper method to safely create a file with a unique name
-    public async createFileWithUniqueName(initialPath: string, content: string): Promise<string> {
+    public async createFileWithUniqueName(initialPath: string, content: string, openAfterCreate: boolean = true): Promise<string> {
         // Normalize the path
         const normalizedPath = initialPath.replace(/\\/g, '/');
         
@@ -436,8 +436,14 @@ export default class SkribePlugin extends Plugin {
                 // Continue with current path
             }
             
-            // Create the file and return the path
+            // Create the file
             const file = await this.app.vault.create(finalPath, content);
+            
+            // Open the file if requested
+            if (openAfterCreate) {
+                await this.app.workspace.getLeaf(false).openFile(file);
+            }
+            
             return file.path;
         } catch (error) {
             console.error('Error creating file:', error);

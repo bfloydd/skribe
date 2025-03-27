@@ -116,8 +116,8 @@ export const CommonCommands: ToolbarCommand[] = [
                 
                 // Create the file
                 try {
-                    await plugin.createFileWithUniqueName(filename, fileContent);
-                    new Notice(`${(context.activeTab || 'transcript').charAt(0).toUpperCase() + (context.activeTab || 'transcript').slice(1)} saved`);
+                    const filePath = await plugin.createFileWithUniqueName(filename, fileContent, true);
+                    new Notice(`${(context.activeTab || 'transcript').charAt(0).toUpperCase() + (context.activeTab || 'transcript').slice(1)} saved and opened`);
                 } catch (error) {
                     new Notice(`Error saving file: ${error.message}`);
                 }
@@ -150,8 +150,8 @@ export const CommonCommands: ToolbarCommand[] = [
                 }
                 
                 try {
-                    await plugin.createFileWithUniqueName(filename, context.content);
-                    new Notice(`Content saved`);
+                    const filePath = await plugin.createFileWithUniqueName(filename, context.content, true);
+                    new Notice(`Content saved and opened`);
                 } catch (error) {
                     new Notice(`Error saving file: ${error.message}`);
                 }
@@ -274,14 +274,12 @@ export const CommonCommands: ToolbarCommand[] = [
                 
                 // Create the file
                 try {
-                    const file = await plugin.createFileWithUniqueName(filename, fileContent);
-                    
-                    // Open the file in a new tab
-                    await plugin.app.workspace.getLeaf(true).openFile(file);
+                    // The helper already opens the file, no need to do it separately
+                    const filePath = await plugin.createFileWithUniqueName(filename, fileContent, true);
                     
                     // Hide the loading notice and show success
                     loadingNotice.hide();
-                    new Notice('Summary created!');
+                    new Notice('Summary created and opened!');
                 } catch (error) {
                     loadingNotice.hide();
                     new Notice(`Error saving file: ${error.message}`);
