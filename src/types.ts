@@ -6,6 +6,7 @@ export interface SkribeSettings {
     voice: string;
     includeTimestampInFilename: boolean;
     includeContentTypeInFilename: boolean;
+    quips: string[];
 }
 
 export const DEFAULT_SETTINGS: SkribeSettings = {
@@ -15,7 +16,8 @@ export const DEFAULT_SETTINGS: SkribeSettings = {
     model: 'gpt-4o',
     voice: 'alloy',
     includeTimestampInFilename: true,
-    includeContentTypeInFilename: false
+    includeContentTypeInFilename: false,
+    quips: []
 }
 
 export interface TranscriptSegment {

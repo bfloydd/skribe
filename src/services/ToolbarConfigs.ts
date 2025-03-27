@@ -359,26 +359,32 @@ const chatCommands: ToolbarCommand[] = [
         },
         execute: (context: CommandContext) => {
             try {
-                // Simply empty the chat messages array without any other actions
-                if (context.chatState && Array.isArray(context.chatState.messages)) {
-                    context.chatState.messages = [];
-                    
-                    // Refresh the view if possible
-                    if (context.view && typeof context.view.renderChatMessages === 'function') {
-                        context.view.renderChatMessages();
-                    }
-                    
+                if (context.view && typeof context.view.clearChat === 'function') {
+                    // Use the new clearChat method that will show quips again
+                    context.view.clearChat();
                     new Notice('Chat contents cleared');
-                } else if (Array.isArray(context.chatMessages)) {
-                    // Empty the array directly if chatState is not available
-                    context.chatMessages.length = 0;
-                    
-                    // Force a refresh if possible
-                    if (context.view && typeof context.view.refresh === 'function') {
-                        context.view.refresh();
+                } else {
+                    // Fallback to old method if clearChat is not available
+                    if (context.chatState && Array.isArray(context.chatState.messages)) {
+                        context.chatState.messages = [];
+                        
+                        // Refresh the view if possible
+                        if (context.view && typeof context.view.renderChatMessages === 'function') {
+                            context.view.renderChatMessages();
+                        }
+                        
+                        new Notice('Chat contents cleared');
+                    } else if (Array.isArray(context.chatMessages)) {
+                        // Empty the array directly if chatState is not available
+                        context.chatMessages.length = 0;
+                        
+                        // Force a refresh if possible
+                        if (context.view && typeof context.view.refresh === 'function') {
+                            context.view.refresh();
+                        }
+                        
+                        new Notice('Chat contents cleared');
                     }
-                    
-                    new Notice('Chat contents cleared');
                 }
             } catch (error) {
                 console.error('Clear chat error:', error);

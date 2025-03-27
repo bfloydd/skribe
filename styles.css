@@ -721,3 +721,112 @@ button:not([disabled]) {
     flex-shrink: 0;
     margin: 0 4px;
 }
+
+/* Improved Quips Styling in Settings */
+.quips-list-container {
+    margin-top: 20px;
+    margin-bottom: 30px;
+}
+
+.quips-subheading {
+    margin-top: 15px;
+    margin-bottom: 10px;
+    font-weight: bold;
+    color: var(--text-accent);
+    padding-bottom: 5px;
+    border-bottom: 1px solid var(--background-modifier-border);
+}
+
+.quips-list {
+    margin-top: 10px;
+    margin-bottom: 30px;
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+}
+
+.quip-item {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 10px;
+    border-radius: 5px;
+    background-color: var(--background-secondary);
+    transition: background-color 0.2s ease;
+    border-left: 3px solid var(--interactive-accent);
+}
+
+.quip-item:hover {
+    background-color: var(--background-secondary-alt);
+    transform: translateY(-1px);
+    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.05);
+}
+
+.quip-text {
+    flex: 1;
+    word-break: break-word;
+    padding-right: 10px;
+}
+
+.quip-controls {
+    display: flex;
+    gap: 5px;
+}
+
+.quip-edit-container {
+    flex: 1;
+    margin-right: 10px;
+}
+
+.quip-button-container {
+    display: flex;
+    gap: 5px;
+}
+
+.no-quips-message {
+    color: var(--text-muted);
+    font-style: italic;
+    padding: 10px;
+    background-color: var(--background-secondary);
+    border-radius: 5px;
+    text-align: center;
+}
+
+/* Chat quips cards */
+.quips-cards-container {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 10px;
+    padding: 15px;
+    justify-content: center;
+}
+
+.quip-card {
+    background-color: var(--background-secondary);
+    border-radius: 8px;
+    padding: 12px;
+    cursor: pointer;
+    max-width: 300px;
+    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+    transition: transform 0.2s ease, box-shadow 0.2s ease;
+    border-left: 3px solid var(--interactive-accent);
+}
+
+.quip-card:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 4px 8px rgba(0, 0, 0, 0.15);
+    background-color: var(--background-secondary-alt);
+}
+
+.quip-card-text {
+    font-size: 0.95em;
+    color: var(--text-normal);
+    word-break: break-word;
+}
+
+/* Empty quips message */
+.no-quips-message {
+    color: var(--text-muted);
+    text-align: center;
+    margin: 10px 0;
+}

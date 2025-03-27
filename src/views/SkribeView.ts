@@ -27,6 +27,7 @@ export class SkribeView extends ItemView {
         'Hire a Skribe',
         'Skribe a Video'
     ];
+    private showQuips: boolean = true;
 
     private getRandomWelcomeMessage(): string {
         const randomIndex = Math.floor(Math.random() * this.welcomeMessages.length);
@@ -428,6 +429,9 @@ export class SkribeView extends ItemView {
 
             // Clear input
             chatInput.value = '';
+            
+            // Hide quips when a message is sent
+            this.showQuips = false;
 
             // Add user message to chat
             this.chatState.messages.push({
@@ -491,17 +495,56 @@ export class SkribeView extends ItemView {
     }
 
     private renderChatMessages(container: HTMLElement) {
-        if (this.chatState.messages.length === 0) {
+        // Check if we should show quips
+        if (this.showQuips && this.chatState.messages.length === 0) {
+            // Show quip cards if any are defined in settings
+            if (this.plugin.settings.quips && this.plugin.settings.quips.length > 0) {
+                const quipsContainer = container.createDiv({
+                    cls: 'quips-cards-container'
+                });
+                
+                this.plugin.settings.quips.forEach(quip => {
+                    const quipCard = quipsContainer.createDiv({
+                        cls: 'quip-card'
+                    });
+                    
+                    const quipText = quipCard.createDiv({
+                        cls: 'quip-card-text',
+                        text: quip
+                    });
+                    
+                    // Add click handler to submit quip as chat message
+                    quipCard.addEventListener('click', () => {
+                        // Hide quips
+                        this.showQuips = false;
+                        
+                        // Add user message
+                        this.chatState.messages.push({
+                            role: 'user',
+                            content: quip
+                        });
+                        
+                        // Re-render chat messages
+                        container.empty();
+                        this.renderChatMessages(container);
+                        
+                        // Process AI response
+                        this.processAIResponse(container);
+                    });
+                });
+                
+                return;
+            }
+            
+            // Show empty state if no quips and no messages
             const emptyMessage = container.createDiv({
                 cls: 'empty-chat-message',
                 text: 'Ask a question...'
             });
-            emptyMessage.style.textAlign = 'center';
-            emptyMessage.style.color = 'var(--text-muted)';
-            emptyMessage.style.padding = '20px';
             return;
         }
 
+        // Display existing chat messages
         this.chatState.messages.forEach(async message => {
             const messageEl = container.createDiv({
                 cls: `chat-message ${message.role}-message`
@@ -531,6 +574,39 @@ export class SkribeView extends ItemView {
                 messageEl.setText(message.content);
             }
         });
+    }
+    
+    // Helper method to process AI response
+    private async processAIResponse(container: HTMLElement) {
+        try {
+            // Get AI response
+            const response = await this.plugin.openaiService.chatWithTranscript(
+                this.chatState.messages,
+                this.content
+            );
+            
+            // Add assistant message to chat
+            this.chatState.messages.push({
+                role: 'assistant',
+                content: response
+            });
+            
+            // Re-render chat messages
+            container.empty();
+            this.renderChatMessages(container);
+            
+            // Scroll to bottom
+            container.scrollTop = container.scrollHeight;
+            
+            // Update toolbar state after assistant message
+            const chatToolbarContainer = this.chatContainer.querySelector('.chat-toolbar-container') as HTMLElement;
+            if (chatToolbarContainer) {
+                this.plugin.toolbarService.updateToolbarState(chatToolbarContainer, this.getCommandContext());
+            }
+        } catch (error) {
+            new Notice('Failed to get response: ' + error.message);
+            console.error('Chat Error:', error);
+        }
     }
 
     private formatTranscript(): string {
@@ -818,31 +894,22 @@ export class SkribeView extends ItemView {
      * This ensures that toolbar commands always have the latest state
      */
     public getCommandContext(): CommandContext {
-        // Determine which content to use based on the active tab
-        let tabContent = this.content;
-        if (this.activeTab === 'revised' && this.revisedContent) {
-            tabContent = this.revisedContent;
-        } else if (this.activeTab === 'summary' && this.summaryContent) {
-            tabContent = this.summaryContent;
-        }
-        
-        // Return a fresh context with the latest state
-        return {
+        // Create a fresh context object for toolbar commands
+        const context: CommandContext = {
             plugin: this.plugin,
-            view: this,  // Make sure this reference is correctly maintained
-            content: tabContent,
-            originalContent: this.content,  // Always include the original transcript
-            revisedContent: this.revisedContent,
-            summaryContent: this.summaryContent,
+            view: this,
+            content: this.content,
             videoUrl: this.videoUrl,
             videoTitle: this.videoTitle,
             activeTab: this.activeTab,
-            chatMessages: this.chatState.messages,
-            onClearChat: () => {
-                this.chatState.messages = [];
-                this.renderChatMessages(this.chatContainer);
-            }
+            chatMessages: this.chatState?.messages || [],
+            chatState: this.chatState,
+            summaryContent: this.summaryContent,
+            revisedContent: this.revisedContent,
+            showQuips: this.showQuips
         };
+        
+        return context;
     }
 
     /**
@@ -982,31 +1049,20 @@ export class SkribeView extends ItemView {
      * Can be called directly from toolbar buttons
      */
     public resetView(): void {
-        // Add clear console message
-        console.log('%c SkribeView.resetView called!', 'background: #770000; color: white; padding: 2px;');
+        // Reset all content
+        this.content = '';
+        this.videoUrl = '';
+        this.videoTitle = '';
+        this.summaryContent = '';
+        this.revisedContent = '';
+        this.chatState = { messages: [] };
+        this.showQuips = true; // Reset the showQuips flag
         
-        try {
-            // Clear state directly
-            this.content = '';
-            this.videoUrl = '';
-            this.chatState = { messages: [] };
-            this.summaryContent = '';
-            this.revisedContent = '';
-            this.activeTab = 'transcript';
-            
-            if (this.audioPlayer) {
-                this.audioPlayer.stop();
-                this.audioPlayer = null;
-            }
-            
-            // Simple refresh
-            this.refresh();
-            
-            new Notice('View reset successfully');
-        } catch (error) {
-            console.error('Reset error:', error);
-            new Notice(`Error: ${error instanceof Error ? error.message : 'Unknown error'}`);
-        }
+        // Switch back to transcript tab 
+        this.activeTab = 'transcript';
+        
+        // Refresh the view
+        this.refresh();
     }
 
     /**
@@ -1033,5 +1089,19 @@ export class SkribeView extends ItemView {
         }
         
         return Promise.resolve();
+    }
+
+    // Update existing clearChat method or add if not exists
+    public clearChat() {
+        this.chatState.messages = [];
+        this.showQuips = true; // Show quips again when chat is cleared
+        
+        if (this.chatContainer) {
+            const chatMessagesContainer = this.chatContainer.querySelector('.chat-messages-container') as HTMLElement;
+            if (chatMessagesContainer) {
+                chatMessagesContainer.empty();
+                this.renderChatMessages(chatMessagesContainer);
+            }
+        }
     }
 } 
