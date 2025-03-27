@@ -42,6 +42,7 @@ export interface ChatMessage {
 export interface ChatState {
     messages: ChatMessage[];
     videoUrl?: string;
+    videoTitle?: string;
 }
 
 export interface ToolbarCommand {

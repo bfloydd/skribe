@@ -140,7 +140,7 @@ export class OpenAIService {
         return response.arrayBuffer;
     }
 
-    public async chatWithTranscript(messages: ChatMessage[], transcript: string): Promise<string> {
+    public async chatWithTranscript(messages: ChatMessage[], transcript: string, videoTitle?: string): Promise<string> {
         if (!this.apiKey) {
             throw new Error('OpenAI API key not set');
         }
@@ -149,7 +149,7 @@ export class OpenAIService {
             role: "system",
             content: `You are a helpful assistant analyzing a video transcript. 
             Use the following transcript as context for answering the user's questions.
-            Transcript: ${transcript}`
+            ${videoTitle ? `Video Title: ${videoTitle}\n    ` : ''}Transcript: ${transcript}`
         };
 
         try {

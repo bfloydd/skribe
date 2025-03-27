@@ -66,6 +66,7 @@ export class SkribeView extends ItemView {
         }
         if (videoTitle) {
             this.videoTitle = videoTitle;
+            this.chatState.videoTitle = videoTitle;
         }
         this.refresh();
     }
@@ -472,7 +473,8 @@ export class SkribeView extends ItemView {
                 // Use the OpenAI service to get a response
                 const response = await this.plugin.openaiService.chatWithTranscript(
                     this.chatState.messages,
-                    this.content
+                    this.content,
+                    this.videoTitle
                 );
                 
                 // Add assistant message to chat
@@ -595,7 +597,8 @@ export class SkribeView extends ItemView {
             // Get AI response
             const response = await this.plugin.openaiService.chatWithTranscript(
                 this.chatState.messages,
-                this.content
+                this.content,
+                this.videoTitle
             );
             
             // Add assistant message to chat
