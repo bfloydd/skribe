@@ -515,9 +515,6 @@ div.nav-folder-content.markdown-preview-view {
 }
 
 /* Chat toolbar styles */
-.chat-toolbar-container {
-    /* Position now handled by common styles */
-}
 
 .chat-toolbar-container .toolbar-container {
     margin-top: 0;
@@ -538,9 +535,6 @@ div.nav-folder-content.markdown-preview-view {
 }
 
 /* Transcript toolbar styles */
-.transcript-toolbar-container {
-    /* Position now handled by common styles */
-}
 
 .transcript-toolbar-container .toolbar-container {
     margin-top: 0;
@@ -571,11 +565,6 @@ div.nav-folder-content.markdown-preview-view {
     height: 100%;
     overflow-y: auto;
     position: relative;
-}
-
-/* Summary toolbar styles */
-.summary-toolbar-container {
-    /* Position now handled by common styles */
 }
 
 .summary-toolbar-container .toolbar-container {
@@ -618,9 +607,6 @@ div.nav-folder-content.markdown-preview-view {
 }
 
 /* Revised toolbar styles */
-.revised-toolbar-container {
-    /* Position now handled by common styles */
-}
 
 .revised-toolbar-container .toolbar-container {
     margin-top: 0;
