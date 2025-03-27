@@ -171,6 +171,11 @@ export class SkribeView extends ItemView {
                 }
             });
             
+            // Auto-focus on the URL input field
+            setTimeout(() => {
+                urlInput.focus();
+            }, 50);
+            
             return;
         }
         
