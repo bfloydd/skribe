@@ -361,7 +361,7 @@ div.nav-folder-content.markdown-preview-view {
     display: flex;
     flex-direction: column;
     gap: 10px;
-    padding: 10px 0 60px 0; /* Add bottom padding to make room for input */
+    padding: 10px 0 70px 0; /* Increased bottom padding to make room for input */
     background-color: var(--background-secondary);
     border-radius: 5px;
     overflow-y: auto;
@@ -403,12 +403,14 @@ div.nav-folder-content.markdown-preview-view {
     gap: 10px;
     border-top: 1px solid var(--background-modifier-border);
     box-shadow: 0 -2px 5px rgba(0, 0, 0, 0.05);
-    height: 50px; /* Set a fixed height */
+    height: 60px; /* Increased height to accommodate buttons */
+    align-items: center; /* Ensure buttons are vertically centered */
 }
 
 /* Adjust for status bar in Obsidian */
 .workspace-leaf-content[data-type="skribe-view"] .chat-input-container {
     bottom: var(--status-bar-height, 22px); /* Use Obsidian's status bar height */
+    padding-right: 10px;
 }
 
 .chat-input {
@@ -418,6 +420,8 @@ div.nav-folder-content.markdown-preview-view {
     border: 1px solid var(--background-modifier-border);
     background-color: var(--background-primary);
     color: var(--text-normal);
+    height: 36px; /* Fixed height to match buttons */
+    box-sizing: border-box; /* Include padding in height calculation */
 }
 
 .chat-send-button {
@@ -863,4 +867,122 @@ button:not([disabled]) {
 .skribe-modal-button svg {
     width: 18px;
     height: 18px;
+}
+
+/* Split button styling */
+.split-button-container {
+    display: flex;
+    align-items: stretch;
+    border-radius: 4px;
+    overflow: hidden;
+    height: 36px; /* Set explicit height */
+    flex-shrink: 0; /* Prevent shrinking */
+}
+
+.split-button-main {
+    padding: 8px 12px;
+    background-color: var(--interactive-accent);
+    color: var(--text-on-accent);
+    cursor: pointer;
+    border: none;
+    font-weight: bold;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    border-top-left-radius: 4px;
+    border-bottom-left-radius: 4px;
+    border-right: 1px solid rgba(255, 255, 255, 0.2);
+    flex-grow: 1;
+    height: 100%; /* Take full height of container */
+}
+
+.split-button-dropdown {
+    padding: 8px;
+    background-color: var(--interactive-accent);
+    color: var(--text-on-accent);
+    cursor: pointer;
+    border: none;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    border-top-right-radius: 4px;
+    border-bottom-right-radius: 4px;
+    height: 100%; /* Take full height of container */
+    width: 36px; /* Fixed width */
+}
+
+.split-button-main:hover, .split-button-dropdown:hover {
+    opacity: 0.9;
+    background-color: var(--interactive-accent-hover);
+}
+
+.split-button-main svg, .split-button-dropdown svg {
+    width: 18px;
+    height: 18px;
+}
+
+/* Quips dropdown menu */
+.quips-dropdown-menu {
+    position: absolute;
+    bottom: 70px; /* Increased distance from bottom to account for larger container */
+    right: 10px;
+    background-color: var(--background-primary);
+    border-radius: 8px;
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+    min-width: 220px;
+    max-width: 300px;
+    max-height: 300px;
+    overflow-y: auto;
+    z-index: 1000;
+    border: 1px solid var(--background-modifier-border);
+    animation: fadeIn 0.2s ease;
+}
+
+@keyframes fadeIn {
+    from { opacity: 0; transform: translateY(10px); }
+    to { opacity: 1; transform: translateY(0); }
+}
+
+.quips-dropdown-item {
+    padding: 10px 12px;
+    cursor: pointer;
+    border-bottom: 1px solid var(--background-modifier-border);
+    transition: background-color 0.2s ease;
+    line-height: 1.4;
+}
+
+.quips-dropdown-item:last-child {
+    border-bottom: none;
+}
+
+.quips-dropdown-item:hover {
+    background-color: var(--background-modifier-hover);
+}
+
+/* Adjust chat send button to use the split button */
+.chat-input-container {
+    padding-right: 5px;
+}
+
+/* Ensure the dropdown menu doesn't get hidden */
+.chat-container {
+    overflow: visible !important;
+}
+
+.chat-messages-container {
+    overflow-y: auto !important;
+    overflow-x: hidden !important;
+}
+
+/* Animate the dropdown arrow */
+.split-button-dropdown svg {
+    transition: transform 0.2s ease;
+}
+
+.split-button-dropdown.active {
+    background-color: var(--interactive-accent-hover);
+}
+
+.split-button-dropdown.active svg {
+    transform: rotate(180deg);
 }

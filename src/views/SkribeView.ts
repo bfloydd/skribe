@@ -393,7 +393,10 @@ export class SkribeView extends ItemView {
     }
 
     private renderChatInterface() {
-        // Create chat toolbar container first (moved to top)
+        if (!this.chatContainer) return;
+        this.chatContainer.empty();
+        
+        // Create chat toolbar container first (at the top)
         const chatToolbarContainer = this.chatContainer.createDiv({
             cls: 'chat-toolbar-container'
         });
@@ -404,14 +407,12 @@ export class SkribeView extends ItemView {
         // Create chat toolbar with standard context
         this.plugin.toolbarService.createToolbar(chatToolbarContainer, 'chat', toolbarContext);
         
-        // Render chat messages if any
+        // Create chat messages container
         const chatMessagesContainer = this.chatContainer.createDiv({
             cls: 'chat-messages-container'
         });
         
-        this.renderChatMessages(chatMessagesContainer);
-        
-        // Create chat input container
+        // Create chat input container (at the bottom)
         const chatInputContainer = this.chatContainer.createDiv({
             cls: 'chat-input-container'
         });
@@ -428,13 +429,65 @@ export class SkribeView extends ItemView {
         // Store a reference to the chat input
         this.chatInput = chatInput;
         
-        // Create send button
-        const sendButton = chatInputContainer.createEl('button', {
-            cls: 'chat-send-button'
+        // Create split button container
+        const splitButtonContainer = chatInputContainer.createDiv({
+            cls: 'split-button-container'
+        });
+        
+        // Create main button part
+        const sendButton = splitButtonContainer.createEl('button', {
+            cls: 'split-button-main'
         });
         
         // Add send icon
         setIcon(sendButton, 'arrow-right');
+        
+        // Create dropdown part
+        const dropdownButton = splitButtonContainer.createEl('button', {
+            cls: 'split-button-dropdown'
+        });
+        
+        // Add dropdown icon
+        setIcon(dropdownButton, 'chevron-down');
+        
+        // Create dropdown menu (initially hidden)
+        const quipsDropdownMenu = this.chatContainer.createDiv({
+            cls: 'quips-dropdown-menu'
+        });
+        quipsDropdownMenu.style.display = 'none';
+        
+        // Populate dropdown with quips
+        this.populateQuipsDropdown(quipsDropdownMenu);
+        
+        // Toggle dropdown on click
+        dropdownButton.addEventListener('click', (e) => {
+            e.preventDefault();
+            e.stopPropagation();
+            
+            // Toggle active state
+            dropdownButton.classList.toggle('active');
+            
+            // Toggle dropdown visibility
+            if (quipsDropdownMenu.style.display === 'none') {
+                quipsDropdownMenu.style.display = 'block';
+                // Close dropdown when clicking outside
+                document.addEventListener('click', closeDropdown);
+            } else {
+                quipsDropdownMenu.style.display = 'none';
+                // Remove event listener
+                document.removeEventListener('click', closeDropdown);
+            }
+        });
+        
+        // Close dropdown function
+        const closeDropdown = (e: MouseEvent) => {
+            // Check if click is outside dropdown
+            if (!quipsDropdownMenu.contains(e.target as Node) && e.target !== dropdownButton) {
+                quipsDropdownMenu.style.display = 'none';
+                dropdownButton.classList.remove('active');
+                document.removeEventListener('click', closeDropdown);
+            }
+        };
         
         // Handle send button click
         const handleSend = async () => {
@@ -446,6 +499,10 @@ export class SkribeView extends ItemView {
             
             // Hide quips when a message is sent
             this.showQuips = false;
+            
+            // Hide dropdown if it's open
+            quipsDropdownMenu.style.display = 'none';
+            dropdownButton.classList.remove('active');
 
             // Add user message to chat
             this.chatState.messages.push({
@@ -461,15 +518,12 @@ export class SkribeView extends ItemView {
             chatMessagesContainer.scrollTop = chatMessagesContainer.scrollHeight;
             
             // Update toolbar state after user message
-            const chatToolbarContainer = this.chatContainer.querySelector('.chat-toolbar-container') as HTMLElement;
             if (chatToolbarContainer) {
                 this.plugin.toolbarService.updateToolbarState(chatToolbarContainer, this.getCommandContext());
             }
 
             // Get AI response
             try {
-                // Notice removed
-                
                 // Use the OpenAI service to get a response
                 const response = await this.plugin.openaiService.chatWithTranscript(
                     this.chatState.messages,
@@ -491,7 +545,6 @@ export class SkribeView extends ItemView {
                 chatMessagesContainer.scrollTop = chatMessagesContainer.scrollHeight;
                 
                 // Update toolbar state after assistant message
-                const chatToolbarContainer = this.chatContainer.querySelector('.chat-toolbar-container') as HTMLElement;
                 if (chatToolbarContainer) {
                     this.plugin.toolbarService.updateToolbarState(chatToolbarContainer, this.getCommandContext());
                 }
@@ -506,6 +559,74 @@ export class SkribeView extends ItemView {
             if (e.key === 'Enter') {
                 handleSend();
             }
+        });
+        
+        // Render chat messages
+        this.renderChatMessages(chatMessagesContainer);
+    }
+    
+    // Helper to populate the quips dropdown
+    private populateQuipsDropdown(dropdownMenu: HTMLElement) {
+        dropdownMenu.empty();
+        
+        // Set dropdown position and styling
+        dropdownMenu.style.position = 'absolute';
+        dropdownMenu.style.bottom = '60px'; // Position above the input bar
+        dropdownMenu.style.right = '10px';
+        dropdownMenu.style.maxHeight = '300px';
+        dropdownMenu.style.overflowY = 'auto';
+        dropdownMenu.style.zIndex = '1000';
+        
+        // If no quips, show a message
+        if (!this.plugin.settings.quips || this.plugin.settings.quips.length === 0) {
+            const noQuipsItem = dropdownMenu.createDiv({
+                cls: 'quips-dropdown-item',
+                text: 'No quick messages available.'
+            });
+            return;
+        }
+        
+        // Create a header item
+        const headerItem = dropdownMenu.createDiv({
+            cls: 'quips-dropdown-item'
+        });
+        headerItem.style.fontWeight = 'bold';
+        headerItem.style.borderBottom = '2px solid var(--background-modifier-border)';
+        headerItem.style.color = 'var(--text-accent)';
+        headerItem.setText('Quick Messages');
+        
+        // Add each quip as a dropdown item
+        this.plugin.settings.quips.forEach(quip => {
+            const quipItem = dropdownMenu.createDiv({
+                cls: 'quips-dropdown-item'
+            });
+            
+            // Truncate text if too long
+            const displayText = quip.length > 40 ? quip.substring(0, 40) + '...' : quip;
+            quipItem.setText(displayText);
+            
+            // Handle click on quip item
+            quipItem.addEventListener('click', () => {
+                // Hide quips display
+                this.showQuips = false;
+                dropdownMenu.style.display = 'none';
+                
+                // Add user message
+                this.chatState.messages.push({
+                    role: 'user',
+                    content: quip
+                });
+                
+                // Re-render chat messages
+                const chatMessagesContainer = this.chatContainer.querySelector('.chat-messages-container') as HTMLElement;
+                if (chatMessagesContainer) {
+                    chatMessagesContainer.empty();
+                    this.renderChatMessages(chatMessagesContainer);
+                    
+                    // Process AI response
+                    this.processAIResponse(chatMessagesContainer);
+                }
+            });
         });
     }
 
