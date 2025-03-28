@@ -617,6 +617,12 @@ export class SkribeView extends ItemView {
                 this.showQuips = false;
                 dropdownMenu.style.display = 'none';
                 
+                // Remove active class from dropdown button
+                const dropdownButton = this.chatContainer.querySelector('.split-button-dropdown') as HTMLElement;
+                if (dropdownButton) {
+                    dropdownButton.classList.remove('active');
+                }
+                
                 // Add user message
                 this.chatState.messages.push({
                     role: 'user',
