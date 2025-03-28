@@ -154,18 +154,22 @@ export class ToolbarService {
         
         // Create button with Obsidian's DOM API
         const button = container.createEl('button', {
-            cls: `clickable-icon toolbar-button ${!isEnabled ? 'disabled-button-style' : ''}`,
+            cls: `clickable-icon toolbar-button ${!isEnabled ? 'disabled-button' : ''}`,
             attr: { 
                 'aria-label': actualCommand.tooltip,
                 'title': actualCommand.tooltip,
                 'data-command-id': actualCommand.id,
-                // Critical: Don't set disabled attribute even if logically disabled
-                // This prevents browsers from blocking click events
-                // 'disabled': !isEnabled
             }
         });
         
-        console.log(`Button created for ${actualCommand.id}, classNames: ${button.className}, disabled: ${button.hasAttribute('disabled')}`);
+        // Set button style based on enabled state
+        if (!isEnabled) {
+            button.style.opacity = '0.5';
+            button.style.cursor = 'not-allowed';
+            button.style.pointerEvents = 'none'; // Make it not clickable
+        }
+        
+        console.log(`Button created for ${actualCommand.id}, classNames: ${button.className}, disabled: ${!isEnabled}`);
         
         // Set the icon
         setIcon(button, actualCommand.icon);
@@ -173,6 +177,11 @@ export class ToolbarService {
         // Add click handler with the viewRef captured in its closure
         // Using function() instead of arrow function to maintain proper this binding
         button.addEventListener('click', function(e) {
+            // If button is disabled, don't process click
+            if (button.classList.contains('disabled-button')) {
+                return;
+            }
+            
             e.preventDefault();
             e.stopPropagation();
             
@@ -277,24 +286,24 @@ export class ToolbarService {
             
             if (!command) return;
             
-            // Only update visual state with CSS classes, don't use disabled attribute
+            // Update button state based on isEnabled
             const isEnabled = command.isEnabled(context);
             const buttonEl = button as HTMLElement;
             
             if (isEnabled) {
-                // Remove any disabled attributes to ensure clickability
-                buttonEl.removeAttribute('disabled');
-                buttonEl.classList.remove('disabled-button-style');
-                buttonEl.style.pointerEvents = 'auto';
+                // Enable the button
+                buttonEl.classList.remove('disabled-button');
                 buttonEl.style.opacity = '1';
+                buttonEl.style.cursor = 'pointer';
+                buttonEl.style.pointerEvents = 'auto';
                 console.log(`Updated button ${commandId} to ENABLED state`);
             } else {
-                // Don't set disabled, just style it to look disabled
-                buttonEl.classList.add('disabled-button-style');
-                // Still keep it clickable
-                buttonEl.style.pointerEvents = 'auto';
+                // Disable the button
+                buttonEl.classList.add('disabled-button');
                 buttonEl.style.opacity = '0.5';
-                console.log(`Updated button ${commandId} to STYLED-DISABLED state (but still clickable)`);
+                buttonEl.style.cursor = 'not-allowed';
+                buttonEl.style.pointerEvents = 'none'; // Make it not clickable
+                console.log(`Updated button ${commandId} to DISABLED state (not clickable)`);
             }
         });
     }

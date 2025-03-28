@@ -224,12 +224,17 @@ export class SkribeView extends ItemView {
             await this.renderTranscriptContent();
         }
 
-        // Render revised content if available
+        // Always render revised container and toolbar, even when empty
+        await this.renderRevisedToolbar();
+        
+        // Always render summary container and toolbar, even when empty
+        await this.renderSummaryToolbar();
+        
+        // If there's actual content, render it
         if (this.revisedContent) {
             await this.renderRevisedContent();
         }
         
-        // Render summary content if available
         if (this.summaryContent) {
             await this.renderSummaryContent();
         }
@@ -871,6 +876,9 @@ export class SkribeView extends ItemView {
     }
 
     private async renderSummaryContent() {
+        // Clear container first
+        this.summaryContainer.empty();
+        
         // Create summary toolbar container at the top
         const summaryToolbarContainer = this.summaryContainer.createDiv({
             cls: 'summary-toolbar-container'
@@ -962,9 +970,27 @@ export class SkribeView extends ItemView {
         if (this.transcriptContainer) {
             this.transcriptContainer.style.display = tabName === 'transcript' ? 'block' : 'none';
         }
+        
         if (this.revisedContainer) {
             this.revisedContainer.style.display = tabName === 'revised' ? 'block' : 'none';
+            
+            // Ensure the revised tab has a toolbar when switching to it
+            if (tabName === 'revised' && !this.revisedContent) {
+                // If there's no content and we're switching to it, ensure toolbar is shown
+                this.renderRevisedToolbar();
+            }
         }
+        
+        if (this.summaryContainer) {
+            this.summaryContainer.style.display = tabName === 'summary' ? 'block' : 'none';
+            
+            // Ensure the summary tab has a toolbar when switching to it
+            if (tabName === 'summary' && !this.summaryContent) {
+                // If there's no content and we're switching to it, ensure toolbar is shown
+                this.renderSummaryToolbar();
+            }
+        }
+        
         if (this.chatContainer) {
             this.chatContainer.style.display = tabName === 'chat' ? 'block' : 'none';
             
@@ -984,9 +1010,6 @@ export class SkribeView extends ItemView {
                     }
                 }, 50);
             }
-        }
-        if (this.summaryContainer) {
-            this.summaryContainer.style.display = tabName === 'summary' ? 'block' : 'none';
         }
         
         // Update tab styles
@@ -1039,6 +1062,9 @@ export class SkribeView extends ItemView {
      * Render content in the revised tab
      */
     private async renderRevisedContent() {
+        // Clear container first
+        this.revisedContainer.empty();
+        
         // Create revised toolbar container at the top
         const revisedToolbarContainer = this.revisedContainer.createDiv({
             cls: 'revised-toolbar-container'
@@ -1225,6 +1251,60 @@ export class SkribeView extends ItemView {
                 chatMessagesContainer.empty();
                 this.renderChatMessages(chatMessagesContainer);
             }
+        }
+    }
+
+    // New method to render just the Revised toolbar
+    private async renderRevisedToolbar() {
+        // Create revised toolbar container at the top if it doesn't exist
+        let revisedToolbarContainer = this.revisedContainer.querySelector('.revised-toolbar-container') as HTMLElement;
+        if (!revisedToolbarContainer) {
+            revisedToolbarContainer = this.revisedContainer.createDiv({
+                cls: 'revised-toolbar-container'
+            });
+        }
+        
+        // Create toolbar with revised commands
+        const toolbarContext = this.getCommandContext();
+        this.plugin.toolbarService.createToolbar(revisedToolbarContainer, 'revised', toolbarContext);
+        
+        // Add an empty content message if there's no content
+        if (!this.revisedContent) {
+            const emptyContentEl = this.revisedContainer.createDiv({
+                cls: 'empty-content-message'
+            });
+            emptyContentEl.setText('No revised content yet. Click "Create Revised Version" to generate one.');
+            emptyContentEl.style.textAlign = 'center';
+            emptyContentEl.style.marginTop = '40px';
+            emptyContentEl.style.color = 'var(--text-muted)';
+            emptyContentEl.style.fontStyle = 'italic';
+        }
+    }
+    
+    // New method to render just the Summary toolbar
+    private async renderSummaryToolbar() {
+        // Create summary toolbar container at the top if it doesn't exist
+        let summaryToolbarContainer = this.summaryContainer.querySelector('.summary-toolbar-container') as HTMLElement;
+        if (!summaryToolbarContainer) {
+            summaryToolbarContainer = this.summaryContainer.createDiv({
+                cls: 'summary-toolbar-container'
+            });
+        }
+        
+        // Create toolbar with summary commands
+        const toolbarContext = this.getCommandContext();
+        this.plugin.toolbarService.createToolbar(summaryToolbarContainer, 'summary', toolbarContext);
+        
+        // Add an empty content message if there's no content
+        if (!this.summaryContent) {
+            const emptyContentEl = this.summaryContainer.createDiv({
+                cls: 'empty-content-message'
+            });
+            emptyContentEl.setText('No summary yet. Click "Generate Summary" to create one.');
+            emptyContentEl.style.textAlign = 'center';
+            emptyContentEl.style.marginTop = '40px';
+            emptyContentEl.style.color = 'var(--text-muted)';
+            emptyContentEl.style.fontStyle = 'italic';
         }
     }
 } 

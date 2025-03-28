@@ -646,14 +646,8 @@ div.nav-folder-content.markdown-preview-view {
     box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
 }
 
-.disabled-button-style {
-    opacity: 0.5;
-    cursor: pointer !important;
-    /* Make it look disabled but still clickable */
-}
-
-/* Override any native disabled styling from Obsidian */
-button:not([disabled]) {
+/* Override any native disabled styling from Obsidian, but not for our disabled buttons */
+button:not([disabled]):not(.disabled-button) {
     pointer-events: auto !important;
     cursor: pointer !important;
 }
@@ -985,4 +979,19 @@ button:not([disabled]) {
 
 .split-button-dropdown.active svg {
     transform: rotate(180deg);
+}
+
+/* Empty content message */
+.empty-content-message {
+    text-align: center;
+    padding: 20px;
+    color: var(--text-muted);
+    font-style: italic;
+    margin-top: 40px;
+    background-color: var(--background-secondary);
+    border-radius: 8px;
+    max-width: 80%;
+    margin-left: auto;
+    margin-right: auto;
+    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.05);
 }
