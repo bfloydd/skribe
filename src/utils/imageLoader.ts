@@ -16,5 +16,5 @@ export function getAssetPath(app: App, pluginDir: string, assetPath: string): st
  * @param pluginDir The plugin directory name
  */
 export function getLogoPath(app: App, pluginDir: string): string {
-    return getAssetPath(app, pluginDir, 'src/assets/logo-34DNHXQ2.png');
+    return getAssetPath(app, pluginDir, 'assets/logo-34DNHXQ2.png');
 } 
