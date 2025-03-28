@@ -469,7 +469,8 @@ div.nav-folder-content.markdown-preview-view {
     justify-content: center;
     padding: 40px;
     text-align: center;
-    max-width: 500px;
+    max-width: 440px; /* Further reduced from 470px */
+    width: 65%; /* Reduced from 70% */
     margin: 0 auto;
     background-color: var(--background-secondary);
     border-radius: 8px;
@@ -498,6 +499,8 @@ div.nav-folder-content.markdown-preview-view {
 
 .empty-state-url-input {
     flex-grow: 1;
+    flex-shrink: 1;
+    min-width: 0; /* Allow shrinking below default min-width */
     padding: 8px 12px;
     border-radius: 4px;
     border: 1px solid var(--background-modifier-border);
@@ -516,6 +519,7 @@ div.nav-folder-content.markdown-preview-view {
     display: flex;
     justify-content: center;
     align-items: center;
+    flex-shrink: 0; /* Prevent button from shrinking */
 }
 
 .empty-state-get-button svg {
@@ -994,4 +998,41 @@ button:not([disabled]):not(.disabled-button) {
     margin-left: auto;
     margin-right: auto;
     box-shadow: 0 2px 4px rgba(0, 0, 0, 0.05);
+}
+
+/* Loading spinner styles */
+.loading-spinner-container {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    padding: 20px;
+    margin: 10px;
+    align-self: flex-start;
+}
+
+.loading-spinner {
+    width: 24px;
+    height: 24px;
+    border: 3px solid var(--background-modifier-border);
+    border-radius: 50%;
+    border-top-color: var(--text-accent);
+    animation: spin 1s linear infinite;
+}
+
+.loading-message {
+    color: var(--text-muted);
+    margin-left: 10px;
+    font-style: italic;
+}
+
+@keyframes spin {
+    0% { transform: rotate(0deg); }
+    100% { transform: rotate(360deg); }
+}
+
+/* Message error state */
+.message-error {
+    background-color: rgba(var(--background-modifier-error-rgb), 0.1) !important;
+    border-left: 3px solid var(--background-modifier-error) !important;
+    padding-left: 12px !important;
 }

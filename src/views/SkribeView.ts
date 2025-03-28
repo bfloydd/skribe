@@ -96,6 +96,10 @@ export class SkribeView extends ItemView {
                 cls: 'empty-state-container'
             });
             
+            // Increase the max-width while keeping it responsive
+            promptContainer.style.maxWidth = '440px';  // Reduced to match CSS
+            promptContainer.style.width = '65%';  // Reduced to match CSS
+            
             // Add logo image
             const logoContainer = promptContainer.createDiv({
                 cls: 'empty-state-logo-container'
@@ -125,6 +129,7 @@ export class SkribeView extends ItemView {
             inputContainer.style.display = 'flex';
             inputContainer.style.width = '100%';
             inputContainer.style.gap = '10px';
+            inputContainer.style.maxWidth = '380px'; // Adjusted to match the reduced container size
             
             // Create URL input
             const urlInput = inputContainer.createEl('input', {
@@ -530,12 +535,32 @@ export class SkribeView extends ItemView {
 
             // Get AI response
             try {
+                // Create a loading spinner message while waiting for the API response
+                const loadingContainer = chatMessagesContainer.createDiv({
+                    cls: 'loading-spinner-container'
+                });
+                
+                const loadingSpinner = loadingContainer.createDiv({
+                    cls: 'loading-spinner'
+                });
+                
+                const loadingMessage = loadingContainer.createDiv({
+                    cls: 'loading-message',
+                    text: 'Thinking...'
+                });
+                
+                // Scroll to show the loading spinner
+                chatMessagesContainer.scrollTop = chatMessagesContainer.scrollHeight;
+                
                 // Use the OpenAI service to get a response
                 const response = await this.plugin.openaiService.chatWithTranscript(
                     this.chatState.messages,
                     this.content,
                     this.videoTitle
                 );
+                
+                // Remove the loading spinner
+                loadingContainer.remove();
                 
                 // Add assistant message to chat
                 this.chatState.messages.push({
@@ -555,8 +580,30 @@ export class SkribeView extends ItemView {
                     this.plugin.toolbarService.updateToolbarState(chatToolbarContainer, this.getCommandContext());
                 }
             } catch (error) {
+                // Remove the loading spinner if it exists
+                const loadingContainer = chatMessagesContainer.querySelector('.loading-spinner-container');
+                if (loadingContainer) {
+                    loadingContainer.remove();
+                }
+                
+                // Create an error message in the chat
+                const errorContainer = chatMessagesContainer.createDiv({
+                    cls: 'chat-message assistant-message message-error'
+                });
+                
+                errorContainer.style.padding = '10px';
+                errorContainer.style.marginBottom = '10px';
+                errorContainer.style.maxWidth = '80%';
+                errorContainer.style.alignSelf = 'flex-start';
+                
+                errorContainer.setText(`Error: ${error.message || 'Failed to get a response'}`);
+                
+                // Show a notice as well
                 new Notice('Failed to get response: ' + error.message);
                 console.error('Chat Error:', error);
+                
+                // Scroll to show the error
+                chatMessagesContainer.scrollTop = chatMessagesContainer.scrollHeight;
             }
         };
 
@@ -727,12 +774,32 @@ export class SkribeView extends ItemView {
     // Helper method to process AI response
     private async processAIResponse(container: HTMLElement) {
         try {
+            // Create a loading spinner message while waiting for the API response
+            const loadingContainer = container.createDiv({
+                cls: 'loading-spinner-container'
+            });
+            
+            const loadingSpinner = loadingContainer.createDiv({
+                cls: 'loading-spinner'
+            });
+            
+            const loadingMessage = loadingContainer.createDiv({
+                cls: 'loading-message',
+                text: 'Thinking...'
+            });
+            
+            // Scroll to show the loading spinner
+            container.scrollTop = container.scrollHeight;
+            
             // Get AI response
             const response = await this.plugin.openaiService.chatWithTranscript(
                 this.chatState.messages,
                 this.content,
                 this.videoTitle
             );
+            
+            // Remove the loading spinner
+            loadingContainer.remove();
             
             // Add assistant message to chat
             this.chatState.messages.push({
@@ -753,8 +820,30 @@ export class SkribeView extends ItemView {
                 this.plugin.toolbarService.updateToolbarState(chatToolbarContainer, this.getCommandContext());
             }
         } catch (error) {
+            // Remove the loading spinner if it exists
+            const loadingContainer = container.querySelector('.loading-spinner-container');
+            if (loadingContainer) {
+                loadingContainer.remove();
+            }
+            
+            // Create an error message in the chat
+            const errorContainer = container.createDiv({
+                cls: 'chat-message assistant-message message-error'
+            });
+            
+            errorContainer.style.padding = '10px';
+            errorContainer.style.marginBottom = '10px';
+            errorContainer.style.maxWidth = '80%';
+            errorContainer.style.alignSelf = 'flex-start';
+            
+            errorContainer.setText(`Error: ${error.message || 'Failed to get a response'}`);
+            
+            // Show a notice as well
             new Notice('Failed to get response: ' + error.message);
             console.error('Chat Error:', error);
+            
+            // Scroll to show the error
+            container.scrollTop = container.scrollHeight;
         }
     }
 

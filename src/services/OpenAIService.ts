@@ -198,6 +198,8 @@ export class OpenAIService {
                 throw new Error('Invalid OpenAI API key. Please check your API key in settings.');
             } else if (error.status === 429) {
                 throw new Error('OpenAI API rate limit exceeded. Please try again later.');
+            } else if (error.message && error.message.includes('NetworkError')) {
+                throw new Error('Network error or timeout. Please check your internet connection and try again.');
             } else {
                 throw new Error(`OpenAI API Error: ${error.message}`);
             }
