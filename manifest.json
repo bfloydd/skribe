@@ -7,5 +7,14 @@
 	"author": "Ben Floyd",
 	"authorUrl": "https://b.floy.dev",
 	"fundingUrl": "https://paypal.me/bfloydd",
-	"isDesktopOnly": false
+	"isDesktopOnly": false,
+	"files": [
+		"main.js",
+		"manifest.json",
+		"styles.css",
+		{
+			"src": "logo-34DNHXQ2.png",
+			"dest": "assets/logo-34DNHXQ2.png"
+		}
+	]
 }
