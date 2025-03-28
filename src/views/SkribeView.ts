@@ -3,6 +3,7 @@ import type SkribePlugin from '../../main';
 import { OpenAIService } from '../services/OpenAIService';
 import { AudioPlayer } from '../services/AudioPlayer';
 import { ChatMessage, ChatState, CommandContext } from '../types';
+import { getLogoPath } from '../utils/imageLoader';
 
 export const VIEW_TYPE_SKRIBE = "skribe-view";
 
@@ -102,7 +103,7 @@ export class SkribeView extends ItemView {
             const logo = logoContainer.createEl('img', {
                 cls: 'empty-state-logo',
                 attr: {
-                    src: this.plugin.app.vault.adapter.getResourcePath(this.plugin.manifest.dir + '/logo.png'),
+                    src: getLogoPath(this.plugin.app, this.plugin.manifest.dir || ''),
                     alt: 'Skribe Logo'
                 }
             });
