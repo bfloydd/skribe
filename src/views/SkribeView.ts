@@ -98,7 +98,7 @@ export class SkribeView extends ItemView {
             
             // Increase the max-width while keeping it responsive
             promptContainer.style.maxWidth = '440px';  // Reduced to match CSS
-            promptContainer.style.width = '65%';  // Reduced to match CSS
+            promptContainer.style.width = '85%';  // Updated to match the new CSS value
             
             // Add logo image
             const logoContainer = promptContainer.createDiv({
