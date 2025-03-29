@@ -319,10 +319,10 @@ div.nav-folder-content.markdown-preview-view {
     text-decoration: underline;
 }
 
-/* Tabs - adjust position */
+/* Tabs - move down 5px */
 .tabs-container {
     position: fixed;
-    top: 110px; /* Reduced by 10px from 120px */
+    top: 115px; /* Increased by 5px from 110px */
     left: 0;
     right: 0;
     z-index: 2;
@@ -349,13 +349,13 @@ div.nav-folder-content.markdown-preview-view {
     font-weight: bold;
 }
 
-/* Toolbar - adjust position */
+/* Toolbar - move down 5px */
 .chat-toolbar-container,
 .transcript-toolbar-container,
 .summary-toolbar-container,
 .revised-toolbar-container {
     position: fixed;
-    top: 147px; /* Reduced by 10px from 157px */
+    top: 152px; /* Increased by 5px from 147px */
     left: 0;
     right: 0;
     z-index: 2;
@@ -1282,4 +1282,118 @@ body div.workspace-leaf-content[data-type="skribe-view"] * {
     overflow-y: auto !important;
     overflow-x: hidden !important;
     margin-bottom: 60px; /* Space for input container */
+}
+
+/* Mobile specific positioning - FINAL FIX */
+html.is-mobile .tabs-container,
+html.is-mobile body .tabs-container,
+html.is-phone .tabs-container,
+.is-mobile .tabs-container,
+.is-phone .tabs-container,
+body.is-mobile .tabs-container,
+.is-tablet .tabs-container {
+    top: 60px !important; /* Increased by 5px from 55px */
+    position: fixed !important;
+    z-index: 200 !important;
+}
+
+/* Final toolbar position for mobile - fixed below tabs */
+html.is-mobile .chat-toolbar-container,
+html.is-mobile .transcript-toolbar-container,
+html.is-mobile .summary-toolbar-container,
+html.is-mobile .revised-toolbar-container,
+html.is-phone .chat-toolbar-container,
+html.is-phone .transcript-toolbar-container,
+html.is-phone .summary-toolbar-container,
+html.is-phone .revised-toolbar-container,
+.is-mobile .chat-toolbar-container,
+.is-mobile .transcript-toolbar-container,
+.is-mobile .summary-toolbar-container,
+.is-mobile .revised-toolbar-container,
+.is-phone .chat-toolbar-container,
+.is-phone .transcript-toolbar-container,
+.is-phone .summary-toolbar-container,
+.is-phone .revised-toolbar-container,
+body.is-mobile .chat-toolbar-container,
+body.is-mobile .transcript-toolbar-container,
+body.is-mobile .summary-toolbar-container,
+body.is-mobile .revised-toolbar-container,
+.is-tablet .chat-toolbar-container,
+.is-tablet .transcript-toolbar-container,
+.is-tablet .summary-toolbar-container,
+.is-tablet .revised-toolbar-container {
+    top: 97px !important; /* Increased by 5px from 92px */
+    position: fixed !important;
+    z-index: 1000 !important;
+    display: flex !important;
+    height: 50px !important;
+    background-color: var(--background-primary) !important;
+    opacity: 1 !important;
+    visibility: visible !important;
+    border-bottom: 1px solid var(--background-modifier-border) !important;
+    left: 0 !important;
+    right: 0 !important;
+    width: 100% !important;
+    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1) !important;
+}
+
+/* Final content position for mobile */
+html.is-mobile .transcript-container,
+html.is-mobile .revised-container,
+html.is-mobile .summary-container,
+html.is-mobile .chat-container,
+html.is-phone .transcript-container,
+html.is-phone .revised-container,
+html.is-phone .summary-container,
+html.is-phone .chat-container,
+.is-mobile .transcript-container,
+.is-mobile .revised-container,
+.is-mobile .summary-container,
+.is-mobile .chat-container,
+.is-phone .transcript-container,
+.is-phone .revised-container,
+.is-phone .summary-container,
+.is-phone .chat-container,
+body.is-mobile .transcript-container,
+body.is-mobile .revised-container,
+body.is-mobile .summary-container,
+body.is-mobile .chat-container,
+.is-tablet .transcript-container,
+.is-tablet .revised-container,
+.is-tablet .summary-container,
+.is-tablet .chat-container {
+    margin-top: 92px !important; /* Reduced by 5px from 97px */
+    padding-top: 0 !important;
+    overflow-y: auto !important;
+    position: relative !important;
+    z-index: 1 !important;
+}
+
+/* Mobile-specific fix for nav-header and refresh button padding */
+html.is-mobile .nav-header,
+html.is-phone .nav-header,
+.is-mobile .nav-header,
+.is-phone .nav-header,
+body.is-mobile .nav-header,
+.is-tablet .nav-header {
+    padding-bottom: 0 !important;
+    margin-bottom: 0 !important;
+    min-height: 30px !important; /* Reduce min-height to bring refresh button closer */
+}
+
+/* Fix any padding on the refresh button container on mobile */
+html.is-mobile .nav-buttons-container,
+html.is-phone .nav-buttons-container,
+.is-mobile .nav-buttons-container,
+.is-phone .nav-buttons-container,
+body.is-mobile .nav-buttons-container,
+.is-tablet .nav-buttons-container {
+    margin-top: 0 !important;
+    margin-bottom: 0 !important;
+    padding-bottom: 0 !important;
+}
+
+/* Reduce bottom padding for the plugin container */
+div.view-content.skribe-plugin {
+    padding-bottom: 12px !important;
 }
