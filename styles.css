@@ -1212,14 +1212,6 @@ div[class*="markdown-preview-view"] {
     box-sizing: border-box !important;
 }
 
-/* Target the exact padding shown in the browser inspection */
-body div.workspace-leaf-content[data-type="skribe-view"] div,
-body div.workspace-leaf-content[data-type="skribe-view"] * {
-    /* Remove these overly aggressive rules that affect all elements */
-    /* padding-right: 0 !important;
-    margin-right: 0 !important; */
-}
-
 /* Ensure proper centering for empty states and content containers */
 .empty-content-message {
     text-align: center;
