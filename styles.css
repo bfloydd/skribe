@@ -9,6 +9,19 @@
     justify-content: flex-start;
 }
 
+.toolbar-container {
+    display: flex;
+    flex-direction: row;
+    justify-content: flex-start;
+    align-items: center;
+    gap: 8px;
+    padding: 8px 10px;
+    margin: 0;
+    transition: all 0.3s ease;
+    background-color: transparent;
+    width: 100%;
+}
+
 .toolbar-container button {
     background-color: var(--background-secondary);
     border: none;
@@ -89,7 +102,7 @@
 .chat-container {
     position: relative !important;
     height: 100%;
-    overflow-y: auto;
+    overflow-y: hidden; /* Changed from auto to hidden to prevent double scrollbars */
     display: flex;
     flex-direction: column;
     padding: 0;
@@ -221,7 +234,8 @@
 }
 
 .markdown-preview-view {
-    padding-top: 0;
+    padding-right: 0 !important;
+    margin-right: 0 !important;
 }
 
 /* If needed, also target the container directly */
@@ -236,6 +250,7 @@ div.nav-folder-content.markdown-preview-view {
     padding: 2px;
     margin-bottom: 5px;
     border-bottom: 1px solid var(--background-modifier-border);
+    width: 100%;
 }
 
 .video-title {
@@ -282,32 +297,63 @@ div.nav-folder-content.markdown-preview-view {
     font-weight: bold;
 }
 
-/* Tab-specific toolbar containers with consistent styling */
+/* Tab-specific toolbar styling with solid backgrounds */
+.chat-toolbar-container,
 .transcript-toolbar-container,
-.revised-toolbar-container,
 .summary-toolbar-container,
-.chat-toolbar-container {
+.revised-toolbar-container {
     position: sticky !important;
     top: 0;
     left: 0;
     right: 0;
     z-index: 100 !important;
-    border-bottom: 1px solid var(--background-modifier-border);
     background-color: var(--background-primary);
-    width: 100%;
-    padding: 5px 0;
+    border-bottom: 1px solid var(--background-modifier-border);
     box-shadow: 0 2px 5px rgba(0, 0, 0, 0.05);
+    width: 100% !important;
+    max-width: none !important;
     display: flex;
     flex-direction: row;
+    align-items: center;
     backdrop-filter: blur(10px);
+    padding: 0 !important;
+    margin: 0 !important;
+    min-height: 50px;
+    box-sizing: border-box !important;
+}
+
+/* Tab-specific toolbar styling with solid backgrounds */
+.chat-toolbar-container .toolbar-container,
+.transcript-toolbar-container .toolbar-container,
+.summary-toolbar-container .toolbar-container,
+.revised-toolbar-container .toolbar-container {
+    margin: 0;
+    padding: 8px 0;
+    display: flex;
+    flex-direction: row;
+    align-items: center;
+    flex: 1;
+    background-color: var(--background-primary) !important;
+    padding-right: 0 !important; /* Ensure no right padding */
+    width: 100% !important; /* Ensure 100% width */
 }
 
 /* Content areas with proper spacing */
-.transcript-content,
+.transcript-content, 
 .revised-content,
 .summary-content,
 .chat-messages-container {
-    padding: 10px 0;
+    padding: 10px 15px;
+    margin-top: 5px;
+    overflow-y: auto; /* This element will handle scrolling */
+    flex: 1; /* Make content take available space */
+}
+
+/* Adjust content for fixed toolbar */
+.transcript-container, 
+.revised-container,
+.summary-container,
+.chat-container {
     padding-top: 0;
     margin-top: 0;
 }
@@ -361,12 +407,13 @@ div.nav-folder-content.markdown-preview-view {
     display: flex;
     flex-direction: column;
     gap: 10px;
-    padding: 10px 0 70px 0; /* Increased bottom padding to make room for input */
+    padding: 10px 15px 70px 15px; /* Keep more bottom padding for the input area */
     background-color: var(--background-secondary);
     border-radius: 5px;
     overflow-y: auto;
-    height: 100%; /* Take full height */
+    height: calc(100% - 50px); /* Account for toolbar height */
     margin-bottom: 0;
+    flex: 1;
 }
 
 /* Chat message styles */
@@ -459,7 +506,9 @@ div.nav-folder-content.markdown-preview-view {
     align-items: center;
     height: 100%;
     width: 100%;
-    overflow: hidden; /* Prevent scrolling in empty state */
+    overflow: hidden;
+    padding: 0 !important;
+    margin: 0 auto !important;
 }
 
 .empty-state-container {
@@ -469,9 +518,9 @@ div.nav-folder-content.markdown-preview-view {
     justify-content: center;
     padding: 40px;
     text-align: center;
-    max-width: 440px; /* Further reduced from 470px */
-    width: 65%; /* Reduced from 70% */
-    margin: 0 auto;
+    max-width: 440px;
+    width: 65%;
+    margin: 0 auto !important;
     background-color: var(--background-secondary);
     border-radius: 8px;
     box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
@@ -664,19 +713,7 @@ button:not([disabled]):not(.disabled-button) {
     margin-top: 10px;
 }
 
-/* Tab-specific toolbar styling with solid backgrounds */
-.chat-toolbar-container .toolbar-container,
-.transcript-toolbar-container .toolbar-container,
-.summary-toolbar-container .toolbar-container,
-.revised-toolbar-container .toolbar-container {
-    margin: 0;
-    padding: 8px 10px;
-    display: flex;
-    flex-direction: row;
-    align-items: center;
-    width: 100%;
-    background-color: var(--background-primary) !important;
-}
+/* Note: The toolbar-container styling is now defined higher up in the file to avoid duplicates */
 
 /* Ensure consistent button styling across all toolbars */
 .toolbar-container button,
@@ -698,22 +735,18 @@ button:not([disabled]):not(.disabled-button) {
 
 /* Tab-specific background colors for toolbars */
 .transcript-toolbar-container {
-    background-color: var(--background-primary);
     border-bottom: 2px solid rgba(var(--interactive-accent-rgb), 0.3);
 }
 
 .revised-toolbar-container {
-    background-color: var(--background-primary);
     border-bottom: 2px solid rgba(var(--green-rgb), 0.3);
 }
 
 .summary-toolbar-container {
-    background-color: var(--background-primary);
     border-bottom: 2px solid rgba(var(--text-normal-rgb), 0.3);
 }
 
 .chat-toolbar-container {
-    background-color: var(--background-primary);
     border-bottom: 2px solid rgba(var(--text-accent-rgb), 0.3);
 }
 
@@ -724,6 +757,11 @@ button:not([disabled]):not(.disabled-button) {
     justify-content: center;
     flex-shrink: 0;
     margin: 0 4px;
+}
+
+/* Fix the first and last button margins to create even spacing */
+.toolbar-container button:first-child {
+    margin-left: 10px;
 }
 
 /* Improved Quips Styling in Settings */
@@ -995,9 +1033,31 @@ button:not([disabled]):not(.disabled-button) {
     background-color: var(--background-secondary);
     border-radius: 8px;
     max-width: 80%;
-    margin-left: auto;
-    margin-right: auto;
+    margin-left: auto !important;
+    margin-right: auto !important;
     box-shadow: 0 2px 4px rgba(0, 0, 0, 0.05);
+}
+
+/* Special handling for empty states in summary and revised tabs */
+.summary-container:has(.empty-content-message),
+.revised-container:has(.empty-content-message) {
+    overflow-y: hidden;
+}
+
+.summary-content:has(.empty-content-message),
+.revised-content:has(.empty-content-message) {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: flex-start;
+    height: calc(100% - 60px); /* Account for toolbar height */
+    overflow: hidden;
+    padding-top: 20px; /* Add padding to the top */
+}
+
+.summary-content:has(.empty-content-message) .empty-content-message,
+.revised-content:has(.empty-content-message) .empty-content-message {
+    margin-top: 0;
 }
 
 /* Loading spinner styles */
@@ -1035,4 +1095,193 @@ button:not([disabled]):not(.disabled-button) {
     background-color: rgba(var(--background-modifier-error-rgb), 0.1) !important;
     border-left: 3px solid var(--background-modifier-error) !important;
     padding-left: 12px !important;
+}
+
+/* Model indicator in toolbar */
+.model-indicator {
+    margin-left: auto !important; /* Force right alignment */
+    margin-right: 10px;
+    padding: 4px 8px;
+    font-size: 0.8em;
+    color: var(--text-muted);
+    background-color: var(--background-secondary);
+    border-radius: 4px;
+    display: inline-flex;
+    align-items: center;
+    gap: 4px;
+    height: 24px;
+    font-weight: 500;
+    box-shadow: 0 1px 2px rgba(0, 0, 0, 0.1);
+}
+
+.model-indicator::before {
+    content: "";
+    display: inline-block;
+    width: 8px;
+    height: 8px;
+    background-color: var(--interactive-accent);
+    border-radius: 50%;
+    animation: pulse 2s infinite;
+}
+
+@keyframes pulse {
+    0% {
+        box-shadow: 0 0 0 0 rgba(var(--interactive-accent-rgb), 0.7);
+    }
+    70% {
+        box-shadow: 0 0 0 5px rgba(var(--interactive-accent-rgb), 0);
+    }
+    100% {
+        box-shadow: 0 0 0 0 rgba(var(--interactive-accent-rgb), 0);
+    }
+}
+
+.dark .model-indicator::before {
+    box-shadow: 0 0 4px var(--interactive-accent);
+}
+
+/* Fix for transcript container with nav-folder-content class */
+.nav-folder-content.transcript-container,
+.nav-folder-content.markdown-preview-view.transcript-container,
+div[class*="nav-folder-content"][class*="transcript-container"] {
+    padding: 0 !important;
+    margin: 0 !important;
+    width: 100% !important;
+    box-sizing: border-box !important;
+}
+
+/* Fix for transcript toolbar container in nav-folder-content */
+.nav-folder-content .transcript-toolbar-container,
+div[class*="nav-folder-content"] .transcript-toolbar-container {
+    padding: 0 !important;
+    margin: 0 !important;
+    width: 100% !important; 
+    left: 0 !important;
+    right: 0 !important;
+    max-width: none !important;
+}
+
+/* Ensure all toolbar containers maintain 100% width */
+.chat-toolbar-container,
+.transcript-toolbar-container,
+.summary-toolbar-container,
+.revised-toolbar-container {
+    width: 100% !important;
+    max-width: none !important;
+    box-sizing: border-box !important;
+}
+
+/* Ensure the toolbar container inside nav-folder fills the width */
+.nav-folder-content .transcript-toolbar-container .toolbar-container,
+div[class*="nav-folder-content"] .transcript-toolbar-container .toolbar-container {
+    width: 100% !important;
+    padding-right: 0 !important;
+    margin-right: 0 !important;
+    flex: 1 !important;
+}
+
+/* Remove all padding/margin from the right side of ALL containers */
+.markdown-preview-view {
+    padding-right: 0 !important;
+    margin-right: 0 !important;
+}
+
+/* Fix for ALL toolbar containers to ensure they take full width */
+.transcript-toolbar-container,
+.summary-toolbar-container,
+.revised-toolbar-container,
+.chat-toolbar-container {
+    right: 0 !important;
+    width: 100% !important;
+    max-width: 100% !important;
+    box-sizing: border-box !important;
+    padding-right: 0 !important;
+    margin-right: 0 !important;
+}
+
+/* Force all content containers to take full width */
+.transcript-content, 
+.revised-content,
+.summary-content,
+.chat-messages-container {
+    width: 100% !important;
+    max-width: 100% !important;
+    box-sizing: border-box !important;
+    /* Remove fixed right padding/margin that prevents centering */
+    /* padding-right: 0 !important;
+    margin-right: 0 !important; */
+}
+
+/* Force all container elements to have no right padding/margin */
+.transcript-container, 
+.revised-container,
+.summary-container,
+.chat-container {
+    padding-right: 0 !important;
+    margin-right: 0 !important;
+    width: 100% !important;
+    box-sizing: border-box !important;
+    /* Allow proper padding for content centering */
+    /* padding-right: 0 !important;
+    margin-right: 0 !important; */
+}
+
+/* Fix for Obsidian's native padding on containers - make more targeted */
+.nav-folder-content,
+div[class*="nav-folder-content"],
+.markdown-preview-view,
+div[class*="markdown-preview-view"] {
+    padding-right: 0 !important;
+    margin-right: 0 !important;
+    width: 100% !important;
+    max-width: 100% !important;
+    box-sizing: border-box !important;
+}
+
+/* Target the exact padding shown in the browser inspection */
+body div.workspace-leaf-content[data-type="skribe-view"] div,
+body div.workspace-leaf-content[data-type="skribe-view"] * {
+    /* Remove these overly aggressive rules that affect all elements */
+    /* padding-right: 0 !important;
+    margin-right: 0 !important; */
+}
+
+/* Ensure proper centering for empty states and content containers */
+.empty-content-message {
+    text-align: center;
+    padding: 20px;
+    color: var(--text-muted);
+    font-style: italic;
+    margin-top: 40px;
+    background-color: var(--background-secondary);
+    border-radius: 8px;
+    max-width: 80%;
+    margin-left: auto !important;
+    margin-right: auto !important;
+    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.05);
+}
+
+/* Content styling for tabs */
+.transcript-content, 
+.revised-content,
+.summary-content {
+    /* Don't remove right padding/margin for content containers */
+    padding: 10px 15px;
+    margin: 5px auto;
+    overflow-y: auto;
+    flex: 1;
+}
+
+/* Fix toolbar containers to full width without breaking centering */
+.transcript-toolbar-container,
+.summary-toolbar-container,
+.revised-toolbar-container,
+.chat-toolbar-container {
+    right: 0 !important;
+    width: 100% !important;
+    max-width: 100% !important;
+    box-sizing: border-box !important;
+    /* Keep these for toolbar only */
+    padding-right: 0 !important;
+    margin-right: 0 !important;
 }

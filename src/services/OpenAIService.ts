@@ -51,7 +51,7 @@ export class OpenAIService {
                         'Content-Type': 'application/json'
                     },
                     body: JSON.stringify({
-                        model: "gpt-3.5-turbo",
+                        model: this.plugin.settings.model,
                         messages: [
                             {
                                 role: "system",
@@ -230,7 +230,7 @@ export class OpenAIService {
                         'Content-Type': 'application/json'
                     },
                     body: JSON.stringify({
-                        model: "gpt-3.5-turbo",
+                        model: this.plugin.settings.model,
                         messages: [
                             {
                                 role: "system",

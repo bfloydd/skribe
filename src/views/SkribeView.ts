@@ -201,17 +201,17 @@ export class SkribeView extends ItemView {
 
         // Create transcript container
         this.transcriptContainer = contentWrapper.createDiv({
-            cls: 'nav-folder-content markdown-preview-view transcript-container'
+            cls: 'transcript-container'
         });
         
         // Create revised container
         this.revisedContainer = contentWrapper.createDiv({
-            cls: 'revised-container markdown-preview-view'
+            cls: 'revised-container'
         });
         
         // Create summary container
         this.summaryContainer = contentWrapper.createDiv({
-            cls: 'summary-container markdown-preview-view'
+            cls: 'summary-container'
         });
 
         // Create chat container
@@ -225,17 +225,11 @@ export class SkribeView extends ItemView {
         this.summaryContainer.style.display = this.activeTab === 'summary' ? 'block' : 'none';
         this.chatContainer.style.display = this.activeTab === 'chat' ? 'block' : 'none';
 
-        // Render transcript content
-        if (this.content) {
-            await this.renderTranscriptContent();
-        }
-
-        // Always render revised container and toolbar, even when empty
+        // Always render all toolbars
+        await this.renderTranscriptToolbar();
         await this.renderRevisedToolbar();
-        
-        // Always render summary container and toolbar, even when empty
         await this.renderSummaryToolbar();
-        
+
         // If there's actual content, render it
         if (this.revisedContent) {
             await this.renderRevisedContent();
@@ -364,50 +358,55 @@ export class SkribeView extends ItemView {
         return tab;
     }
 
-    private async renderTranscriptContent() {
-        console.log('SkribeView: renderTranscriptContent called');
+    private async renderTranscriptToolbar() {
+        this.transcriptContainer.empty();
         
-        // Create transcript toolbar container at the top
+        // Create transcript toolbar container
         const transcriptToolbarContainer = this.transcriptContainer.createDiv({
             cls: 'transcript-toolbar-container'
         });
         
-        // Create toolbar with transcript commands
+        // Get fresh command context for the toolbar
         const toolbarContext = this.getCommandContext();
         
-        console.log('SkribeView: Creating transcript toolbar with context', {
-            hasContent: !!toolbarContext.content,
-            contentLength: toolbarContext.content?.length,
-            hasPlugin: !!toolbarContext.plugin,
-            hasApiKey: !!toolbarContext.plugin?.settings?.openaiApiKey,
-            view: toolbarContext.view?.constructor.name
-        });
-        
-        // Create transcript toolbar using the ToolbarService
+        // Create transcript toolbar with standard context
         this.plugin.toolbarService.createToolbar(transcriptToolbarContainer, 'transcript', toolbarContext);
         
-        // Create content div
+        // Add model indicator to the toolbar
+        const modelIndicator = transcriptToolbarContainer.createDiv({
+            cls: 'model-indicator'
+        });
+        modelIndicator.innerText = `Model: ${this.plugin.settings.model}`;
+        
+        // Create content container - use consistent structure
         const transcriptContentEl = this.transcriptContainer.createDiv({
             cls: 'transcript-content'
         });
         
-        // Create paragraphs from the content
-        const paragraphs = this.content.split('. ').filter(p => p.trim());
-        
-        // Render paragraphs
-        paragraphs.forEach(paragraph => {
-            const p = transcriptContentEl.createEl('p', {
-                cls: 'transcript-paragraph'
+        // Add an empty content message if there's no content
+        if (!this.content) {
+            const emptyMessage = transcriptContentEl.createDiv({
+                cls: 'empty-content-message',
+                text: 'No transcript content yet. Enter a YouTube URL to get started.'
             });
-            p.textContent = paragraph.trim() + '.';
-        });
+        } else {
+            // Create paragraphs from the content
+            const paragraphs = this.content.split('. ').filter(p => p.trim());
+            
+            // Render paragraphs
+            paragraphs.forEach(paragraph => {
+                const p = transcriptContentEl.createEl('p', {
+                    cls: 'transcript-paragraph'
+                });
+                p.textContent = paragraph.trim() + '.';
+            });
+        }
     }
 
     private renderChatInterface() {
-        if (!this.chatContainer) return;
         this.chatContainer.empty();
         
-        // Create chat toolbar container first (at the top)
+        // Create chat toolbar container
         const chatToolbarContainer = this.chatContainer.createDiv({
             cls: 'chat-toolbar-container'
         });
@@ -415,13 +414,33 @@ export class SkribeView extends ItemView {
         // Get fresh command context for the toolbar
         const toolbarContext = this.getCommandContext();
         
-        // Create chat toolbar with standard context
+        // Create chat toolbar with standard context - use 'chat' instead of 'transcript'
         this.plugin.toolbarService.createToolbar(chatToolbarContainer, 'chat', toolbarContext);
         
-        // Create chat messages container
+        // Add model indicator to the toolbar
+        const modelIndicator = chatToolbarContainer.createDiv({
+            cls: 'model-indicator'
+        });
+        modelIndicator.innerText = `Model: ${this.plugin.settings.model}`;
+        
+        // Create chat messages container with markdown preview class for consistent styling
         const chatMessagesContainer = this.chatContainer.createDiv({
             cls: 'chat-messages-container'
         });
+        
+        // Render chat messages if there are any
+        if (this.chatState.messages.length > 0) {
+            this.renderChatMessages(chatMessagesContainer);
+        } else if (this.showQuips && this.plugin.settings.quips.length > 0) {
+            // Show quips cards when chat is empty and quips are available
+            this.renderQuipsCards(chatMessagesContainer);
+        } else {
+            // Show empty message if no messages and no quips
+            const emptyMessage = chatMessagesContainer.createDiv({
+                cls: 'empty-content-message',
+                text: 'No chat messages yet. Ask a question about the transcript.'
+            });
+        }
         
         // Create chat input container (at the bottom)
         const chatInputContainer = this.chatContainer.createDiv({
@@ -591,31 +610,22 @@ export class SkribeView extends ItemView {
                     cls: 'chat-message assistant-message message-error'
                 });
                 
-                errorContainer.style.padding = '10px';
-                errorContainer.style.marginBottom = '10px';
-                errorContainer.style.maxWidth = '80%';
-                errorContainer.style.alignSelf = 'flex-start';
+                errorContainer.createDiv({
+                    text: `Error: ${error instanceof Error ? error.message : 'Failed to get response'}`
+                });
                 
-                errorContainer.setText(`Error: ${error.message || 'Failed to get a response'}`);
-                
-                // Show a notice as well
-                new Notice('Failed to get response: ' + error.message);
-                console.error('Chat Error:', error);
-                
-                // Scroll to show the error
+                // Scroll to show the error message
                 chatMessagesContainer.scrollTop = chatMessagesContainer.scrollHeight;
             }
         };
-
+        
+        // Set up event listeners
         sendButton.addEventListener('click', handleSend);
         chatInput.addEventListener('keydown', (e) => {
             if (e.key === 'Enter') {
                 handleSend();
             }
         });
-        
-        // Render chat messages
-        this.renderChatMessages(chatMessagesContainer);
     }
     
     // Helper to populate the quips dropdown
@@ -660,7 +670,7 @@ export class SkribeView extends ItemView {
             
             // Handle click on quip item
             quipItem.addEventListener('click', () => {
-                // Hide quips display
+                // Hide quips
                 this.showQuips = false;
                 dropdownMenu.style.display = 'none';
                 
@@ -975,26 +985,32 @@ export class SkribeView extends ItemView {
         // Clear container first
         this.summaryContainer.empty();
         
-        // Create summary toolbar container at the top
+        // Create summary toolbar container
         const summaryToolbarContainer = this.summaryContainer.createDiv({
             cls: 'summary-toolbar-container'
         });
         
-        // Create toolbar with summary commands using the standard context
+        // Get fresh command context for the toolbar
         const toolbarContext = this.getCommandContext();
         
-        // Create summary toolbar
+        // Create summary toolbar with standard context
         this.plugin.toolbarService.createToolbar(summaryToolbarContainer, 'summary', toolbarContext);
         
-        // Create summary content div
-        const summaryContentEl = this.summaryContainer.createDiv({
+        // Add model indicator to the toolbar
+        const modelIndicator = summaryToolbarContainer.createDiv({
+            cls: 'model-indicator'
+        });
+        modelIndicator.innerText = `Model: ${this.plugin.settings.model}`;
+        
+        // Create content container - removed markdown-preview-view class
+        const summaryContentContainer = this.summaryContainer.createDiv({
             cls: 'summary-content'
         });
         
         // Render markdown content
         await MarkdownRenderer.renderMarkdown(
             this.summaryContent,
-            summaryContentEl,
+            summaryContentContainer,
             this.app.workspace.getActiveFile()?.path || '',
             this
         );
@@ -1021,26 +1037,32 @@ export class SkribeView extends ItemView {
         this.summaryContainer.empty();
         
         try {
-            // Create summary toolbar container at the top
+            // Create summary toolbar container
             const summaryToolbarContainer = this.summaryContainer.createDiv({
                 cls: 'summary-toolbar-container'
             });
             
-            // Create toolbar with summary commands using the standard context
+            // Get fresh command context for the toolbar
             const toolbarContext = this.getCommandContext();
             
-            // Create summary toolbar
+            // Create summary toolbar with standard context
             this.plugin.toolbarService.createToolbar(summaryToolbarContainer, 'summary', toolbarContext);
             
-            // Create summary content div
-            const summaryContentEl = this.summaryContainer.createDiv({
+            // Add model indicator to the toolbar
+            const modelIndicator = summaryToolbarContainer.createDiv({
+                cls: 'model-indicator'
+            });
+            modelIndicator.innerText = `Model: ${this.plugin.settings.model}`;
+            
+            // Create content container
+            const summaryContentContainer = this.summaryContainer.createDiv({
                 cls: 'summary-content'
             });
             
             // Render markdown content immediately
             MarkdownRenderer.renderMarkdown(
                 this.summaryContent,
-                summaryContentEl,
+                summaryContentContainer,
                 this.app.workspace.getActiveFile()?.path || '',
                 this
             );
@@ -1172,7 +1194,13 @@ export class SkribeView extends ItemView {
         // Create revised toolbar
         this.plugin.toolbarService.createToolbar(revisedToolbarContainer, 'revised', toolbarContext);
         
-        // Create revised content div
+        // Add model indicator to the toolbar
+        const modelIndicator = revisedToolbarContainer.createDiv({
+            cls: 'model-indicator'
+        });
+        modelIndicator.innerText = `Model: ${this.plugin.settings.model}`;
+        
+        // Create revised content div - removed markdown-preview-view class
         const revisedContentEl = this.revisedContainer.createDiv({
             cls: 'revised-content'
         });
@@ -1220,6 +1248,12 @@ export class SkribeView extends ItemView {
             
             // Create revised toolbar
             this.plugin.toolbarService.createToolbar(revisedToolbarContainer, 'revised', toolbarContext);
+            
+            // Add model indicator to the toolbar
+            const modelIndicator = revisedToolbarContainer.createDiv({
+                cls: 'model-indicator'
+            });
+            modelIndicator.innerText = `Model: ${this.plugin.settings.model}`;
             
             // Create revised content div
             const revisedContentEl = this.revisedContainer.createDiv({
@@ -1347,60 +1381,150 @@ export class SkribeView extends ItemView {
                 chatMessagesContainer.empty();
                 this.renderChatMessages(chatMessagesContainer);
             }
+            
+            // Update toolbar state after clearing messages
+            const chatToolbarContainer = this.chatContainer.querySelector('.chat-toolbar-container') as HTMLElement;
+            if (chatToolbarContainer) {
+                this.plugin.toolbarService.updateToolbarState(chatToolbarContainer, this.getCommandContext());
+            }
         }
+    }
+
+    // Add a method to clear revised content
+    public clearRevised() {
+        this.revisedContent = '';
+        this.refresh();
+    }
+
+    // Add a method to clear summary content
+    public clearSummary() {
+        this.summaryContent = '';
+        this.refresh();
     }
 
     // New method to render just the Revised toolbar
     private async renderRevisedToolbar() {
-        // Create revised toolbar container at the top if it doesn't exist
-        let revisedToolbarContainer = this.revisedContainer.querySelector('.revised-toolbar-container') as HTMLElement;
-        if (!revisedToolbarContainer) {
-            revisedToolbarContainer = this.revisedContainer.createDiv({
-                cls: 'revised-toolbar-container'
-            });
-        }
+        this.revisedContainer.empty();
         
-        // Create toolbar with revised commands
+        // Create revised toolbar container
+        const revisedToolbarContainer = this.revisedContainer.createDiv({
+            cls: 'revised-toolbar-container'
+        });
+        
+        // Get fresh command context for the toolbar
         const toolbarContext = this.getCommandContext();
+        
+        // Create revised toolbar with standard context
         this.plugin.toolbarService.createToolbar(revisedToolbarContainer, 'revised', toolbarContext);
+        
+        // Add model indicator to the toolbar
+        const modelIndicator = revisedToolbarContainer.createDiv({
+            cls: 'model-indicator'
+        });
+        modelIndicator.innerText = `Model: ${this.plugin.settings.model}`;
+        
+        // Create content container - removed markdown-preview-view class
+        const revisedContentContainer = this.revisedContainer.createDiv({
+            cls: 'revised-content'
+        });
         
         // Add an empty content message if there's no content
         if (!this.revisedContent) {
-            const emptyContentEl = this.revisedContainer.createDiv({
-                cls: 'empty-content-message'
+            const emptyMessage = revisedContentContainer.createDiv({
+                cls: 'empty-content-message',
+                text: 'No revised content yet. Use the "Create Revised Version" button to improve the transcript formatting and grammar.'
             });
-            emptyContentEl.setText('No revised content yet. Click "Create Revised Version" to generate one.');
-            emptyContentEl.style.textAlign = 'center';
-            emptyContentEl.style.marginTop = '40px';
-            emptyContentEl.style.color = 'var(--text-muted)';
-            emptyContentEl.style.fontStyle = 'italic';
+        } else {
+            // Render markdown content
+            await MarkdownRenderer.renderMarkdown(
+                this.revisedContent, 
+                revisedContentContainer, 
+                this.app.workspace.getActiveFile()?.path || '',
+                this
+            );
         }
     }
     
     // New method to render just the Summary toolbar
     private async renderSummaryToolbar() {
-        // Create summary toolbar container at the top if it doesn't exist
-        let summaryToolbarContainer = this.summaryContainer.querySelector('.summary-toolbar-container') as HTMLElement;
-        if (!summaryToolbarContainer) {
-            summaryToolbarContainer = this.summaryContainer.createDiv({
-                cls: 'summary-toolbar-container'
-            });
-        }
+        this.summaryContainer.empty();
         
-        // Create toolbar with summary commands
+        // Create summary toolbar container
+        const summaryToolbarContainer = this.summaryContainer.createDiv({
+            cls: 'summary-toolbar-container'
+        });
+        
+        // Get fresh command context for the toolbar
         const toolbarContext = this.getCommandContext();
+        
+        // Create summary toolbar with standard context
         this.plugin.toolbarService.createToolbar(summaryToolbarContainer, 'summary', toolbarContext);
+        
+        // Add model indicator to the toolbar
+        const modelIndicator = summaryToolbarContainer.createDiv({
+            cls: 'model-indicator'
+        });
+        modelIndicator.innerText = `Model: ${this.plugin.settings.model}`;
+        
+        // Create content container - removed markdown-preview-view class
+        const summaryContentContainer = this.summaryContainer.createDiv({
+            cls: 'summary-content'
+        });
         
         // Add an empty content message if there's no content
         if (!this.summaryContent) {
-            const emptyContentEl = this.summaryContainer.createDiv({
-                cls: 'empty-content-message'
+            const emptyMessage = summaryContentContainer.createDiv({
+                cls: 'empty-content-message',
+                text: 'No summary content yet. Use the "Generate Summary" button to create a summary from the transcript.'
             });
-            emptyContentEl.setText('No summary yet. Click "Generate Summary" to create one.');
-            emptyContentEl.style.textAlign = 'center';
-            emptyContentEl.style.marginTop = '40px';
-            emptyContentEl.style.color = 'var(--text-muted)';
-            emptyContentEl.style.fontStyle = 'italic';
+        } else {
+            // Render markdown content
+            await MarkdownRenderer.renderMarkdown(
+                this.summaryContent, 
+                summaryContentContainer, 
+                this.app.workspace.getActiveFile()?.path || '',
+                this
+            );
         }
+    }
+
+    // Update the renderQuipsCards method to auto-submit quips
+    private renderQuipsCards(container: HTMLElement) {
+        if (!this.plugin.settings.quips || this.plugin.settings.quips.length === 0) {
+            return;
+        }
+        
+        const quipsContainer = container.createDiv({
+            cls: 'quips-cards-container'
+        });
+        
+        this.plugin.settings.quips.forEach(quip => {
+            const quipCard = quipsContainer.createDiv({
+                cls: 'quip-card'
+            });
+            
+            const quipText = quipCard.createDiv({
+                cls: 'quip-card-text',
+                text: quip
+            });
+            
+            quipCard.addEventListener('click', async () => {
+                // Hide quips
+                this.showQuips = false;
+                
+                // Add user message
+                this.chatState.messages.push({
+                    role: 'user',
+                    content: quip
+                });
+                
+                // Re-render chat messages
+                container.empty();
+                this.renderChatMessages(container);
+                
+                // Process AI response
+                this.processAIResponse(container);
+            });
+        });
     }
 } 

@@ -71,6 +71,24 @@ export class SettingsTab extends PluginSettingTab {
                 }));
 
         new Setting(containerEl)
+            .setName('OpenAI Model')
+            .setDesc('Select the model to use for chat and summarization')
+            .addDropdown(dropdown => dropdown
+                .addOptions({
+                    'gpt-4o': 'GPT-4o',
+                    'gpt-4o-mini': 'GPT-4o Mini',
+                    'gpt-4': 'GPT-4',
+                    'gpt-4-turbo': 'GPT-4 Turbo',
+                    'gpt-3.5-turbo': 'GPT-3.5 Turbo'
+                })
+                .setValue(this.plugin.settings.model)
+                .onChange(async (value) => {
+                    this.plugin.settings.model = value;
+                    await this.plugin.saveSettings();
+                })
+            );
+
+        new Setting(containerEl)
             .setName('OpenAI Voice')
             .setDesc('Select the voice to use for text-to-speech')
             .addDropdown(dropdown => dropdown

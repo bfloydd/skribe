@@ -188,6 +188,77 @@ const transcriptCommands: ToolbarCommand[] = [
                 new Notice(`AI enhancement error: ${error instanceof Error ? error.message : 'Unknown error'}`);
             }
         }
+    },
+    // Adding append button
+    {
+        id: 'append',
+        icon: 'arrow-down',
+        tooltip: 'Append content to current note',
+        isEnabled: (context: CommandContext) => {
+            return !!context.content && !!context.plugin?.app.workspace.getActiveFile();
+        },
+        execute: async (context: CommandContext) => {
+            if (!context.content) return;
+            
+            try {
+                const plugin = context.plugin as SkribePlugin;
+                
+                // Get active file if any
+                const activeFile = plugin.app.workspace.getActiveFile();
+                
+                if (!activeFile) {
+                    new Notice('No active file to append to. Please open a note first.');
+                    return;
+                }
+                
+                // Format content as markdown
+                const transcript = context.content;
+                
+                // Create content with a proper horizontal rule
+                const timestamp = new Date().toLocaleString();
+                const appendContent = [
+                    '',
+                    '',
+                    '---',
+                    '',
+                    '## Transcript Append - ' + timestamp,
+                    '',
+                    transcript,
+                    ''
+                ].join('\n');
+                
+                // Read existing file content
+                const existingContent = await plugin.app.vault.read(activeFile);
+                
+                // Append new content
+                await plugin.app.vault.modify(activeFile, existingContent + appendContent);
+                
+                new Notice(`Content appended to ${activeFile.name}`);
+            } catch (error) {
+                console.error('Append error:', error);
+                new Notice(`Append error: ${error instanceof Error ? error.message : 'Unknown error'}`);
+            }
+        }
+    },
+    // Adding clear button for transcript
+    {
+        id: 'clear-transcript',
+        icon: 'trash',
+        tooltip: 'Clear transcript',
+        isEnabled: (context: CommandContext) => {
+            return !!context.content;
+        },
+        execute: (context: CommandContext) => {
+            try {
+                if (context.view && typeof context.view.resetView === 'function') {
+                    context.view.resetView();
+                    new Notice('Transcript cleared');
+                }
+            } catch (error) {
+                console.error('Clear transcript error:', error);
+                new Notice(`Clear error: ${error instanceof Error ? error.message : 'Unknown error'}`);
+            }
+        }
     }
 ];
 
@@ -195,7 +266,155 @@ const transcriptCommands: ToolbarCommand[] = [
  * Chat-specific commands
  */
 const chatCommands: ToolbarCommand[] = [
-    // Chat-specific commands
+    // Custom copy command for chat tab (not using common reference)
+    {
+        id: 'copy',
+        icon: 'copy',
+        tooltip: 'Copy to clipboard',
+        isEnabled: (context: CommandContext) => {
+            // Only enable if we have chat messages
+            return context.activeTab === 'chat' && 
+                   Array.isArray(context.chatMessages) && 
+                   context.chatMessages.length > 0;
+        },
+        execute: async (context: CommandContext) => {
+            if (!context.chatMessages || !context.chatMessages.length) return;
+            
+            // Format chat messages as markdown for copying
+            const chatContent = context.chatMessages.map((msg: { role: string; content: string }) => {
+                const role = msg.role === 'user' ? '**You**' : '**Assistant**';
+                return `${role}: ${msg.content}`;
+            }).join('\n\n');
+            
+            // Copy to clipboard
+            await navigator.clipboard.writeText(chatContent);
+            new Notice('Chat content copied to clipboard');
+        }
+    },
+    
+    // Add other buttons from transcript with chat-specific isEnabled conditions
+    {
+        id: 'play-tts',
+        icon: 'play-circle',
+        tooltip: 'Play/Pause transcript with TTS',
+        isEnabled: (context: CommandContext) => {
+            // Use same conditions as save-chat
+            return context.activeTab === 'chat' && 
+                   Array.isArray(context.chatMessages) && 
+                   context.chatMessages.length > 0 &&
+                   !!context.plugin?.settings?.openaiApiKey;
+        },
+        execute: async (context: CommandContext) => {
+            // Same implementation as transcript
+            if (!context.chatMessages || !context.chatMessages.length) return;
+            
+            try {
+                const plugin = context.plugin as SkribePlugin;
+                
+                if (!plugin.settings.openaiApiKey) {
+                    new Notice('Please set your OpenAI API key in settings');
+                    return;
+                }
+
+                // Toggle play/pause functionality would be implemented here
+                // This would interact with the AudioPlayer service
+                new Notice('TTS playback toggled');
+            } catch (error) {
+                console.error('TTS error:', error);
+                new Notice(`TTS error: ${error instanceof Error ? error.message : 'Unknown error'}`);
+            }
+        }
+    },
+    // Create revised version button
+    {
+        id: 'create-revised',
+        icon: 'file-text',
+        tooltip: 'Create Revised Version',
+        isEnabled: (context: CommandContext) => {
+            // Use same conditions as save-chat
+            return context.activeTab === 'chat' && 
+                   Array.isArray(context.chatMessages) && 
+                   context.chatMessages.length > 0 &&
+                   !!context.plugin?.settings?.openaiApiKey;
+        },
+        execute: async (context: CommandContext) => {
+            if (!context.chatMessages || !context.chatMessages.length) return;
+            
+            if (!context.plugin?.settings?.openaiApiKey) {
+                new Notice('Please set your OpenAI API key in settings');
+                try {
+                    // Try to open settings
+                    (context.plugin.app as any).setting?.open();
+                    (context.plugin.app as any).setting?.openTabById('skribe');
+                } catch (error) {
+                    console.error('Could not open settings:', error);
+                }
+                return;
+            }
+            
+            if (!context.view) {
+                new Notice('View not found');
+                return;
+            }
+            
+            // Instead of calling enhanceWithAI, we'll call createRevisedContent
+            try {
+                if (typeof context.view.createRevisedContent === 'function') {
+                    context.view.createRevisedContent();
+                } else {
+                    throw new Error('createRevisedContent method not found on view');
+                }
+            } catch (error) {
+                console.error('AI revision error:', error);
+                new Notice(`AI revision error: ${error instanceof Error ? error.message : 'Unknown error'}`);
+            }
+        }
+    },
+    // Add enhance-ai button
+    {
+        id: 'enhance-ai',
+        icon: 'wand',
+        tooltip: 'Generate Summary',
+        isEnabled: (context: CommandContext) => {
+            // Use same conditions as save-chat
+            return context.activeTab === 'chat' && 
+                   Array.isArray(context.chatMessages) && 
+                   context.chatMessages.length > 0 &&
+                   !!context.plugin?.settings?.openaiApiKey;
+        },
+        execute: async (context: CommandContext) => {
+            if (!context.chatMessages || !context.chatMessages.length) return;
+            
+            if (!context.plugin?.settings?.openaiApiKey) {
+                new Notice('Please set your OpenAI API key in settings');
+                try {
+                    // Try to open settings
+                    (context.plugin.app as any).setting?.open();
+                    (context.plugin.app as any).setting?.openTabById('skribe');
+                } catch (error) {
+                    console.error('Could not open settings:', error);
+                }
+                return;
+            }
+            
+            if (!context.view) {
+                new Notice('View not found');
+                return;
+            }
+            
+            try {
+                if (typeof context.view.enhanceWithAI === 'function') {
+                    context.view.enhanceWithAI();
+                } else {
+                    throw new Error('enhanceWithAI method not found on view');
+                }
+            } catch (error) {
+                console.error('AI enhancement error:', error);
+                new Notice(`AI enhancement error: ${error instanceof Error ? error.message : 'Unknown error'}`);
+            }
+        }
+    },
+    // Add back the original chat commands
     {
         id: 'save-chat',
         icon: 'save',
@@ -370,7 +589,7 @@ const chatCommands: ToolbarCommand[] = [
         execute: (context: CommandContext) => {
             try {
                 if (context.view && typeof context.view.clearChat === 'function') {
-                    // Use the new clearChat method that will show quips again
+                    // Use the clearChat method
                     context.view.clearChat();
                     new Notice('Chat contents cleared');
                 } else {
@@ -435,74 +654,73 @@ const summaryCommands: ToolbarCommand[] = [
         execute: async (context: CommandContext) => {
             if (!context.summaryContent || !context.view) return;
             
-            // Use the view's public methods or fallback to generic implementation
-            if (context.view) {
-                // Use a generic approach
-                const plugin = context.plugin as SkribePlugin;
-                
-                // Extract video title and URL from the context
-                const videoTitle = context.videoTitle || 'Untitled Video';
-                const videoUrl = context.videoUrl || '';
-                
-                // Clean the URL to keep only essential parameters
-                const cleanVideoUrl = videoUrl ? plugin.youtubeService.cleanYouTubeUrl(videoUrl) : '';
-                
-                // Format the date to yyyy-mm-dd hh:mm format
-                const now = new Date();
-                const dateStr = now.toISOString().split('T')[0];
-                const timeStr = now.toLocaleTimeString('en-US', { 
-                    hour12: false,
-                    hour: '2-digit',
-                    minute: '2-digit'
-                }).replace(':', '-');
-                
-                // Get first 30 chars of title (or less if title is shorter)
-                const titlePrefix = videoTitle.replace(/[\\/:*?"<>|]/g, '-').substring(0, 30);
-                
-                // Try to extract v parameter from YouTube URL
-                let vParam = '';
-                if (videoUrl) {
-                    // Use the YouTubeService to extract the video ID
-                    vParam = plugin.youtubeService.extractVideoIdForFilename ? 
-                        plugin.youtubeService.extractVideoIdForFilename(videoUrl) : '';
-                }
-                
-                // Always include summary in filename
-                let contentTypeSuffix = ' summary';
-                
-                // Create filename
-                let filename = '';
-                if (plugin.settings.includeTimestampInFilename === true) {
-                    // With timestamp
-                    filename = `${plugin.settings.transcriptFolder}/${dateStr}-${timeStr} ${titlePrefix}${vParam ? ' ' + vParam : ''}${contentTypeSuffix}.md`;
-                } else {
-                    // Without timestamp
-                    filename = `${plugin.settings.transcriptFolder}/${titlePrefix}${vParam ? ' ' + vParam : ''}${contentTypeSuffix}.md`;
-                }
-                
-                // Add metadata and content including title and link at the top
-                const fileContent = [
-                    '---',
-                    'type: summary',
-                    `created: ${now.toISOString()}`,
-                    videoTitle ? `title: "${videoTitle}"` : '',
-                    cleanVideoUrl ? `source: "${cleanVideoUrl}"` : '',
-                    '---',
-                    '',
-                    videoTitle ? `# ${videoTitle} - Summary` : `# Video Summary`,
-                    '',
-                    cleanVideoUrl ? `Source: [${cleanVideoUrl}](${cleanVideoUrl})` : '',
-                    '',
-                    context.summaryContent
-                ].filter(line => line !== '').join('\n');
-                
-                // Create the file
-                try {
-                    const filePath = await plugin.createFileWithUniqueName(filename, fileContent, true);
-                    new Notice(`Summary saved and opened`);
-                } catch (error) {
-                    new Notice(`Error saving file: ${error.message}`);
-                }
+            // Use a generic approach
+            const plugin = context.plugin as SkribePlugin;
+            
+            // Extract video title and URL from the context
+            const videoTitle = context.videoTitle || 'Untitled Video';
+            const videoUrl = context.videoUrl || '';
+            
+            // Clean the URL to keep only essential parameters
+            const cleanVideoUrl = videoUrl ? plugin.youtubeService.cleanYouTubeUrl(videoUrl) : '';
+            
+            // Format the date to yyyy-mm-dd hh:mm format
+            const now = new Date();
+            const dateStr = now.toISOString().split('T')[0];
+            const timeStr = now.toLocaleTimeString('en-US', { 
+                hour12: false,
+                hour: '2-digit',
+                minute: '2-digit'
+            }).replace(':', '-');
+            
+            // Get first 30 chars of title (or less if title is shorter)
+            const titlePrefix = videoTitle.replace(/[\\/:*?"<>|]/g, '-').substring(0, 30);
+            
+            // Try to extract v parameter from YouTube URL
+            let vParam = '';
+            if (videoUrl) {
+                // Use the YouTubeService to extract the video ID
+                vParam = plugin.youtubeService.extractVideoIdForFilename(videoUrl);
+            }
+            
+            // Create filename
+            let filename = '';
+            // Add content type suffix if setting is enabled
+            let contentTypeSuffix = '';
+            if (plugin.settings.includeContentTypeInFilename === true) {
+                contentTypeSuffix = ' summary';
+            }
+
+            if (plugin.settings.includeTimestampInFilename === true) {
+                // With timestamp
+                filename = `${plugin.settings.transcriptFolder}/${dateStr}-${timeStr} ${titlePrefix}${vParam ? ' ' + vParam : ''}${contentTypeSuffix}.md`;
+            } else {
+                // Without timestamp
+                filename = `${plugin.settings.transcriptFolder}/${titlePrefix}${vParam ? ' ' + vParam : ''}${contentTypeSuffix}.md`;
+            }
+            
+            // Add metadata at the top of the file
+            const fileContent = [
+                '---',
+                'type: summary',
+                `created: ${new Date().toISOString()}`,
+                videoTitle ? `title: "${videoTitle}"` : '',
+                cleanVideoUrl ? `source: "${cleanVideoUrl}"` : '',
+                '---',
+                '',
+                videoTitle ? `# ${videoTitle} - Summary` : '# Video Summary',
+                '',
+                cleanVideoUrl ? `Source: [${cleanVideoUrl}](${cleanVideoUrl})` : '',
+                '',
+                context.summaryContent
+            ].filter(line => line !== '').join('\n');
+            
+            // Create the file
+            try {
+                const filePath = await plugin.createFileWithUniqueName(filename, fileContent, true);
+                new Notice(`Summary saved and opened`);
+            } catch (error) {
+                new Notice(`Error saving file: ${error.message}`);
             }
         }
     },
@@ -621,6 +839,88 @@ const summaryCommands: ToolbarCommand[] = [
                 new Notice(`Enhancement error: ${error instanceof Error ? error.message : 'Unknown error'}`);
             }
         }
+    },
+    
+    // Adding append button
+    {
+        id: 'append',
+        icon: 'arrow-down',
+        tooltip: 'Append content to current note',
+        isEnabled: (context: CommandContext) => {
+            return !!context.summaryContent && !!context.plugin?.app.workspace.getActiveFile();
+        },
+        execute: async (context: CommandContext) => {
+            if (!context.summaryContent) return;
+            
+            try {
+                const plugin = context.plugin as SkribePlugin;
+                
+                // Get active file if any
+                const activeFile = plugin.app.workspace.getActiveFile();
+                
+                if (!activeFile) {
+                    new Notice('No active file to append to. Please open a note first.');
+                    return;
+                }
+                
+                // Format content as markdown
+                const content = context.summaryContent;
+                
+                // Create content with a proper horizontal rule
+                const timestamp = new Date().toLocaleString();
+                const appendContent = [
+                    '',
+                    '',
+                    '---',
+                    '',
+                    '## Summary Append - ' + timestamp,
+                    '',
+                    content,
+                    ''
+                ].join('\n');
+                
+                // Read existing file content
+                const existingContent = await plugin.app.vault.read(activeFile);
+                
+                // Append new content
+                await plugin.app.vault.modify(activeFile, existingContent + appendContent);
+                
+                new Notice(`Content appended to ${activeFile.name}`);
+            } catch (error) {
+                console.error('Append error:', error);
+                new Notice(`Append error: ${error instanceof Error ? error.message : 'Unknown error'}`);
+            }
+        }
+    },
+    
+    // Adding clear button for summary
+    {
+        id: 'clear-summary',
+        icon: 'trash',
+        tooltip: 'Clear summary content',
+        isEnabled: (context: CommandContext) => {
+            return !!context.summaryContent;
+        },
+        execute: (context: CommandContext) => {
+            try {
+                if (context.view && typeof context.view.clearSummary === 'function') {
+                    context.view.clearSummary();
+                    new Notice('Summary content cleared');
+                } else {
+                    // Fallback if method not available
+                    if (context.view) {
+                        context.view.summaryContent = '';
+                        if (typeof context.view.refresh === 'function') {
+                            context.view.refresh();
+                        }
+                        new Notice('Summary content cleared');
+                    }
+                }
+            } catch (error) {
+                console.error('Clear summary error:', error);
+                new Notice(`Clear error: ${error instanceof Error ? error.message : 'Unknown error'}`);
+            }
+        }
     }
 ];
 
@@ -683,33 +983,35 @@ const revisedCommands: ToolbarCommand[] = [
                 let vParam = '';
                 if (videoUrl) {
                     // Use the YouTubeService to extract the video ID
-                    vParam = plugin.youtubeService.extractVideoIdForFilename ? 
-                        plugin.youtubeService.extractVideoIdForFilename(videoUrl) : '';
+                    vParam = plugin.youtubeService.extractVideoIdForFilename(videoUrl);
                 }
-                
-                // Always include revised in filename
-                let contentTypeSuffix = ' revised';
                 
                 // Create filename
                 let filename = '';
+                // Add content type suffix if setting is enabled
+                let contentTypeSuffix = '';
+                if (plugin.settings.includeContentTypeInFilename === true) {
+                    contentTypeSuffix = ' revised';
+                }
+
                 if (plugin.settings.includeTimestampInFilename === true) {
                     // With timestamp
                     filename = `${plugin.settings.transcriptFolder}/${dateStr}-${timeStr} ${titlePrefix}${vParam ? ' ' + vParam : ''}${contentTypeSuffix}.md`;
                 } else {
-                    // Without timestamp
+                    // Without timestamp 
                     filename = `${plugin.settings.transcriptFolder}/${titlePrefix}${vParam ? ' ' + vParam : ''}${contentTypeSuffix}.md`;
                 }
                 
-                // Add metadata and content including title and link at the top
+                // Add metadata at the top of the file
                 const fileContent = [
                     '---',
-                    'type: revised',
-                    `created: ${now.toISOString()}`,
+                    'type: revised_transcript',
+                    `created: ${new Date().toISOString()}`,
                     videoTitle ? `title: "${videoTitle}"` : '',
                     cleanVideoUrl ? `source: "${cleanVideoUrl}"` : '',
                     '---',
                     '',
-                    videoTitle ? `# ${videoTitle} - Revised` : `# Revised Transcript`,
+                    videoTitle ? `# ${videoTitle} - Revised` : '# Revised Transcript',
                     '',
                     cleanVideoUrl ? `Source: [${cleanVideoUrl}](${cleanVideoUrl})` : '',
                     '',
@@ -839,6 +1141,88 @@ const revisedCommands: ToolbarCommand[] = [
             } catch (error) {
                 console.error('Enhance with AI error:', error);
                 new Notice(`Enhancement error: ${error instanceof Error ? error.message : 'Unknown error'}`);
+            }
+        }
+    },
+    
+    // Adding append button
+    {
+        id: 'append',
+        icon: 'arrow-down',
+        tooltip: 'Append content to current note',
+        isEnabled: (context: CommandContext) => {
+            return !!context.revisedContent && !!context.plugin?.app.workspace.getActiveFile();
+        },
+        execute: async (context: CommandContext) => {
+            if (!context.revisedContent) return;
+            
+            try {
+                const plugin = context.plugin as SkribePlugin;
+                
+                // Get active file if any
+                const activeFile = plugin.app.workspace.getActiveFile();
+                
+                if (!activeFile) {
+                    new Notice('No active file to append to. Please open a note first.');
+                    return;
+                }
+                
+                // Format content as markdown
+                const content = context.revisedContent;
+                
+                // Create content with a proper horizontal rule
+                const timestamp = new Date().toLocaleString();
+                const appendContent = [
+                    '',
+                    '',
+                    '---',
+                    '',
+                    '## Revised Transcript Append - ' + timestamp,
+                    '',
+                    content,
+                    ''
+                ].join('\n');
+                
+                // Read existing file content
+                const existingContent = await plugin.app.vault.read(activeFile);
+                
+                // Append new content
+                await plugin.app.vault.modify(activeFile, existingContent + appendContent);
+                
+                new Notice(`Content appended to ${activeFile.name}`);
+            } catch (error) {
+                console.error('Append error:', error);
+                new Notice(`Append error: ${error instanceof Error ? error.message : 'Unknown error'}`);
+            }
+        }
+    },
+    
+    // Adding clear button for revised
+    {
+        id: 'clear-revised',
+        icon: 'trash',
+        tooltip: 'Clear revised content',
+        isEnabled: (context: CommandContext) => {
+            return !!context.revisedContent;
+        },
+        execute: (context: CommandContext) => {
+            try {
+                if (context.view && typeof context.view.clearRevised === 'function') {
+                    context.view.clearRevised();
+                    new Notice('Revised content cleared');
+                } else {
+                    // Fallback if method not available
+                    if (context.view) {
+                        context.view.revisedContent = '';
+                        if (typeof context.view.refresh === 'function') {
+                            context.view.refresh();
+                        }
+                        new Notice('Revised content cleared');
+                    }
+                }
+            } catch (error) {
+                console.error('Clear revised error:', error);
+                new Notice(`Clear error: ${error instanceof Error ? error.message : 'Unknown error'}`);
             }
         }
     }
