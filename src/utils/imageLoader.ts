@@ -16,12 +16,21 @@ export function getAssetPath(app: App, pluginDir: string, assetPath: string): st
  * @param pluginDir The plugin directory name
  */
 export function getLogoPath(app: App, pluginDir: string): string {
-    // Try the assets directory first
+    // Try assets directory first (prefer it if exists)
     try {
-        return getAssetPath(app, pluginDir, 'assets/logo-34DNHXQ2.png');
+        const assetsPath = getAssetPath(app, pluginDir, 'assets/logo-34DNHXQ2.png');
+        // Log the path for debugging
+        console.log('Trying logo path: ', assetsPath);
+        return assetsPath;
     } catch (e) {
-        // If that fails, try at the root level
+        // If that fails, fall back to root level
         console.log('Could not find logo in assets folder, trying root level');
-        return getAssetPath(app, pluginDir, 'logo-34DNHXQ2.png');
+        try {
+            return getAssetPath(app, pluginDir, 'logo-34DNHXQ2.png');
+        } catch (e) {
+            console.log('Could not find logo at root level either, using hardcoded path');
+            // Last resort: just use a direct path that should work in most cases
+            return `${pluginDir}/logo-34DNHXQ2.png`;
+        }
     }
 } 

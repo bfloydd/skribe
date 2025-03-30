@@ -1,7 +1,7 @@
 {
 	"id": "skribe",
 	"name": "Skribe",
-	"version": "0.2.6",
+	"version": "0.2.7",
 	"minAppVersion": "0.15.0",
 	"description": "Video Transkriber & Summarizer",
 	"author": "Ben Floyd",
@@ -13,7 +13,9 @@
 		"manifest.json",
 		"manifest-beta.json",
 		"styles.css",
-		"logo-34DNHXQ2.png",
+		"logo-34DNHXQ2.png"
+	],
+	"assets": [
 		{
 			"src": "logo-34DNHXQ2.png",
 			"dest": "assets/logo-34DNHXQ2.png"
