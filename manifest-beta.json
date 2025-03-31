@@ -3,7 +3,7 @@
 	"name": "Skribe",
 	"version": "0.3.2",
 	"minAppVersion": "0.15.0",
-	"description": "Video Research Tool, transcribe, summarize, chat",
+	"description": "Video Research Tool (YouTube): Transcribe, Summarize, and Chat",
 	"author": "Ben Floyd",
 	"authorUrl": "https://b.floy.dev",
 	"fundingUrl": "https://paypal.me/bfloydd",
