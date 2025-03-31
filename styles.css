@@ -391,10 +391,12 @@ div.nav-folder-content.markdown-preview-view {
     background-color: var(--background-primary);
 }
 
-/* Fix chat container scrolling */
+/* Fix chat container scrolling - Override the generic container styles for chat */
 .chat-container {
     margin-top: 97px; /* Same as other containers */
-    height: calc(100% - 97px - 60px); /* Subtract toolbar and input container heights */
+    height: calc(100% - 97px - 30px) !important; /* Reduced space for input from 60px to 30px */
+    padding-bottom: 0 !important; /* No padding at bottom */
+    margin-bottom: 0 !important; /* No margin at bottom */
     overflow-y: auto !important; /* Force scrolling */
     position: relative;
     padding: 0;
@@ -405,14 +407,20 @@ div.nav-folder-content.markdown-preview-view {
 
 .chat-messages-container {
     flex: 1;
-    padding: 10px 15px;
+    padding: 10px 15px 0 15px !important; /* Removed bottom padding completely */
     overflow-y: auto !important;
     overflow-x: hidden !important;
-    margin-bottom: 60px; /* Space for input container */
+    margin-bottom: -40px !important; /* Added negative margin to push content down */
     position: relative; /* Position context for scroll button */
-    max-height: calc(100% - 60px) !important; /* Enforce max height */
-    height: calc(100% - 60px) !important; /* Force fixed height */
+    max-height: calc(100% - 30px) !important; /* Reduced space reserved for input */
+    height: auto !important; /* Allow content to determine height */
     min-height: 200px !important; /* Minimum height */
+}
+
+/* Remove the extra padding element completely */
+.chat-messages-container::after {
+    content: none;
+    display: none;
 }
 
 /* Debugging helper class that can be added to force scrolling for testing */
@@ -1524,4 +1532,34 @@ body.is-mobile .nav-buttons-container,
 /* Reduce bottom padding for the plugin container */
 div.view-content.skribe-plugin {
     padding-bottom: 12px !important;
+}
+
+/* Add explicit bottom padding to create space above the input container */
+.chat-container {
+    padding-bottom: 10px !important; /* Minimal padding */
+}
+
+.chat-messages-container {
+    padding-bottom: 20px !important; /* Minimal padding */
+}
+
+/* Mobile specific adjustments for chat container */
+html.is-mobile .chat-container,
+html.is-phone .chat-container,
+.is-mobile .chat-container,
+.is-phone .chat-container,
+body.is-mobile .chat-container,
+.is-tablet .chat-container {
+    padding-bottom: 0 !important; /* No padding */
+    margin-bottom: -10px !important; /* Negative margin to push down */
+}
+
+html.is-mobile .chat-messages-container,
+html.is-phone .chat-messages-container,
+.is-mobile .chat-messages-container,
+.is-phone .chat-messages-container,
+body.is-mobile .chat-messages-container,
+.is-tablet .chat-messages-container {
+    padding-bottom: 0 !important; /* No padding */
+    margin-bottom: -30px !important; /* Negative margin to push down */
 }
