@@ -391,6 +391,153 @@ div.nav-folder-content.markdown-preview-view {
     background-color: var(--background-primary);
 }
 
+/* Fix chat container scrolling */
+.chat-container {
+    margin-top: 97px; /* Same as other containers */
+    height: calc(100% - 97px - 60px); /* Subtract toolbar and input container heights */
+    overflow-y: auto !important; /* Force scrolling */
+    position: relative;
+    padding: 0;
+    z-index: 1;
+    display: flex;
+    flex-direction: column;
+}
+
+.chat-messages-container {
+    flex: 1;
+    padding: 10px 15px;
+    overflow-y: auto !important;
+    overflow-x: hidden !important;
+    margin-bottom: 60px; /* Space for input container */
+    position: relative; /* Position context for scroll button */
+    max-height: calc(100% - 60px) !important; /* Enforce max height */
+    height: calc(100% - 60px) !important; /* Force fixed height */
+    min-height: 200px !important; /* Minimum height */
+}
+
+/* Debugging helper class that can be added to force scrolling for testing */
+.chat-debug-scrollable .chat-messages-container::after {
+    content: '';
+    display: block;
+    height: 1000px; /* Force scrollable area */
+    width: 1px;
+}
+
+/* Scroll to bottom button */
+.scroll-to-bottom-button {
+    position: fixed;
+    bottom: 110px; /* Further increased to ensure it's well above input */
+    right: 20px;
+    width: 46px;
+    height: 46px;
+    background: linear-gradient(145deg, var(--interactive-accent), var(--text-accent));
+    color: var(--text-on-accent);
+    border-radius: 50%;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    box-shadow: 0 3px 12px rgba(0, 0, 0, 0.3), 
+                0 0 20px rgba(var(--interactive-accent-rgb), 0.4),
+                inset 0 1px 1px rgba(255, 255, 255, 0.2);
+    border: 1px solid rgba(255, 255, 255, 0.2);
+    cursor: pointer;
+    z-index: 1000;
+    transition: all 0.2s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+    animation: bounce-in 0.5s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+    opacity: 1 !important;
+    visibility: visible !important;
+    transform-origin: center;
+}
+
+/* Button label that appears on hover */
+.scroll-to-bottom-button::after {
+    content: "New messages";
+    position: absolute;
+    top: -30px;
+    left: 50%;
+    transform: translateX(-50%);
+    background-color: var(--background-secondary);
+    color: var(--text-normal);
+    padding: 4px 8px;
+    border-radius: 4px;
+    font-size: 12px;
+    opacity: 0;
+    pointer-events: none;
+    transition: opacity 0.2s ease;
+    white-space: nowrap;
+    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+}
+
+.scroll-to-bottom-button:hover::after {
+    opacity: 1;
+}
+
+.scroll-to-bottom-button:hover {
+    transform: translateY(-3px) scale(1.05);
+    box-shadow: 0 5px 15px rgba(0, 0, 0, 0.3), 
+                0 0 20px rgba(var(--interactive-accent-rgb), 0.4),
+                inset 0 1px 1px rgba(255, 255, 255, 0.3);
+    background: linear-gradient(145deg, var(--text-accent), var(--interactive-accent));
+}
+
+.scroll-to-bottom-button:active {
+    transform: translateY(0) scale(0.95);
+    box-shadow: 0 2px 5px rgba(0, 0, 0, 0.2),
+                0 0 10px rgba(var(--interactive-accent-rgb), 0.2),
+                inset 0 1px 1px rgba(0, 0, 0, 0.1);
+    transition: all 0.1s ease;
+}
+
+.scroll-to-bottom-button svg {
+    width: 24px;
+    height: 24px;
+    fill: var(--text-on-accent);
+    stroke: var(--text-on-accent);
+    filter: drop-shadow(0 1px 1px rgba(0, 0, 0, 0.3));
+    animation: bounce-arrow 2s ease-in-out infinite;
+}
+
+@keyframes bounce-arrow {
+    0%, 100% { transform: translateY(0); }
+    50% { transform: translateY(3px); }
+}
+
+@keyframes bounce-in {
+    0% { transform: scale(0); opacity: 0; }
+    40% { transform: scale(1.2); opacity: 0.7; }
+    70% { transform: scale(0.9); opacity: 0.9; }
+    100% { transform: scale(1); opacity: 1; }
+}
+
+/* Pulse animation when new messages arrive */
+@keyframes pulse {
+    0% { box-shadow: 0 0 0 0 rgba(var(--interactive-accent-rgb), 0.5); }
+    70% { box-shadow: 0 0 0 10px rgba(var(--interactive-accent-rgb), 0); }
+    100% { box-shadow: 0 0 0 0 rgba(var(--interactive-accent-rgb), 0); }
+}
+
+.theme-dark .scroll-to-bottom-button {
+    box-shadow: 0 3px 10px rgba(0, 0, 0, 0.3), 
+                0 0 15px rgba(var(--interactive-accent-rgb), 0.4),
+                inset 0 1px 1px rgba(255, 255, 255, 0.15);
+}
+
+.theme-dark .scroll-to-bottom-button:hover {
+    box-shadow: 0 5px 15px rgba(0, 0, 0, 0.4), 
+                0 0 20px rgba(var(--interactive-accent-rgb), 0.5),
+                inset 0 1px 1px rgba(255, 255, 255, 0.2);
+}
+
+/* Mobile adjustments for the scroll button */
+.is-mobile .scroll-to-bottom-button,
+html.is-mobile .scroll-to-bottom-button,
+html.is-phone .scroll-to-bottom-button {
+    bottom: 110px; /* Increased from 90px to move it higher on mobile */
+    right: 15px;
+    width: 42px;
+    height: 42px;
+}
+
 /* Chat input container */
 .chat-input-container {
     position: fixed;
@@ -1263,26 +1410,6 @@ div[class*="markdown-preview-view"] {
 .revised-content h6 {
     margin-top: 1.5em;
     margin-bottom: 0.5em;
-}
-
-/* Fix chat container scrolling */
-.chat-container {
-    margin-top: 97px; /* Same as other containers */
-    height: calc(100% - 97px - 60px); /* Subtract toolbar and input container heights */
-    overflow-y: auto !important; /* Force scrolling */
-    position: relative;
-    padding: 0;
-    z-index: 1;
-    display: flex;
-    flex-direction: column;
-}
-
-.chat-messages-container {
-    flex: 1;
-    padding: 10px 15px;
-    overflow-y: auto !important;
-    overflow-x: hidden !important;
-    margin-bottom: 60px; /* Space for input container */
 }
 
 /* Mobile specific positioning - FINAL FIX */

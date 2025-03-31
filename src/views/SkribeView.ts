@@ -1,4 +1,4 @@
-import { ItemView, WorkspaceLeaf, setIcon, Notice, MarkdownRenderer } from 'obsidian';
+import { ItemView, WorkspaceLeaf, setIcon, Notice, MarkdownRenderer, Menu, MenuItem } from 'obsidian';
 import type SkribePlugin from '../../main';
 import { OpenAIService } from '../services/OpenAIService';
 import { AudioPlayer } from '../services/AudioPlayer';
@@ -29,6 +29,8 @@ export class SkribeView extends ItemView {
         'Skribe a Video'
     ];
     private showQuips: boolean = true;
+    private isAtBottom: boolean = true;
+    private scrollToBottomButton: HTMLElement | null = null;
 
     private getRandomWelcomeMessage(): string {
         const randomIndex = Math.floor(Math.random() * this.welcomeMessages.length);
@@ -439,9 +441,92 @@ export class SkribeView extends ItemView {
             cls: 'chat-messages-container'
         });
         
+        // Add context menu for debugging
+        const contextMenuHandler = (e: MouseEvent) => {
+            const menu = new Menu();
+            menu.addItem((item: MenuItem) => 
+                item.setTitle("Toggle debug scroll mode")
+                    .setIcon("bug")
+                    .onClick(() => this.toggleDebugScrollable())
+            );
+            
+            // Add force scroll test item
+            menu.addItem((item: MenuItem) => 
+                item.setTitle("Force scroll test")
+                    .setIcon("arrow-down")
+                    .onClick(() => {
+                        if (chatMessagesContainer.scrollHeight > chatMessagesContainer.clientHeight) {
+                            // Force scroll to middle
+                            chatMessagesContainer.scrollTop = 300;
+                            setTimeout(() => {
+                                this.checkScrollPosition(chatMessagesContainer);
+                            }, 50);
+                        } else {
+                            new Notice("Container not scrollable. Try enabling debug mode first.");
+                        }
+                    })
+            );
+            
+            menu.showAtMouseEvent(e);
+        };
+        // Register the context menu handler through Obsidian's API for proper cleanup
+        this.registerDomEvent(chatMessagesContainer, 'contextmenu', contextMenuHandler);
+        
+        // Create scroll to bottom button inside the chat messages container
+        this.scrollToBottomButton = chatMessagesContainer.createDiv({
+            cls: 'scroll-to-bottom-button',
+            attr: {
+                'aria-label': 'Scroll to bottom',
+                'title': 'Scroll to latest messages'
+            }
+        });
+        // Use double-arrow-down for clearer indication of scrolling to bottom
+        setIcon(this.scrollToBottomButton, 'chevrons-down');
+        this.scrollToBottomButton.style.display = 'none';
+        
+        // Add click handler to scroll to bottom button
+        const scrollButtonHandler = (e: MouseEvent) => {
+            e.preventDefault();
+            e.stopPropagation();
+            this.scrollChatToBottom();
+        };
+        // Register the click handler through Obsidian's API for proper cleanup
+        this.registerDomEvent(this.scrollToBottomButton, 'click', scrollButtonHandler);
+        
+        // Add scroll event listener to detect when user is not at bottom
+        const scrollHandler = () => {
+            this.checkScrollPosition(chatMessagesContainer);
+        };
+        // Register the scroll handler through Obsidian's API for proper cleanup
+        this.registerDomEvent(chatMessagesContainer, 'scroll', scrollHandler);
+        
+        // Also check scroll position on window resize
+        this.registerDomEvent(window, 'resize', () => {
+            if (this.activeTab === 'chat') {
+                this.checkScrollPosition(chatMessagesContainer);
+            }
+        });
+        
+        // Set up a periodic check for scroll position - only do this once
+        const intervalId = window.setInterval(() => {
+            if (this.activeTab === 'chat') {
+                this.checkScrollPosition(chatMessagesContainer);
+            }
+        }, 1000);
+        
+        // Register the interval for cleanup when the view is closed
+        this.register(() => {
+            window.clearInterval(intervalId);
+        });
+        
         // Render chat messages if there are any
         if (this.chatState.messages.length > 0) {
             this.renderChatMessages(chatMessagesContainer);
+            
+            // Initial scroll position check after rendering messages
+            setTimeout(() => {
+                this.checkScrollPosition(chatMessagesContainer);
+            }, 100);
         } else if (this.showQuips && this.plugin.settings.quips.length > 0) {
             // Show quips cards when chat is empty and quips are available
             this.renderQuipsCards(chatMessagesContainer);
@@ -790,6 +875,11 @@ export class SkribeView extends ItemView {
                 messageEl.setText(message.content);
             }
         });
+        
+        // Check scroll position after rendering messages
+        setTimeout(() => {
+            this.checkScrollPosition(container);
+        }, 100);
     }
     
     // Helper method to process AI response
@@ -811,6 +901,10 @@ export class SkribeView extends ItemView {
             
             // Scroll to show the loading spinner
             container.scrollTop = container.scrollHeight;
+            this.isAtBottom = true;
+            if (this.scrollToBottomButton) {
+                this.scrollToBottomButton.style.display = 'none';
+            }
             
             // Get AI response
             const response = await this.plugin.openaiService.chatWithTranscript(
@@ -834,6 +928,10 @@ export class SkribeView extends ItemView {
             
             // Scroll to bottom
             container.scrollTop = container.scrollHeight;
+            this.isAtBottom = true;
+            if (this.scrollToBottomButton) {
+                this.scrollToBottomButton.style.display = 'none';
+            }
             
             // Update toolbar state after assistant message
             const chatToolbarContainer = this.chatContainer.querySelector('.chat-toolbar-container') as HTMLElement;
@@ -1146,6 +1244,12 @@ export class SkribeView extends ItemView {
                             chatInput.focus();
                         }
                     }
+                    
+                    // Check scroll position when switching to chat tab
+                    const chatMessagesContainer = this.chatContainer.querySelector('.chat-messages-container') as HTMLElement;
+                    if (chatMessagesContainer) {
+                        this.checkScrollPosition(chatMessagesContainer);
+                    }
                 }, 50);
             }
         }
@@ -1380,11 +1484,6 @@ export class SkribeView extends ItemView {
     public onClose(): Promise<void> {
         console.log('SkribeView: onClose called');
         
-        // Clean up event listeners
-        this.registerDomEvent(window, 'resize', () => {
-            // This will be automatically removed by Obsidian
-        });
-        
         // Clean up references in the ToolbarService to prevent memory leaks
         if (this.plugin && this.plugin.toolbarService) {
             // Clean up view references for all toolbar types
@@ -1395,6 +1494,9 @@ export class SkribeView extends ItemView {
             
             console.log('SkribeView: Cleaned up view references in ToolbarService');
         }
+        
+        // Note: We don't need to manually remove event listeners or clear interval timers
+        // as they are registered through Obsidian's register system and will be automatically cleaned up
         
         return Promise.resolve();
     }
@@ -1409,6 +1511,12 @@ export class SkribeView extends ItemView {
             if (chatMessagesContainer) {
                 chatMessagesContainer.empty();
                 this.renderChatMessages(chatMessagesContainer);
+                
+                // Reset scroll state
+                this.isAtBottom = true;
+                if (this.scrollToBottomButton) {
+                    this.scrollToBottomButton.style.display = 'none';
+                }
             }
             
             // Update toolbar state after clearing messages
@@ -1632,5 +1740,79 @@ export class SkribeView extends ItemView {
             console.error('Error restoring saved state:', error);
             return false;
         }
+    }
+
+    // Helper to check if user is at bottom of chat and show/hide scroll button
+    private checkScrollPosition(container: HTMLElement): void {
+        // Ensure we have a valid container
+        if (!container) return;
+      
+        // Make sure container is actually scrollable
+        const isScrollable = container.scrollHeight > container.clientHeight;
+        
+        if (!isScrollable) {
+            // If container isn't scrollable, hide the button
+            if (this.scrollToBottomButton) {
+                this.scrollToBottomButton.style.display = 'none';
+            }
+            return;
+        }
+        
+        // Calculate if we're at the bottom (with a smaller threshold)
+        const scrollRemaining = container.scrollHeight - container.scrollTop - container.clientHeight;
+        const atBottom = scrollRemaining < 10;
+        
+        // Update state
+        this.isAtBottom = atBottom;
+        
+        // Show/hide scroll button based on position
+        if (this.scrollToBottomButton) {
+            if (atBottom || !isScrollable) {
+                this.scrollToBottomButton.style.display = 'none';
+            } else {
+                this.scrollToBottomButton.style.display = 'flex';
+                // Force button to appear
+                this.scrollToBottomButton.style.opacity = '1';
+                this.scrollToBottomButton.style.visibility = 'visible';
+            }
+        }
+    }
+    
+    // Helper to scroll chat to bottom
+    private scrollChatToBottom(): void {
+        const chatMessagesContainer = this.chatContainer.querySelector('.chat-messages-container') as HTMLElement;
+        if (chatMessagesContainer) {
+            chatMessagesContainer.scrollTop = chatMessagesContainer.scrollHeight;
+            this.isAtBottom = true;
+            if (this.scrollToBottomButton) {
+                this.scrollToBottomButton.style.display = 'none';
+            }
+        }
+    }
+
+    // For debugging - adds the debug class to force scrolling
+    public toggleDebugScrollable(): void {
+        const chatContainer = this.chatContainer;
+        if (!chatContainer) return;
+        
+        // Toggle the debug class
+        chatContainer.classList.toggle('chat-debug-scrollable');
+        
+        // Get messages container
+        const messagesContainer = chatContainer.querySelector('.chat-messages-container') as HTMLElement;
+        if (!messagesContainer) return;
+        
+        // Force check after toggling
+        setTimeout(() => {
+            // Force scroll to middle to test detection if debug mode is enabled
+            if (chatContainer.classList.contains('chat-debug-scrollable')) {
+                messagesContainer.scrollTop = 300;
+            }
+            this.checkScrollPosition(messagesContainer);
+        }, 100);
+        
+        // Show notice about current state
+        new Notice('Debug scroll mode ' + 
+            (chatContainer.classList.contains('chat-debug-scrollable') ? 'enabled' : 'disabled'));
     }
 } 
