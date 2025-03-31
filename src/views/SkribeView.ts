@@ -2,7 +2,7 @@ import { ItemView, WorkspaceLeaf, setIcon, Notice, MarkdownRenderer } from 'obsi
 import type SkribePlugin from '../../main';
 import { OpenAIService } from '../services/OpenAIService';
 import { AudioPlayer } from '../services/AudioPlayer';
-import { ChatMessage, ChatState, CommandContext } from '../types';
+import { ChatMessage, ChatState, CommandContext } from '../types/index';
 import { getLogoPath } from '../utils/imageLoader';
 
 export const VIEW_TYPE_SKRIBE = "skribe-view";
@@ -107,7 +107,7 @@ export class SkribeView extends ItemView {
             const logo = logoContainer.createEl('img', {
                 cls: 'empty-state-logo',
                 attr: {
-                    src: getLogoPath(this.plugin.app, this.plugin.manifest.dir || ''),
+                    src: getLogoPath(),
                     alt: 'Skribe Logo'
                 }
             });

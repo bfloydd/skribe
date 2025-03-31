@@ -1,5 +1,5 @@
 import { Plugin, Notice, MarkdownView, WorkspaceLeaf, Menu, Editor, setIcon } from 'obsidian';
-import { SkribeSettings, DEFAULT_SETTINGS } from './src/types';
+import { SkribeSettings, DEFAULT_SETTINGS } from './src/types/index';
 import { YouTubeService } from './src/services/YouTubeService';
 import { OpenAIService } from './src/services/OpenAIService';
 import { SkribeView, VIEW_TYPE_SKRIBE } from './src/views/SkribeView';
@@ -8,8 +8,6 @@ import { SettingsTab } from './src/settings/SettingsTab';
 import { ToolbarService } from './src/services/ToolbarService';
 import { CommonCommands } from './src/services/CommonCommands';
 import { ToolbarConfigs } from './src/services/ToolbarConfigs';
-import { existsSync, mkdirSync, copyFileSync } from 'fs';
-import { join } from 'path';
 
 export default class SkribePlugin extends Plugin {
     settings: SkribeSettings;
@@ -31,67 +29,10 @@ export default class SkribePlugin extends Plugin {
         this.toolbarService = ToolbarService.getInstance();
         this.initializeToolbars();
 
-        // Ensure assets directory exists and logo is copied
-        // await this.ensureAssets();
-
         this.registerCommands();
         this.initializeView();
         this.initializeRibbonIcon();
         this.addSettingTab(new SettingsTab(this.app, this));
-    }
-
-    private async ensureAssets() {
-        try {
-            // Try to create the assets directory if it doesn't exist
-            const pluginDir = this.manifest.dir || '';
-            const assetsDir = `${pluginDir}/assets`;
-            
-            // For mobile (Android/iOS)
-            if (this.app.vault.adapter.exists) {
-                // Check if assets directory exists
-                const assetsDirExists = await this.app.vault.adapter.exists(assetsDir);
-                
-                if (!assetsDirExists) {
-                    // Create assets directory
-                    console.log('Creating assets directory for mobile');
-                    await this.app.vault.createFolder(assetsDir);
-                }
-                
-                // Check if logo exists in assets
-                const logoExists = await this.app.vault.adapter.exists(`${assetsDir}/logo-34DNHXQ2.png`);
-                
-                if (!logoExists) {
-                    console.log('Logo not found in assets, will copy on first view load');
-                    // We'll let the imageLoader handle the fallback path
-                }
-            }
-            // For desktop
-            else if (typeof window !== 'undefined' && window.require) {
-                try {
-                    const fs = window.require('fs');
-                    const path = window.require('path');
-                    
-                    // Check if assets directory exists
-                    if (!fs.existsSync(assetsDir)) {
-                        console.log('Creating assets directory for desktop');
-                        fs.mkdirSync(assetsDir, { recursive: true });
-                    }
-                    
-                    // Check if logo exists in assets
-                    const logoPath = `${assetsDir}/logo-34DNHXQ2.png`;
-                    const sourceLogoPath = `${pluginDir}/logo-34DNHXQ2.png`;
-                    
-                    if (!fs.existsSync(logoPath) && fs.existsSync(sourceLogoPath)) {
-                        console.log('Copying logo file to assets folder');
-                        fs.copyFileSync(sourceLogoPath, logoPath);
-                    }
-                } catch (err) {
-                    console.error('Error setting up assets directory on desktop:', err);
-                }
-            }
-        } catch (err) {
-            console.error('Error ensuring assets exist:', err);
-        }
     }
 
     private initializeToolbars() {

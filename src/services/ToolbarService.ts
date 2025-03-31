@@ -1,5 +1,5 @@
 import { setIcon, Notice } from 'obsidian';
-import { ToolbarCommand, ToolbarConfig, CommandContext } from '../types';
+import { ToolbarCommand, ToolbarConfig, CommandContext } from '../types/index';
 
 /**
  * ToolbarService - Manages toolbar commands and configurations

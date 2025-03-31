@@ -1,5 +1,5 @@
 import { requestUrl } from 'obsidian';
-import { TranscriptEvent, TranscriptSegment, CaptionTrack } from '../types';
+import { TranscriptEvent, TranscriptSegment, CaptionTrack } from '../types/index';
 
 export class YouTubeService {
     private static instance: YouTubeService;

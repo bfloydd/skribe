@@ -1,6 +1,6 @@
-import { requestUrl } from 'obsidian';
+import { requestUrl, Notice } from 'obsidian';
 import type SkribePlugin from '../../main';
-import { ChatMessage } from '../types';
+import { ChatMessage } from '../types/index';
 
 export class OpenAIService {
     private static instance: OpenAIService;

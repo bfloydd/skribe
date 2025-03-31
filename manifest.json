@@ -11,13 +11,6 @@
 	"files": [
 		"main.js",
 		"manifest-beta.json",
-		"styles.css",
-		"logo-34DNHXQ2.png"
-	],
-	"assets": [
-		{
-			"src": "logo-34DNHXQ2.png",
-			"dest": "logo-34DNHXQ2.png"
-		}
+		"styles.css"
 	]
 }

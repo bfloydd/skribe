@@ -1,6 +1,7 @@
 import esbuild from "esbuild";
 import process from "process";
 import builtins from "builtin-modules";
+import inlineImage from "esbuild-plugin-inline-image";
 
 const banner =
 `/*
@@ -39,6 +40,11 @@ const context = await esbuild.context({
 	treeShaking: true,
 	outfile: "main.js",
 	minify: prod,
+	plugins: [
+		inlineImage({
+			limit: -1, // Always inline all images
+		})
+	],
 });
 
 if (prod) {

@@ -1,5 +1,5 @@
 import { Notice } from 'obsidian';
-import { ToolbarConfig, ToolbarCommand, CommandContext } from '../types';
+import { ToolbarConfig, ToolbarCommand, CommandContext } from '../types/index';
 import { createCommonCommandReference } from './CommonCommands';
 import type SkribePlugin from '../../main';
 
