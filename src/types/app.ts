@@ -7,6 +7,18 @@ export interface SkribeSettings {
     includeTimestampInFilename: boolean;
     includeContentTypeInFilename: boolean;
     quips: string[];
+    savedState?: SkribeState;
+}
+
+export interface SkribeState {
+    content: string;
+    videoUrl: string;
+    videoTitle: string;
+    revisedContent: string;
+    summaryContent: string;
+    chatState: ChatState;
+    activeTab: 'transcript' | 'revised' | 'summary' | 'chat';
+    lastUpdated: number;
 }
 
 export const DEFAULT_SETTINGS: SkribeSettings = {

@@ -2,7 +2,7 @@ import { ItemView, WorkspaceLeaf, setIcon, Notice, MarkdownRenderer } from 'obsi
 import type SkribePlugin from '../../main';
 import { OpenAIService } from '../services/OpenAIService';
 import { AudioPlayer } from '../services/AudioPlayer';
-import { ChatMessage, ChatState, CommandContext } from '../types/index';
+import { ChatMessage, ChatState, CommandContext, SkribeState } from '../types/index';
 import { getLogoPath } from '../utils/imageLoader';
 
 export const VIEW_TYPE_SKRIBE = "skribe-view";
@@ -69,11 +69,22 @@ export class SkribeView extends ItemView {
             this.videoTitle = videoTitle;
             this.chatState.videoTitle = videoTitle;
         }
+        
+        // Save state when content is set
+        this.saveState();
+        
         this.refresh();
     }
 
     async onOpen() {
-        this.refresh();
+        // Check for saved state before refreshing the view
+        const hasState = this.loadSavedState();
+        
+        if (!hasState) {
+            // Only refresh directly if we don't have saved state
+            this.refresh();
+        }
+        // If we loaded state, the refresh was already called in loadSavedState
     }
 
     async refresh() {
@@ -855,6 +866,9 @@ export class SkribeView extends ItemView {
             // Scroll to show the error
             container.scrollTop = container.scrollHeight;
         }
+        
+        // Save state after adding AI response
+        this.saveState();
     }
 
     private formatTranscript(): string {
@@ -1030,6 +1044,9 @@ export class SkribeView extends ItemView {
         
         this.summaryContent = content;
         
+        // Save state when summary content changes
+        this.saveState();
+        
         // Switch to summary tab
         this.switchToTab('summary');
         
@@ -1083,6 +1100,9 @@ export class SkribeView extends ItemView {
         
         // Update active tab
         this.activeTab = tabName;
+        
+        // Save state when tab changes
+        this.saveState();
         
         // Update container visibility
         if (this.transcriptContainer) {
@@ -1231,6 +1251,9 @@ export class SkribeView extends ItemView {
         
         this.revisedContent = content;
         
+        // Save state when revised content changes
+        this.saveState();
+        
         // Switch to revised tab
         this.switchToTab('revised');
         
@@ -1339,6 +1362,12 @@ export class SkribeView extends ItemView {
         
         // Switch back to transcript tab 
         this.activeTab = 'transcript';
+        
+        // Clear saved state
+        if (this.plugin.settings.savedState) {
+            this.plugin.settings.savedState = undefined;
+            this.plugin.saveSettings();
+        }
         
         // Refresh the view
         this.refresh();
@@ -1526,5 +1555,82 @@ export class SkribeView extends ItemView {
                 this.processAIResponse(container);
             });
         });
+    }
+
+    /**
+     * Save the current state to settings for persistence
+     */
+    private saveState(): void {
+        // Don't save state if there's no content
+        if (!this.content) {
+            return;
+        }
+
+        // Create state object
+        const state: SkribeState = {
+            content: this.content,
+            videoUrl: this.videoUrl,
+            videoTitle: this.videoTitle,
+            revisedContent: this.revisedContent,
+            summaryContent: this.summaryContent,
+            chatState: this.chatState,
+            activeTab: this.activeTab,
+            lastUpdated: Date.now()
+        };
+
+        // Save state to settings
+        this.plugin.settings.savedState = state;
+        this.plugin.saveSettings();
+        console.log('Skribe state saved', state);
+    }
+
+    /**
+     * Load saved state from settings
+     */
+    public loadSavedState(): boolean {
+        const savedState = this.plugin.settings.savedState;
+        
+        // Check if we have a saved state
+        if (!savedState) {
+            console.log('No saved state found in settings');
+            return false;
+        }
+        
+        // Validate if savedState has content (required field)
+        if (!savedState.content) {
+            console.log('Saved state exists but has no content, ignoring');
+            return false;
+        }
+        
+        console.log('Loading saved state', {
+            hasContent: !!savedState.content,
+            contentLength: savedState.content.length,
+            videoUrl: savedState.videoUrl,
+            videoTitle: savedState.videoTitle?.substring(0, 30) + '...',
+            activeTab: savedState.activeTab,
+            hasRevisedContent: !!savedState.revisedContent,
+            hasSummaryContent: !!savedState.summaryContent,
+            chatMessagesCount: savedState.chatState?.messages?.length || 0,
+            lastUpdated: new Date(savedState.lastUpdated).toLocaleString()
+        });
+        
+        try {
+            // Restore state
+            this.content = savedState.content;
+            this.videoUrl = savedState.videoUrl || '';
+            this.videoTitle = savedState.videoTitle || '';
+            this.revisedContent = savedState.revisedContent || '';
+            this.summaryContent = savedState.summaryContent || '';
+            this.chatState = savedState.chatState || { messages: [] };
+            this.activeTab = savedState.activeTab || 'transcript';
+            
+            // Refresh the view with the restored state
+            this.refresh();
+            console.log('State restored successfully, activeTab:', this.activeTab);
+            return true;
+        } catch (error) {
+            console.error('Error restoring saved state:', error);
+            return false;
+        }
     }
 } 

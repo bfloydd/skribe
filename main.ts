@@ -33,6 +33,21 @@ export default class SkribePlugin extends Plugin {
         this.initializeView();
         this.initializeRibbonIcon();
         this.addSettingTab(new SettingsTab(this.app, this));
+        
+        // Check for existing views that might need state restored
+        this.app.workspace.onLayoutReady(() => {
+            const existingLeaves = this.app.workspace.getLeavesOfType(VIEW_TYPE_SKRIBE);
+            if (existingLeaves.length > 0) {
+                // Store view reference for any existing views
+                for (const leaf of existingLeaves) {
+                    if (leaf.view instanceof SkribeView) {
+                        this.view = leaf.view;
+                        // View's onOpen will handle state restoration
+                        console.log('Found existing SkribeView on layout ready');
+                    }
+                }
+            }
+        });
     }
 
     private initializeToolbars() {
@@ -156,7 +171,13 @@ export default class SkribePlugin extends Plugin {
     }
 
     async saveSettings() {
-        await this.saveData(this.settings);
+        try {
+            await this.saveData(this.settings);
+            console.log('Settings saved successfully');
+        } catch (error) {
+            console.error('Error saving settings:', error);
+            new Notice('Failed to save Skribe settings');
+        }
     }
 
     private async activateView() {
@@ -165,16 +186,19 @@ export default class SkribePlugin extends Plugin {
         // Try to find existing SkribeView
         const existingLeaves = workspace.getLeavesOfType(VIEW_TYPE_SKRIBE);
         let leaf: WorkspaceLeaf | null = null;
+        let viewExists = false;
         
         // Check if we already have a SkribeView open anywhere
         if (existingLeaves.length > 0) {
             leaf = existingLeaves[0];
+            viewExists = true;
             
             // If it's not in the right sidebar, close it
             if (leaf.getRoot() !== workspace.rightSplit) {
                 // Close this instance since it's not in the right sidebar
                 leaf.detach();
                 leaf = null;
+                viewExists = false;
             }
         }
         
@@ -209,9 +233,16 @@ export default class SkribePlugin extends Plugin {
             active: true,
         });
 
-        // Store the view reference and return it
+        // Store the view reference
         if (leaf.view instanceof SkribeView) {
             this.view = leaf.view;
+            
+            // Try to load saved state, but only show notice for new views
+            const hasState = this.view.loadSavedState();
+            if (hasState && !viewExists) {
+                new Notice('Restored previous Skribe session');
+            }
+            
             return this.view;
         }
         
@@ -448,6 +479,16 @@ export default class SkribePlugin extends Plugin {
         } catch (error) {
             console.error('Error creating file:', error);
             throw error;
+        }
+    }
+
+    async onunload() {
+        console.log('Unloading Skribe plugin...');
+        
+        // Save current state if the view is active
+        if (this.view) {
+            // We don't need to call view.saveState() directly as it's already in the settings
+            await this.saveSettings();
         }
     }
 } 
