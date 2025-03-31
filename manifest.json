@@ -1,23 +1,23 @@
 {
 	"id": "skribe",
 	"name": "Skribe",
-	"version": "1.0.0",
+	"version": "0.3.1",
 	"minAppVersion": "0.15.0",
-	"description": "Video Transkriber & Summarizer",
+	"description": "Video Research Tool, transcribe, summarize, chat",
 	"author": "Ben Floyd",
 	"authorUrl": "https://b.floy.dev",
 	"fundingUrl": "https://paypal.me/bfloydd",
 	"isDesktopOnly": false,
 	"files": [
 		"main.js",
-		"manifest.json",
+		"manifest-beta.json",
 		"styles.css",
 		"logo-34DNHXQ2.png"
 	],
 	"assets": [
 		{
 			"src": "logo-34DNHXQ2.png",
-			"dest": "assets/logo-34DNHXQ2.png"
+			"dest": "logo-34DNHXQ2.png"
 		}
 	]
 }

@@ -1,9 +1,9 @@
 {
 	"id": "skribe",
 	"name": "Skribe",
-	"version": "0.3.0",
+	"version": "0.3.1",
 	"minAppVersion": "0.15.0",
-	"description": "Video Transkriber & Summarizer",
+	"description": "Video Research Tool, transcribe, summarize, chat",
 	"author": "Ben Floyd",
 	"authorUrl": "https://b.floy.dev",
 	"fundingUrl": "https://paypal.me/bfloydd",
