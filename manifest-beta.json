@@ -10,7 +10,6 @@
 	"isDesktopOnly": false,
 	"files": [
 		"main.js",
-		"manifest.json",
 		"manifest-beta.json",
 		"styles.css",
 		"logo-34DNHXQ2.png"
