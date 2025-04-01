@@ -8,6 +8,7 @@ export interface SkribeSettings {
     includeContentTypeInFilename: boolean;
     quips: string[];
     savedState?: SkribeState;
+    debugMode?: boolean;
 }
 
 export interface SkribeState {

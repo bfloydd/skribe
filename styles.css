@@ -97,59 +97,79 @@
     position: relative; /* Create positioning context */
 }
 
-/* Ensure all content containers have proper positioning context */
+/* UNIFIED TAB CONTAINER STYLES - applies to ALL tab containers but preserves separate content */
 .transcript-container, 
 .revised-container,
 .summary-container,
 .chat-container {
-    margin-top: 97px; /* Reduced by 10 more pixels from 107px */
-    height: calc(100% - 97px);
+    position: relative;
+    width: 100%;
+    height: 100%;
     overflow-y: auto;
-    position: relative;
+    box-sizing: border-box;
     padding: 0;
-    z-index: 1;
+    margin: 0;
+    margin-top: 97px; /* Same for all tabs - space for tabs and toolbar */
+    background-color: var(--background-primary);
+    /* No display:none here - JS handles this */
 }
 
-/* Ensure content takes available space but respects overflow */
-.transcript-content, 
-.revised-content,
-.summary-content,
-.chat-messages-container {
-    padding: 0 15px;
-    margin-top: 0 !important;
-    padding-top: 0 !important;
-}
+/* Remove active container classes since JS handles visibility */
 
-/* Content styling - proper positioning with fixed toolbar */
-.transcript-content, 
-.revised-content,
-.summary-content {
-    padding: 10px 15px;
-    margin-top: 0 !important; /* No margin needed since container has padding */
-    margin-left: auto !important;
-    margin-right: auto !important;
-    margin-bottom: 5px !important;
-    overflow-y: visible !important;
-    flex: 1;
-    position: relative; 
-    z-index: 40;
-    width: 100% !important;
-}
-
-/* Chat messages container - proper positioning with fixed toolbar */
-.chat-messages-container {
-    position: relative;
+/* UNIFIED TOOLBAR STYLES - applies to ALL tab toolbars regardless of parent container */
+.transcript-toolbar-container,
+.revised-toolbar-container,
+.summary-toolbar-container,
+.chat-toolbar-container {
+    position: fixed;
+    top: 147px !important; /* Same for all tabs */
+    left: 0;
+    right: 0;
+    width: 100%;
+    height: 50px;
+    min-height: 50px;
+    max-height: 50px;
+    z-index: 100;
+    background-color: var(--background-primary);
+    border-bottom: 1px solid var(--background-modifier-border);
+    box-shadow: 0 3px 8px rgba(0, 0, 0, 0.1);
     display: flex;
-    flex-direction: column;
-    gap: 10px;
-    padding: 10px 15px 70px 15px;
-    background-color: var(--background-secondary);
-    border-radius: 5px;
-    overflow-y: visible !important;
-    margin-top: 0 !important; /* No margin needed since container has padding */
-    margin-bottom: 0;
-    flex: 1;
-    z-index: 40;
+    align-items: center;
+    padding: 0;
+    margin: 0;
+}
+
+/* Preserve different container types for different tabs */
+/* Transcript specific container structure */
+.transcript-container {
+    overflow-y: auto; /* Allow scrolling */
+}
+
+/* Revised specific container structure */
+.revised-container {
+    overflow-y: auto; /* Allow scrolling */
+}
+
+/* Summary specific container structure */
+.summary-container {
+    overflow-y: auto; /* Allow scrolling */
+}
+
+/* Chat specific container structure - needs to handle the input area */
+.chat-container {
+    position: relative;
+    display: flex; /* Needed for proper chat layout */
+    flex-direction: column; /* Stack messages and input */
+    overflow: hidden; /* Contain the scrollable messages area */
+}
+
+/* Chat messages container needs to scroll within chat container */
+.chat-messages-container {
+    flex: 1; /* Take remaining space */
+    overflow-y: auto; /* Allow scrolling */
+    padding: 15px;
+    padding-bottom: 70px; /* Space for input */
+    margin-top: 50px; /* Space for toolbar */
 }
 
 /* Toolbar styling */
@@ -177,20 +197,11 @@
 }
 
 /* Tab-specific toolbars */
-.toolbar-container[data-toolbar-id="transcript"] {
-    background-color: rgba(var(--interactive-accent-rgb), 0.05);
-}
-
-.toolbar-container[data-toolbar-id="revised"] {
-    background-color: rgba(var(--green-rgb), 0.05);
-}
-
-.toolbar-container[data-toolbar-id="chat"] {
-    background-color: rgba(var(--text-accent-rgb), 0.05);
-}
-
+.toolbar-container[data-toolbar-id="transcript"],
+.toolbar-container[data-toolbar-id="revised"],
+.toolbar-container[data-toolbar-id="chat"],
 .toolbar-container[data-toolbar-id="summary"] {
-    background-color: rgba(var(--text-normal-rgb), 0.05);
+    background-color: transparent !important;
 }
 
 /* Existing styles */
@@ -213,6 +224,8 @@
     text-align: center;
     pointer-events: none;
     top: 0;
+    margin-top: 15px; /* Add space for the title */
+    z-index: 5; /* Ensure title appears above tabs */
 }
 
 .nav-header {
@@ -319,10 +332,10 @@ div.nav-folder-content.markdown-preview-view {
     text-decoration: underline;
 }
 
-/* Tabs - move down 5px */
+/* Tabs - position below title */
 .tabs-container {
     position: fixed;
-    top: 115px; /* Increased by 5px from 110px */
+    top: 110px; /* Position consistently below title for all tabs */
     left: 0;
     right: 0;
     z-index: 2;
@@ -349,25 +362,105 @@ div.nav-folder-content.markdown-preview-view {
     font-weight: bold;
 }
 
-/* Toolbar - move down 5px */
+/* All toolbars - basic positioning */
 .chat-toolbar-container,
 .transcript-toolbar-container,
 .summary-toolbar-container,
 .revised-toolbar-container {
     position: fixed;
-    top: 152px; /* Increased by 5px from 147px */
+    top: 147px !important;
     left: 0;
     right: 0;
-    z-index: 2;
-    background-color: var(--background-primary);
-    border-bottom: 1px solid var(--background-modifier-border);
+    z-index: 100;
+    background-color: var(--background-primary) !important;
+    border-bottom: 1px solid var(--background-modifier-border) !important;
     box-shadow: 0 3px 8px rgba(0, 0, 0, 0.1);
     width: 100%;
     margin: 0;
     padding: 0;
-    min-height: 50px;
-    display: flex;
+    height: 50px !important;
+    min-height: 50px !important;
+    max-height: 50px !important;
+    display: flex !important;
+    visibility: visible !important;
+    opacity: 1 !important;
     align-items: center;
+    /* Remove any accent borders that might be inconsistent */
+    border-top: none !important;
+    border-left: none !important;
+    border-right: none !important;
+}
+
+/* Fix the chat messages spacing to account for the fixed toolbar */
+.chat-messages-container {
+    margin-top: 50px !important; /* Match the toolbar height */
+    padding-top: 15px !important;
+}
+
+/* Make model indicator consistent across all toolbars */
+.model-indicator {
+    margin-left: auto !important;
+    margin-right: 10px !important;
+    padding: 4px 8px !important;
+    font-size: 0.8em !important;
+    color: var(--text-muted) !important;
+    background-color: var(--background-secondary) !important;
+    border-radius: 4px !important;
+    height: 24px !important;
+    z-index: 3 !important;
+}
+
+/* Remove ALL tab-specific toolbar styling differences */
+.transcript-toolbar-container,
+.revised-toolbar-container,
+.summary-toolbar-container,
+.chat-toolbar-container {
+    border-bottom: 1px solid var(--background-modifier-border) !important;
+}
+
+/* Ensure consistent padding and background for all toolbar containers */
+.chat-toolbar-container .toolbar-container,
+.transcript-toolbar-container .toolbar-container,
+.summary-toolbar-container .toolbar-container,
+.revised-toolbar-container .toolbar-container {
+    margin: 0;
+    padding: 8px 0;
+    display: flex;
+    flex-direction: row;
+    align-items: center;
+    flex: 1;
+    background-color: var(--background-primary) !important;
+    padding-right: 0 !important;
+    width: 100% !important;
+}
+
+/* Ensure consistent button styling across all toolbars */
+.toolbar-container button,
+.chat-toolbar-container button,
+.transcript-toolbar-container button,
+.summary-toolbar-container button,
+.revised-toolbar-container button {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    background-color: var(--background-secondary);
+    margin: 0 4px;
+    padding: 6px 10px;
+    border-radius: 4px;
+    flex-shrink: 0;
+    height: 28px;
+    min-width: 28px;
+}
+
+/* Make all buttons have consistent hover styles */
+.toolbar-container button:hover:not(.disabled-button),
+.chat-toolbar-container button:hover:not(.disabled-button),
+.transcript-toolbar-container button:hover:not(.disabled-button),
+.summary-toolbar-container button:hover:not(.disabled-button),
+.revised-toolbar-container button:hover:not(.disabled-button) {
+    background-color: var(--background-modifier-hover);
+    transform: translateY(-1px);
+    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
 }
 
 /* Chat message styles */
@@ -378,6 +471,11 @@ div.nav-folder-content.markdown-preview-view {
     word-wrap: break-word;
     overflow-wrap: break-word;
     margin: 0 10px;
+    user-select: text;
+    -webkit-user-select: text;
+    -moz-user-select: text;
+    -ms-user-select: text;
+    cursor: text;
 }
 
 .user-message {
@@ -391,30 +489,31 @@ div.nav-folder-content.markdown-preview-view {
     background-color: var(--background-primary);
 }
 
-/* Fix chat container scrolling - Override the generic container styles for chat */
-.chat-container {
-    margin-top: 97px; /* Same as other containers */
-    height: calc(100% - 97px - 30px) !important; /* Reduced space for input from 60px to 30px */
-    padding-bottom: 0 !important; /* No padding at bottom */
-    margin-bottom: 0 !important; /* No margin at bottom */
-    overflow-y: auto !important; /* Force scrolling */
-    position: relative;
-    padding: 0;
-    z-index: 1;
-    display: flex;
-    flex-direction: column;
+/* Ensure text inside messages is selectable */
+.chat-message *,
+.chat-message p,
+.chat-message span,
+.chat-message div,
+.chat-message code,
+.chat-message pre {
+    user-select: text;
+    -webkit-user-select: text;
+    -moz-user-select: text;
+    -ms-user-select: text;
+    cursor: text;
 }
 
+/* Reset any special chat messages container styles to match unified content styles */
 .chat-messages-container {
-    flex: 1;
-    padding: 10px 15px 0 15px !important; /* Removed bottom padding completely */
-    overflow-y: auto !important;
-    overflow-x: hidden !important;
-    margin-bottom: -40px !important; /* Added negative margin to push content down */
-    position: relative; /* Position context for scroll button */
-    max-height: calc(100% - 30px) !important; /* Reduced space reserved for input */
-    height: auto !important; /* Allow content to determine height */
-    min-height: 200px !important; /* Minimum height */
+    margin-top: 0 !important;
+    padding-top: 15px !important;
+    padding-bottom: 70px !important; /* Extra padding for chat input */
+    background-color: transparent !important; /* Match other content */
+    border-radius: 0 !important; /* Remove border radius */
+    gap: unset !important; /* Remove gap */
+    flex-direction: unset !important; /* Remove flex direction */
+    overflow-y: auto !important; /* Allow scrolling */
+    height: calc(100% - 70px) !important; /* Account for input area */
 }
 
 /* Remove the extra padding element completely */
@@ -434,7 +533,7 @@ div.nav-folder-content.markdown-preview-view {
 /* Scroll to bottom button */
 .scroll-to-bottom-button {
     position: fixed;
-    bottom: 110px; /* Further increased to ensure it's well above input */
+    bottom: 130px; /* Adjusted to match input container placement */
     right: 20px;
     width: 46px;
     height: 46px;
@@ -450,11 +549,21 @@ div.nav-folder-content.markdown-preview-view {
     border: 1px solid rgba(255, 255, 255, 0.2);
     cursor: pointer;
     z-index: 1000;
-    transition: all 0.2s cubic-bezier(0.175, 0.885, 0.32, 1.275);
-    animation: bounce-in 0.5s cubic-bezier(0.175, 0.885, 0.32, 1.275);
-    opacity: 1 !important;
-    visibility: visible !important;
-    transform-origin: center;
+    transition: transform 0.15s cubic-bezier(0.175, 0.885, 0.32, 1.275), 
+                opacity 0.15s ease-out, 
+                box-shadow 0.15s ease-out;
+    will-change: transform, opacity;
+    transform: scale(1) translateZ(0);
+    opacity: 1;
+    pointer-events: auto;
+}
+
+/* Hidden class for the scroll button */
+.scroll-to-bottom-button.hidden {
+    transform: scale(0.8) translateZ(0);
+    opacity: 0;
+    pointer-events: none;
+    display: none;  /* Actually hide it completely */
 }
 
 /* Button label that appears on hover */
@@ -481,7 +590,7 @@ div.nav-folder-content.markdown-preview-view {
 }
 
 .scroll-to-bottom-button:hover {
-    transform: translateY(-3px) scale(1.05);
+    transform: translateY(-3px) scale(1.05) translateZ(0);
     box-shadow: 0 5px 15px rgba(0, 0, 0, 0.3), 
                 0 0 20px rgba(var(--interactive-accent-rgb), 0.4),
                 inset 0 1px 1px rgba(255, 255, 255, 0.3);
@@ -489,7 +598,7 @@ div.nav-folder-content.markdown-preview-view {
 }
 
 .scroll-to-bottom-button:active {
-    transform: translateY(0) scale(0.95);
+    transform: translateY(0) scale(0.95) translateZ(0);
     box-shadow: 0 2px 5px rgba(0, 0, 0, 0.2),
                 0 0 10px rgba(var(--interactive-accent-rgb), 0.2),
                 inset 0 1px 1px rgba(0, 0, 0, 0.1);
@@ -540,7 +649,7 @@ div.nav-folder-content.markdown-preview-view {
 .is-mobile .scroll-to-bottom-button,
 html.is-mobile .scroll-to-bottom-button,
 html.is-phone .scroll-to-bottom-button {
-    bottom: 110px; /* Increased from 90px to move it higher on mobile */
+    bottom: 130px; /* Adjusted to match input container placement */
     right: 15px;
     width: 42px;
     height: 42px;
@@ -552,20 +661,18 @@ html.is-phone .scroll-to-bottom-button {
     bottom: 0;
     left: 0;
     right: 0;
+    width: 100%;
     padding: 10px;
     background-color: var(--background-primary);
-    z-index: 99;
-    display: flex;
-    gap: 10px;
     border-top: 1px solid var(--background-modifier-border);
-    box-shadow: 0 -2px 5px rgba(0, 0, 0, 0.05);
-    height: 60px; /* Increased height to accommodate buttons */
-    align-items: center; /* Ensure buttons are vertically centered */
+    z-index: 90;
+    display: flex;
+    align-items: center;
 }
 
 /* Adjust for status bar in Obsidian */
 .workspace-leaf-content[data-type="skribe-view"] .chat-input-container {
-    bottom: var(--status-bar-height, 22px); /* Use Obsidian's status bar height */
+    bottom: var(--status-bar-height, 22px); /* Align with status bar */
     padding-right: 10px;
 }
 
@@ -846,7 +953,10 @@ button:not([disabled]):not(.disabled-button) {
 .revised-content,
 .summary-content,
 .chat-messages-container {
-    margin-top: 10px;
+    margin-top: 50px !important; /* Consistent margin for content below toolbar */
+    padding-top: 15px !important; /* Consistent padding at the top */
+    padding-left: 15px !important;
+    padding-right: 15px !important;
 }
 
 /* Note: The toolbar-container styling is now defined higher up in the file to avoid duplicates */
@@ -871,19 +981,23 @@ button:not([disabled]):not(.disabled-button) {
 
 /* Tab-specific background colors for toolbars */
 .transcript-toolbar-container {
-    border-bottom: 2px solid rgba(var(--interactive-accent-rgb), 0.3);
+    /* Remove the blue border */
+    border-bottom: 1px solid var(--background-modifier-border) !important;
 }
 
 .revised-toolbar-container {
-    border-bottom: 2px solid rgba(var(--green-rgb), 0.3);
+    /* Remove the green border */
+    border-bottom: 1px solid var(--background-modifier-border) !important;
 }
 
 .summary-toolbar-container {
-    border-bottom: 2px solid rgba(var(--text-normal-rgb), 0.3);
+    /* Remove the colored border */
+    border-bottom: 1px solid var(--background-modifier-border) !important;
 }
 
 .chat-toolbar-container {
-    border-bottom: 2px solid rgba(var(--text-accent-rgb), 0.3);
+    /* Remove the colored border */
+    border-bottom: 1px solid var(--background-modifier-border) !important;
 }
 
 /* Ensure toolbar buttons stay in a row */
@@ -1096,7 +1210,7 @@ button:not([disabled]):not(.disabled-button) {
 /* Quips dropdown menu */
 .quips-dropdown-menu {
     position: absolute;
-    bottom: 70px; /* Increased distance from bottom to account for larger container */
+    bottom: 130px; /* Increased from 60px by 70px to move up */
     right: 10px;
     background-color: var(--background-primary);
     border-radius: 8px;
@@ -1420,7 +1534,29 @@ div[class*="markdown-preview-view"] {
     margin-bottom: 0.5em;
 }
 
-/* Mobile specific positioning - FINAL FIX */
+/* Mobile specific adjustments for chat container */
+html.is-mobile .chat-container,
+html.is-phone .chat-container,
+.is-mobile .chat-container,
+.is-phone .chat-container,
+body.is-mobile .chat-container,
+.is-tablet .chat-container {
+    padding-bottom: 0 !important; /* No padding */
+    margin-bottom: 60px !important; /* Add margin to create space at bottom */
+    margin-top: 27px !important; /* Reduced by 70px to match desktop adjustment */
+}
+
+html.is-mobile .chat-messages-container,
+html.is-phone .chat-messages-container,
+.is-mobile .chat-messages-container,
+.is-phone .chat-messages-container,
+body.is-mobile .chat-messages-container,
+.is-tablet .chat-messages-container {
+    padding-bottom: 0 !important; /* No padding */
+    margin-bottom: 0 !important; /* Reset negative margin */
+}
+
+/* Mobile-specific positioning - adjust for consistent placement */
 html.is-mobile .tabs-container,
 html.is-mobile body .tabs-container,
 html.is-phone .tabs-container,
@@ -1428,7 +1564,7 @@ html.is-phone .tabs-container,
 .is-phone .tabs-container,
 body.is-mobile .tabs-container,
 .is-tablet .tabs-container {
-    top: 60px !important; /* Increased by 5px from 55px */
+    top: 40px !important; /* Consistent position for mobile */
     position: fixed !important;
     z-index: 200 !important;
 }
@@ -1458,7 +1594,7 @@ body.is-mobile .revised-toolbar-container,
 .is-tablet .transcript-toolbar-container,
 .is-tablet .summary-toolbar-container,
 .is-tablet .revised-toolbar-container {
-    top: 97px !important; /* Increased by 5px from 92px */
+    top: 77px !important; /* Consistent position for mobile */
     position: fixed !important;
     z-index: 1000 !important;
     display: flex !important;
@@ -1498,7 +1634,7 @@ body.is-mobile .chat-container,
 .is-tablet .revised-container,
 .is-tablet .summary-container,
 .is-tablet .chat-container {
-    margin-top: 92px !important; /* Reduced by 5px from 97px */
+    margin-top: 22px !important; /* Reduced by 70px from 92px */
     padding-top: 0 !important;
     overflow-y: auto !important;
     position: relative !important;
@@ -1532,6 +1668,7 @@ body.is-mobile .nav-buttons-container,
 /* Reduce bottom padding for the plugin container */
 div.view-content.skribe-plugin {
     padding-bottom: 12px !important;
+    padding: 0;
 }
 
 /* Add explicit bottom padding to create space above the input container */
@@ -1562,4 +1699,74 @@ body.is-mobile .chat-messages-container,
 .is-tablet .chat-messages-container {
     padding-bottom: 0 !important; /* No padding */
     margin-bottom: -30px !important; /* Negative margin to push down */
+}
+
+/* Override any potential text selection disabling */
+.skribe-plugin,
+.skribe-content-wrapper,
+.chat-container,
+.markdown-preview-view,
+.workspace-leaf-content[data-type="skribe-view"] {
+    user-select: text !important;
+    -webkit-user-select: text !important;
+    -moz-user-select: text !important;
+    -ms-user-select: text !important;
+}
+
+/* Chat toolbar specific overrides to ensure it matches perfectly with other toolbars */
+.chat-toolbar-container {
+    position: fixed !important;
+    top: 147px !important;
+    left: 0 !important;
+    right: 0 !important;
+    z-index: 100 !important;
+    width: 100% !important;
+    height: 50px !important;
+    min-height: 50px !important;
+    max-height: 50px !important;
+    background-color: var(--background-primary) !important;
+    border-bottom: 1px solid var(--background-modifier-border) !important;
+    display: flex !important;
+    visibility: visible !important;
+    opacity: 1 !important;
+    margin: 0 !important;
+    padding: 0 !important;
+    box-shadow: 0 3px 8px rgba(0, 0, 0, 0.1) !important;
+    align-items: center !important;
+}
+
+/* Chat toolbar container special override - repeated for various browser specificity issues */
+.chat-container .chat-toolbar-container,
+body .chat-toolbar-container,
+html body .chat-toolbar-container,
+.workspace-leaf-content .chat-toolbar-container {
+    top: 147px !important;
+    transform: none !important;
+    position: fixed !important;
+}
+
+/* WebKit-specific positioning fix */
+@media screen and (-webkit-min-device-pixel-ratio:0) {
+    /* Removing WebKit-specific overrides for chat toolbar */
+}
+
+/* Firefox-specific fix */
+@-moz-document url-prefix() {
+    /* Removing Firefox-specific overrides for chat toolbar */
+}
+
+/* Fix the chat messages spacing to account for the fixed toolbar */
+.chat-messages-container {
+    margin-top: 50px !important; /* Match the toolbar height */
+    padding-top: 15px !important;
+}
+
+/* UNIFIED CONTENT STYLES - applies to tab content areas while preserving structure */
+.transcript-content,
+.revised-content,
+.summary-content {
+    padding: 15px;
+    margin-top: 50px; /* Space for toolbar */
+    width: 100%;
+    box-sizing: border-box;
 }
