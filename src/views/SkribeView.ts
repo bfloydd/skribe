@@ -254,6 +254,11 @@ export class SkribeView extends ItemView {
 
         // Render chat interface
         this.renderChatInterface();
+        
+        // Add global chat input on non-chat tabs
+        if (this.activeTab !== 'chat') {
+            this.createGlobalChatInput(container);
+        }
     }
 
     private createHeader(container: HTMLElement): HTMLElement {
@@ -400,6 +405,9 @@ export class SkribeView extends ItemView {
             cls: 'transcript-content'
         });
         
+        // Set bottom padding to ensure content doesn't scroll under the chat input
+        transcriptContentEl.style.paddingBottom = this.activeTab !== 'chat' ? '80px' : '0';
+        
         // Add an empty content message if there's no content
         if (!this.content) {
             const emptyMessage = transcriptContentEl.createDiv({
@@ -440,132 +448,97 @@ export class SkribeView extends ItemView {
         });
         modelIndicator.innerText = `Model: ${this.plugin.settings.model}`;
         
-        // Create chat messages container with markdown preview class for consistent styling
+        // Create a single scrollable container for messages
         const chatMessagesContainer = this.chatContainer.createDiv({
             cls: 'chat-messages-container'
         });
         
-        // Add context menu for debugging
+        // Add chat messages
+        this.renderChatMessages(chatMessagesContainer);
+        
+        // Context menu handler to enable text selection
         const contextMenuHandler = (e: MouseEvent) => {
+            // Only proceed if we're not trying to select text
+            if (window.getSelection()?.toString() !== '') {
+                return;
+            }
+        
+            // Create a menu for the message
             const menu = new Menu();
-            menu.addItem((item: MenuItem) => 
-                item.setTitle("Toggle debug scroll mode")
-                    .setIcon("bug")
-                    .onClick(() => this.toggleDebugScrollable())
-            );
             
-            // Add force scroll test item
-            menu.addItem((item: MenuItem) => 
-                item.setTitle("Force scroll test")
-                    .setIcon("arrow-down")
+            menu.addItem((item: MenuItem) => {
+                item
+                    .setTitle("Copy Message")
+                    .setIcon("copy")
                     .onClick(() => {
-                        if (chatMessagesContainer.scrollHeight > chatMessagesContainer.clientHeight) {
-                            // Force scroll to middle
-                            chatMessagesContainer.scrollTop = 300;
-                            setTimeout(() => {
-                                this.checkScrollPosition(chatMessagesContainer);
-                            }, 50);
-                        } else {
-                            new Notice("Container not scrollable. Try enabling debug mode first.");
-                        }
-                    })
-            );
+                        // Find closest message element
+                        const messageEl = (e.target as HTMLElement).closest('.chat-message');
+                        if (!messageEl) return;
+                        
+                        // Get text content
+                        const text = messageEl.textContent;
+                        if (!text) return;
+                        
+                        // Copy to clipboard
+                        navigator.clipboard.writeText(text)
+                            .then(() => {
+                                new Notice('Message copied to clipboard');
+                            })
+                            .catch(err => {
+                                console.error('Error copying message:', err);
+                                new Notice('Failed to copy message');
+                            });
+                    });
+            });
             
             menu.showAtMouseEvent(e);
         };
-        // Register the context menu handler through Obsidian's API for proper cleanup
-        this.registerDomEvent(chatMessagesContainer, 'contextmenu', contextMenuHandler);
         
-        // Add "scroll to bottom" button if not already created
+        // Add context menu handler to messages container
+        chatMessagesContainer.addEventListener('contextmenu', contextMenuHandler);
+        
+        // Add scroll to bottom button (fixed to document body, not inside container)
         if (!this.scrollToBottomButton) {
-            this.scrollToBottomButton = this.chatContainer.createDiv({
-                cls: 'scroll-to-bottom-button',
-                attr: {
-                    'aria-label': 'Scroll to bottom',
-                    'title': 'Scroll to latest messages'
-                }
-            });
-            // Use double-arrow-down for clearer indication of scrolling to bottom
-            setIcon(this.scrollToBottomButton, 'chevrons-down');
+            this.scrollToBottomButton = document.createElement('div');
+            this.scrollToBottomButton.className = 'scroll-to-bottom-button hidden';
+            this.scrollToBottomButton.innerHTML = '<svg viewBox="0 0 24 24"><path fill="currentColor" d="M7.41,8.58L12,13.17L16.59,8.58L18,10L12,16L6,10L7.41,8.58Z"></path></svg>';
+            document.body.appendChild(this.scrollToBottomButton);
             
-            // Initially hide the button
-            this.scrollToBottomButton.style.display = 'none';
-            
-            // Add click handler to scroll to bottom button
-            const scrollButtonHandler = (e: MouseEvent) => {
+            // Scroll button click handler
+            this.scrollToBottomButton.addEventListener('click', (e: MouseEvent) => {
                 e.preventDefault();
                 e.stopPropagation();
                 this.scrollChatToBottom();
-            };
-            // Register the click handler through Obsidian's API for proper cleanup
-            this.registerDomEvent(this.scrollToBottomButton, 'click', scrollButtonHandler);
-            
-            // Force this element to be above everything else
-            this.scrollToBottomButton.style.zIndex = '9999';
+            });
         }
         
-        // Add scroll event listener to detect when user is not at bottom
-        let ticking = false;
+        // Scroll handler to check position
         const scrollHandler = (e: Event) => {
-            if (!ticking) {
-                // Use requestAnimationFrame for better performance
-                window.requestAnimationFrame(() => {
-                    this.checkScrollPosition(chatMessagesContainer);
-                    ticking = false;
-                });
-                ticking = true;
-            }
+            this.checkScrollPosition(chatMessagesContainer);
         };
         
-        // Register the scroll handler through Obsidian's API for proper cleanup
-        this.registerDomEvent(chatMessagesContainer, 'scroll', scrollHandler);
+        // Add scroll event listener
+        chatMessagesContainer.addEventListener('scroll', scrollHandler);
         
-        // Also check scroll position on window resize with debounce
-        let resizeTimeout: number | null = null;
+        // Add resize observer to update scroll button visibility when container resizes
         const resizeHandler = () => {
-            if (this.activeTab === 'chat') {
-                if (resizeTimeout) {
-                    window.clearTimeout(resizeTimeout);
-                }
-                resizeTimeout = window.setTimeout(() => {
-                    this.checkScrollPosition(chatMessagesContainer);
-                }, 100);
-            }
+            this.checkScrollPosition(chatMessagesContainer);
         };
-        this.registerDomEvent(window, 'resize', resizeHandler);
         
-        // Set up a less frequent periodic check for scroll position
-        const intervalId = window.setInterval(() => {
-            if (this.activeTab === 'chat') {
-                const chatMessagesEl = this.chatContainer.querySelector('.chat-messages-container') as HTMLElement;
-                if (chatMessagesEl) {
-                    this.checkScrollPosition(chatMessagesEl);
-                }
-            }
-        }, 500); // Less frequent checks
-        
-        // Register the interval for cleanup when the view is closed
-        this.register(() => {
-            window.clearInterval(intervalId);
-        });
-        
-        // Render chat messages if there are any
-        if (this.chatState.messages.length > 0) {
-            this.renderChatMessages(chatMessagesContainer);
+        // Set up resize observer
+        if (typeof ResizeObserver !== 'undefined') {
+            const resizeObserver = new ResizeObserver(resizeHandler);
+            resizeObserver.observe(chatMessagesContainer);
             
-            // Initial scroll position check after rendering messages
-            setTimeout(() => {
-                this.checkScrollPosition(chatMessagesContainer);
-            }, 100);
-        } else if (this.showQuips && this.plugin.settings.quips.length > 0) {
-            // Show quips cards when chat is empty and quips are available
-            this.renderQuipsCards(chatMessagesContainer);
+            // Store reference to disconnect later
+            this.chatContainer.dataset.resizeObserverId = String(Math.random());
+            (this as any)[`resizeObserver_${this.chatContainer.dataset.resizeObserverId}`] = resizeObserver;
         } else {
-            // Show empty message if no messages and no quips
-            const emptyMessage = chatMessagesContainer.createDiv({
-                cls: 'empty-content-message',
-                text: 'No chat messages yet. Ask a question about the transcript.'
-            });
+            // Fallback for browsers without ResizeObserver
+            window.addEventListener('resize', resizeHandler);
+            
+            // Store reference to remove later
+            this.chatContainer.dataset.hasResizeListener = 'true';
         }
         
         // Create chat input container (at the bottom)
@@ -615,30 +588,29 @@ export class SkribeView extends ItemView {
         // Populate dropdown with quips
         this.populateQuipsDropdown(quipsDropdownMenu);
         
-        // Toggle dropdown on click
+        // Toggle dropdown visibility
         dropdownButton.addEventListener('click', (e) => {
             e.preventDefault();
             e.stopPropagation();
             
-            // Toggle active state
+            // Toggle active class
             dropdownButton.classList.toggle('active');
             
             // Toggle dropdown visibility
             if (quipsDropdownMenu.style.display === 'none') {
                 quipsDropdownMenu.style.display = 'block';
-                // Close dropdown when clicking outside
+                // Add event listener to close when clicking outside
                 document.addEventListener('click', closeDropdown);
             } else {
                 quipsDropdownMenu.style.display = 'none';
-                // Remove event listener
+                // Remove event listener when closing
                 document.removeEventListener('click', closeDropdown);
             }
         });
         
-        // Close dropdown function
+        // Close dropdown when clicking outside
         const closeDropdown = (e: MouseEvent) => {
-            // Check if click is outside dropdown
-            if (!quipsDropdownMenu.contains(e.target as Node) && e.target !== dropdownButton) {
+            if (!dropdownButton.contains(e.target as Node) && !quipsDropdownMenu.contains(e.target as Node)) {
                 quipsDropdownMenu.style.display = 'none';
                 dropdownButton.classList.remove('active');
                 document.removeEventListener('click', closeDropdown);
@@ -660,8 +632,6 @@ export class SkribeView extends ItemView {
             quipsDropdownMenu.style.display = 'none';
             dropdownButton.classList.remove('active');
 
-            console.debug('[Skribe Debug] Sending message: ' + message);
-
             // Add user message to chat
             this.chatState.messages.push({
                 role: 'user',
@@ -674,7 +644,6 @@ export class SkribeView extends ItemView {
 
             // Scroll to bottom
             chatMessagesContainer.scrollTop = chatMessagesContainer.scrollHeight;
-            console.debug(`[Skribe Debug] After sending message - scrollTop: ${chatMessagesContainer.scrollTop}, scrollHeight: ${chatMessagesContainer.scrollHeight}`);
             
             // Force scroll check after sending
             this.checkScrollPosition(chatMessagesContainer);
@@ -684,85 +653,8 @@ export class SkribeView extends ItemView {
                 this.plugin.toolbarService.updateToolbarState(chatToolbarContainer, this.getCommandContext());
             }
 
-            // Get AI response
-            try {
-                // Create a loading spinner message while waiting for the API response
-                const loadingContainer = chatMessagesContainer.createDiv({
-                    cls: 'loading-spinner-container'
-                });
-                
-                const loadingSpinner = loadingContainer.createDiv({
-                    cls: 'loading-spinner'
-                });
-                
-                const loadingMessage = loadingContainer.createDiv({
-                    cls: 'loading-message',
-                    text: 'Thinking...'
-                });
-                
-                // Scroll to show the loading spinner
-                chatMessagesContainer.scrollTop = chatMessagesContainer.scrollHeight;
-                
-                // Use the OpenAI service to get a response
-                const response = await this.plugin.openaiService.chatWithTranscript(
-                    this.chatState.messages,
-                    this.content,
-                    this.videoTitle
-                );
-                
-                // Remove the loading spinner
-                loadingContainer.remove();
-                
-                // Add assistant message to chat
-                this.chatState.messages.push({
-                    role: 'assistant',
-                    content: response
-                });
-                
-                console.debug('[Skribe Debug] Added AI response to chat');
-                
-                // Re-render chat messages
-                chatMessagesContainer.empty();
-                this.renderChatMessages(chatMessagesContainer);
-                
-                // Scroll to bottom
-                chatMessagesContainer.scrollTop = chatMessagesContainer.scrollHeight;
-                this.isAtBottom = true;
-                console.debug(`[Skribe Debug] After AI response - scrollTop: ${chatMessagesContainer.scrollTop}, scrollHeight: ${chatMessagesContainer.scrollHeight}`);
-                
-                // Force check scroll position after adding AI message
-                setTimeout(() => {
-                    this.checkScrollPosition(chatMessagesContainer);
-                }, 100);
-                
-                if (this.scrollToBottomButton) {
-                    this.scrollToBottomButton.style.display = 'none';
-                    console.debug('[Skribe Debug] Hid scroll button after AI response');
-                }
-                
-                // Update toolbar state after assistant message
-                if (chatToolbarContainer) {
-                    this.plugin.toolbarService.updateToolbarState(chatToolbarContainer, this.getCommandContext());
-                }
-            } catch (error) {
-                // Remove the loading spinner if it exists
-                const loadingContainer = chatMessagesContainer.querySelector('.loading-spinner-container');
-                if (loadingContainer) {
-                    loadingContainer.remove();
-                }
-                
-                // Create an error message in the chat
-                const errorContainer = chatMessagesContainer.createDiv({
-                    cls: 'chat-message assistant-message message-error'
-                });
-                
-                errorContainer.createDiv({
-                    text: `Error: ${error instanceof Error ? error.message : 'Failed to get response'}`
-                });
-                
-                // Scroll to show the error message
-                chatMessagesContainer.scrollTop = chatMessagesContainer.scrollHeight;
-            }
+            // Process AI response
+            await this.processAIResponse(chatMessagesContainer);
         };
         
         // Set up event listeners
@@ -772,6 +664,11 @@ export class SkribeView extends ItemView {
                 handleSend();
             }
         });
+        
+        // Initialize scroll position check
+        setTimeout(() => {
+            this.checkScrollPosition(chatMessagesContainer);
+        }, 100);
     }
     
     // Helper to populate the quips dropdown
@@ -846,6 +743,9 @@ export class SkribeView extends ItemView {
     }
 
     private renderChatMessages(container: HTMLElement) {
+        // Clear the container first
+        container.empty();
+        
         // Check if we should show quips
         if (this.showQuips && this.chatState.messages.length === 0) {
             // Show quip cards if any are defined in settings
@@ -890,62 +790,82 @@ export class SkribeView extends ItemView {
             // Show empty state if no quips and no messages
             const emptyMessage = container.createDiv({
                 cls: 'empty-chat-message',
-                text: 'Ask a question...'
+                text: 'Ask a question about the transcript...'
             });
             return;
         }
 
-        // Display existing chat messages with optimized rendering
-        this.chatState.messages.forEach(async (message, index) => {
-            const messageEl = document.createElement('div');
-            messageEl.className = `chat-message ${message.role}-message`;
-            messageEl.style.padding = '10px';
-            messageEl.style.marginBottom = '10px';
-            messageEl.style.backgroundColor = message.role === 'user' 
-                ? 'var(--interactive-accent)' 
-                : 'var(--background-primary)';
-            messageEl.style.color = message.role === 'user' 
-                ? 'var(--text-on-accent)' 
-                : 'var(--text-normal)';
-            messageEl.style.borderRadius = '5px';
-            messageEl.style.alignSelf = message.role === 'user' ? 'flex-end' : 'flex-start';
-            messageEl.style.maxWidth = '80%';
-            // Ensure text is selectable
-            messageEl.setAttribute('aria-readonly', 'true');
-            messageEl.style.userSelect = 'text';
+        // Create a wrapper for messages that ensures they're in sequence
+        const messagesWrapper = container.createDiv({
+            cls: 'chat-messages-wrapper'
+        });
 
-            // For assistant messages, render markdown
-            if (message.role === 'assistant') {
-                const markdownContainer = document.createElement('div');
-                markdownContainer.style.userSelect = 'text';
-                messageEl.appendChild(markdownContainer);
-                
-                await MarkdownRenderer.renderMarkdown(
-                    message.content,
-                    markdownContainer,
-                    this.app.workspace.getActiveFile()?.path || '',
-                    this
-                );
+        // Display messages in sequential order
+        this.chatState.messages.forEach(async (message, index) => {
+            // Create message element with appropriate class
+            const messageEl = messagesWrapper.createDiv({
+                cls: `chat-message ${message.role}-message`
+            });
+
+            // Handle different message types
+            if (message.role === 'user') {
+                // User messages are typically plain text
+                messageEl.setText(message.content);
             } else {
-                messageEl.textContent = message.content;
+                // Assistant messages may contain markdown - render properly
+                try {
+                    await MarkdownRenderer.renderMarkdown(
+                        message.content,
+                        messageEl,
+                        this.app.workspace.getActiveFile()?.path || '',
+                        this
+                    );
+                    
+                    // Ensure links open in a new tab
+                    messageEl.querySelectorAll('a').forEach(a => {
+                        a.setAttribute('target', '_blank');
+                        a.setAttribute('rel', 'noopener noreferrer');
+                    });
+                } catch (error) {
+                    console.error('Error rendering markdown in chat message:', error);
+                    messageEl.setText(message.content); // Fallback to plain text
+                }
             }
             
-            // Append element to container in a single operation
-            container.appendChild(messageEl);
+            // Add a clear fix after each message to ensure proper layout
+            messagesWrapper.createDiv({
+                cls: 'message-clearfix',
+                attr: {
+                    style: 'clear: both; width: 100%;'
+                }
+            });
         });
         
         // Check scroll position after rendering messages
         setTimeout(() => {
             this.checkScrollPosition(container);
+            
+            // Always scroll to bottom when first displaying messages
+            if (container.scrollHeight > container.clientHeight) {
+                container.scrollTop = container.scrollHeight;
+            }
         }, 100);
     }
     
     // Helper method to process AI response
     private async processAIResponse(container: HTMLElement) {
         try {
+            // Find the messages wrapper or create one if needed
+            let messagesWrapper = container.querySelector('.chat-messages-wrapper');
+            if (!messagesWrapper) {
+                messagesWrapper = container.createDiv({
+                    cls: 'chat-messages-wrapper'
+                });
+            }
+            
             // Create a loading spinner message while waiting for the API response
-            const loadingContainer = container.createDiv({
-                cls: 'loading-spinner-container'
+            const loadingContainer = messagesWrapper.createDiv({
+                cls: 'loading-spinner-container assistant-message'
             });
             
             const loadingSpinner = loadingContainer.createDiv({
@@ -955,6 +875,14 @@ export class SkribeView extends ItemView {
             const loadingMessage = loadingContainer.createDiv({
                 cls: 'loading-message',
                 text: 'Thinking...'
+            });
+            
+            // Add clearfix after loading spinner
+            messagesWrapper.createDiv({
+                cls: 'message-clearfix',
+                attr: {
+                    style: 'clear: both; width: 100%;'
+                }
             });
             
             // Scroll to show the loading spinner
@@ -980,16 +908,13 @@ export class SkribeView extends ItemView {
                 content: response
             });
             
-            console.debug('[Skribe Debug] Added AI response to chat');
-            
-            // Re-render chat messages
+            // Re-render chat messages from scratch to ensure correct order
             container.empty();
             this.renderChatMessages(container);
             
             // Scroll to bottom
             container.scrollTop = container.scrollHeight;
             this.isAtBottom = true;
-            console.debug(`[Skribe Debug] After AI response - scrollTop: ${container.scrollTop}, scrollHeight: ${container.scrollHeight}`);
             
             // Force check scroll position after adding AI message
             setTimeout(() => {
@@ -1017,11 +942,6 @@ export class SkribeView extends ItemView {
             const errorContainer = container.createDiv({
                 cls: 'chat-message assistant-message message-error'
             });
-            
-            errorContainer.style.padding = '10px';
-            errorContainer.style.marginBottom = '10px';
-            errorContainer.style.maxWidth = '80%';
-            errorContainer.style.alignSelf = 'flex-start';
             
             errorContainer.setText(`Error: ${error.message || 'Failed to get a response'}`);
             
@@ -1187,6 +1107,9 @@ export class SkribeView extends ItemView {
             cls: 'summary-content'
         });
         
+        // Set bottom padding to ensure content doesn't scroll under the chat input
+        summaryContentContainer.style.paddingBottom = this.activeTab !== 'chat' ? '80px' : '0';
+        
         // Render markdown content
         await MarkdownRenderer.renderMarkdown(
             this.summaryContent,
@@ -1241,6 +1164,9 @@ export class SkribeView extends ItemView {
             const summaryContentContainer = this.summaryContainer.createDiv({
                 cls: 'summary-content'
             });
+            
+            // Set bottom padding to ensure content doesn't scroll under the chat input
+            summaryContentContainer.style.paddingBottom = this.activeTab !== 'chat' ? '80px' : '0';
             
             // Render markdown content immediately
             MarkdownRenderer.renderMarkdown(
@@ -1320,6 +1246,18 @@ export class SkribeView extends ItemView {
             }
         }
         
+        // Manage global chat input
+        // First, remove any existing global chat input
+        const existingGlobalInput = this.containerEl.querySelector('.global-chat-input-container');
+        if (existingGlobalInput) {
+            existingGlobalInput.remove();
+        }
+        
+        // Then, add global chat input on non-chat tabs
+        if (tab !== 'chat') {
+            this.createGlobalChatInput(this.containerEl.children[1] as HTMLElement);
+        }
+        
         // Update tab styles
         this.updateTabsUI();
     }
@@ -1383,6 +1321,9 @@ export class SkribeView extends ItemView {
             cls: 'revised-content'
         });
         
+        // Set bottom padding to ensure content doesn't scroll under the chat input
+        revisedContentEl.style.paddingBottom = this.activeTab !== 'chat' ? '80px' : '0';
+        
         // Render markdown content
         await MarkdownRenderer.renderMarkdown(
             this.revisedContent,
@@ -1440,6 +1381,9 @@ export class SkribeView extends ItemView {
             const revisedContentEl = this.revisedContainer.createDiv({
                 cls: 'revised-content'
             });
+            
+            // Set bottom padding to ensure content doesn't scroll under the chat input
+            revisedContentEl.style.paddingBottom = this.activeTab !== 'chat' ? '80px' : '0';
             
             // Render markdown content immediately
             MarkdownRenderer.renderMarkdown(
@@ -1549,6 +1493,14 @@ export class SkribeView extends ItemView {
             console.log('SkribeView: Cleaned up view references in ToolbarService');
         }
         
+        // Clean up scroll button if it exists
+        if (this.scrollToBottomButton) {
+            if (this.scrollToBottomButton.parentNode) {
+                this.scrollToBottomButton.parentNode.removeChild(this.scrollToBottomButton);
+            }
+            this.scrollToBottomButton = null;
+        }
+        
         // Note: We don't need to manually remove event listeners or clear interval timers
         // as they are registered through Obsidian's register system and will be automatically cleaned up
         
@@ -1619,6 +1571,9 @@ export class SkribeView extends ItemView {
             cls: 'revised-content'
         });
         
+        // Set bottom padding to ensure content doesn't scroll under the chat input
+        revisedContentContainer.style.paddingBottom = this.activeTab !== 'chat' ? '80px' : '0';
+        
         // Add an empty content message if there's no content
         if (!this.revisedContent) {
             const emptyMessage = revisedContentContainer.createDiv({
@@ -1661,6 +1616,9 @@ export class SkribeView extends ItemView {
         const summaryContentContainer = this.summaryContainer.createDiv({
             cls: 'summary-content'
         });
+        
+        // Set bottom padding to ensure content doesn't scroll under the chat input
+        summaryContentContainer.style.paddingBottom = this.activeTab !== 'chat' ? '80px' : '0';
         
         // Add an empty content message if there's no content
         if (!this.summaryContent) {
@@ -1798,7 +1756,7 @@ export class SkribeView extends ItemView {
 
     // Helper to check if user is at bottom of chat and show/hide scroll button
     private checkScrollPosition(container: HTMLElement): void {
-        // Ensure we have a valid container
+        // Ensure we have a valid container and scroll button
         if (!container || !this.scrollToBottomButton) {
             return;
         }
@@ -1813,11 +1771,9 @@ export class SkribeView extends ItemView {
             
             // Show/hide scroll button based on position
             if (atBottom) {
-                this.scrollToBottomButton.style.display = 'none';
+                this.hideScrollButton();
             } else {
-                this.scrollToBottomButton.style.display = 'flex';
-                this.scrollToBottomButton.style.opacity = '1';
-                this.scrollToBottomButton.style.visibility = 'visible';
+                this.showScrollButton();
             }
         }
     }
@@ -1825,29 +1781,34 @@ export class SkribeView extends ItemView {
     // Helper methods to show/hide scroll button with animation
     private showScrollButton(): void {
         if (!this.scrollToBottomButton) return;
+        this.scrollToBottomButton.classList.remove('hidden');
         this.scrollToBottomButton.style.display = 'flex';
         this.scrollToBottomButton.style.opacity = '1';
         this.scrollToBottomButton.style.visibility = 'visible';
+        this.scrollToBottomButton.style.pointerEvents = 'auto';
     }
     
     private hideScrollButton(): void {
         if (!this.scrollToBottomButton) return;
+        this.scrollToBottomButton.classList.add('hidden');
         this.scrollToBottomButton.style.display = 'none';
+        this.scrollToBottomButton.style.pointerEvents = 'none';
     }
     
     // Helper to scroll chat to bottom
     private scrollChatToBottom(): void {
+        // Find the chat messages container directly
         const chatMessagesContainer = this.chatContainer.querySelector('.chat-messages-container') as HTMLElement;
-        if (chatMessagesContainer) {
-            // Use smooth scrolling for better UX
-            chatMessagesContainer.scrollTo({
-                top: chatMessagesContainer.scrollHeight,
-                behavior: 'smooth'
-            });
-            
-            this.isAtBottom = true;
-            this.hideScrollButton();
-        }
+        if (!chatMessagesContainer) return;
+        
+        // Use smooth scrolling for better UX
+        chatMessagesContainer.scrollTo({
+            top: chatMessagesContainer.scrollHeight,
+            behavior: 'smooth'
+        });
+        
+        this.isAtBottom = true;
+        this.hideScrollButton();
     }
 
     // For debugging - adds the debug class to force scrolling
@@ -1944,6 +1905,85 @@ export class SkribeView extends ItemView {
                 tabEl.classList.remove('active');
                 tabEl.style.borderBottom = '2px solid transparent';
                 tabEl.style.fontWeight = 'normal';
+            }
+        });
+    }
+
+    /**
+     * Ensures the chat interface is properly initialized and processes a message
+     * Used when submitting messages from the global chat input
+     */
+    private async ensureChatInterfaceAndProcessMessage(message: string) {
+        // Add user message to chat state
+        this.chatState.messages.push({
+            role: 'user',
+            content: message
+        });
+        
+        // Switch to chat tab first
+        this.switchToTab('chat');
+        
+        // Delay to allow the tab switch to complete
+        setTimeout(async () => {
+            // If we needed to refresh the view, the chat interface might not be ready yet
+            if (!this.chatContainer) {
+                await this.refresh();
+            }
+            
+            // Now we can be sure the chat interface exists, render it
+            this.renderChatInterface();
+            
+            // Get the chat messages container
+            const chatMessagesContainer = this.chatContainer?.querySelector('.chat-messages-container') as HTMLElement;
+            if (chatMessagesContainer) {
+                // Process AI response
+                await this.processAIResponse(chatMessagesContainer);
+            } else {
+                console.error('Chat messages container not found after refresh');
+            }
+        }, 100);
+    }
+
+    private createGlobalChatInput(container: HTMLElement) {
+        // Create global chat input container at the bottom
+        const globalChatInputContainer = container.createDiv({
+            cls: 'global-chat-input-container'
+        });
+        
+        // Create chat input
+        const globalChatInput = globalChatInputContainer.createEl('input', {
+            cls: 'chat-input',
+            attr: {
+                type: 'text',
+                placeholder: 'Ask a question about this content...'
+            }
+        });
+        
+        // Create send button
+        const globalSendButton = globalChatInputContainer.createEl('button', {
+            cls: 'chat-send-button'
+        });
+        
+        // Add send icon
+        setIcon(globalSendButton, 'arrow-right');
+        
+        // Handle send button click - switches to chat tab and submits message
+        const handleGlobalSend = async () => {
+            const message = globalChatInput.value.trim();
+            if (!message) return;
+            
+            // Clear input
+            globalChatInput.value = '';
+            
+            // Use the helper method to ensure chat interface and process message
+            this.ensureChatInterfaceAndProcessMessage(message);
+        };
+        
+        // Set up event listeners
+        globalSendButton.addEventListener('click', handleGlobalSend);
+        globalChatInput.addEventListener('keydown', (e) => {
+            if (e.key === 'Enter') {
+                handleGlobalSend();
             }
         });
     }

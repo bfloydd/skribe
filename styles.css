@@ -95,6 +95,8 @@
     min-height: 0; /* Crucial for flex child scrolling */
     padding-top: 0; /* No padding needed, containers handle this */
     position: relative; /* Create positioning context */
+    padding-bottom: 90px !important;
+    overflow-y: auto !important;
 }
 
 /* UNIFIED TAB CONTAINER STYLES - applies to ALL tab containers but preserves separate content */
@@ -109,9 +111,11 @@
     box-sizing: border-box;
     padding: 0;
     margin: 0;
-    margin-top: 97px; /* Same for all tabs - space for tabs and toolbar */
+    margin-top: 97px; /* Same for all tabs */
     background-color: var(--background-primary);
     /* No display:none here - JS handles this */
+    padding-bottom: 70px !important;
+    margin-bottom: 20px !important;
 }
 
 /* Remove active container classes since JS handles visibility */
@@ -158,18 +162,77 @@
 /* Chat specific container structure - needs to handle the input area */
 .chat-container {
     position: relative;
-    display: flex; /* Needed for proper chat layout */
-    flex-direction: column; /* Stack messages and input */
-    overflow: hidden; /* Contain the scrollable messages area */
+    display: flex;
+    flex-direction: column;
+    height: 100%;
+    overflow: hidden !important; /* Prevent outer scrollbar */
 }
 
-/* Chat messages container needs to scroll within chat container */
+/* Chat messages container - ensure proper sequential order */
 .chat-messages-container {
-    flex: 1; /* Take remaining space */
-    overflow-y: auto; /* Allow scrolling */
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+    overflow-y: auto !important;
+    overflow-x: hidden !important;
     padding: 15px;
-    padding-bottom: 70px; /* Space for input */
-    margin-top: 50px; /* Space for toolbar */
+    padding-bottom: 70px;
+    margin-top: 0;
+    background-color: var(--background-primary);
+    width: 100%;
+    box-sizing: border-box;
+}
+
+/* Chat message styling */
+.chat-message {
+    padding: 12px 16px;
+    border-radius: 18px;
+    max-width: 70%;
+    word-wrap: break-word;
+    overflow-wrap: break-word;
+    margin-bottom: 15px;
+    user-select: text;
+    -webkit-user-select: text;
+    box-shadow: 0 1px 2px rgba(0, 0, 0, 0.1);
+    line-height: 1.5;
+    clear: both;
+}
+
+.user-message {
+    background-color: var(--interactive-accent);
+    color: var(--text-on-accent);
+    border-bottom-right-radius: 4px;
+    margin-left: auto;
+    align-self: flex-end;
+    float: right;
+}
+
+.assistant-message {
+    background-color: var(--background-secondary);
+    color: var(--text-normal);
+    border-bottom-left-radius: 4px;
+    margin-right: auto;
+    align-self: flex-start;
+    float: left;
+}
+
+/* Ensure markdown content in chat messages is properly styled */
+.assistant-message p {
+    margin: 0 0 10px 0;
+}
+
+.assistant-message p:last-child {
+    margin-bottom: 0;
+}
+
+.assistant-message ul, 
+.assistant-message ol {
+    margin: 10px 0;
+    padding-left: 20px;
+}
+
+.assistant-message li {
+    margin-bottom: 5px;
 }
 
 /* Toolbar styling */
@@ -393,7 +456,7 @@ div.nav-folder-content.markdown-preview-view {
 
 /* Fix the chat messages spacing to account for the fixed toolbar */
 .chat-messages-container {
-    margin-top: 50px !important; /* Match the toolbar height */
+    margin-top: 0 !important; /* Match the toolbar height */
     padding-top: 15px !important;
 }
 
@@ -463,14 +526,14 @@ div.nav-folder-content.markdown-preview-view {
     box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
 }
 
-/* Chat message styles */
+/* Chat message styling */
 .chat-message {
     padding: 10px;
     border-radius: 5px;
     max-width: 80%;
     word-wrap: break-word;
     overflow-wrap: break-word;
-    margin: 0 10px;
+    margin: 0 10px 10px;
     user-select: text;
     -webkit-user-select: text;
     -moz-user-select: text;
@@ -533,7 +596,7 @@ div.nav-folder-content.markdown-preview-view {
 /* Scroll to bottom button */
 .scroll-to-bottom-button {
     position: fixed;
-    bottom: 130px; /* Adjusted to match input container placement */
+    bottom: 130px;
     right: 20px;
     width: 46px;
     height: 46px;
@@ -543,19 +606,14 @@ div.nav-folder-content.markdown-preview-view {
     display: flex;
     justify-content: center;
     align-items: center;
-    box-shadow: 0 3px 12px rgba(0, 0, 0, 0.3), 
-                0 0 20px rgba(var(--interactive-accent-rgb), 0.4),
-                inset 0 1px 1px rgba(255, 255, 255, 0.2);
+    box-shadow: 0 3px 12px rgba(0, 0, 0, 0.3);
     border: 1px solid rgba(255, 255, 255, 0.2);
     cursor: pointer;
-    z-index: 1000;
+    z-index: 1100 !important; /* Higher z-index to ensure clickability */
     transition: transform 0.15s cubic-bezier(0.175, 0.885, 0.32, 1.275), 
                 opacity 0.15s ease-out, 
                 box-shadow 0.15s ease-out;
-    will-change: transform, opacity;
-    transform: scale(1) translateZ(0);
-    opacity: 1;
-    pointer-events: auto;
+    pointer-events: auto !important;
 }
 
 /* Hidden class for the scroll button */
@@ -655,58 +713,87 @@ html.is-phone .scroll-to-bottom-button {
     height: 42px;
 }
 
-/* Chat input container */
-.chat-input-container {
+/* Global chat input container that appears on all tabs */
+.global-chat-input-container {
     position: fixed;
     bottom: 0;
     left: 0;
     right: 0;
     width: 100%;
-    padding: 10px;
+    padding: 10px 15px;
     background-color: var(--background-primary);
     border-top: 1px solid var(--background-modifier-border);
-    z-index: 90;
+    z-index: 100;
     display: flex;
     align-items: center;
+    box-shadow: 0 -2px 10px rgba(0, 0, 0, 0.1);
 }
 
 /* Adjust for status bar in Obsidian */
-.workspace-leaf-content[data-type="skribe-view"] .chat-input-container {
-    bottom: var(--status-bar-height, 22px); /* Align with status bar */
-    padding-right: 10px;
+.workspace-leaf-content[data-type="skribe-view"] .global-chat-input-container {
+    bottom: var(--status-bar-height, 22px);
 }
 
+/* Chat input styling */
 .chat-input {
     flex-grow: 1;
-    padding: 8px;
-    border-radius: 4px;
+    padding: 10px 12px;
+    border-radius: 20px;
     border: 1px solid var(--background-modifier-border);
-    background-color: var(--background-primary);
+    background-color: var(--background-secondary);
     color: var(--text-normal);
-    height: 36px; /* Fixed height to match buttons */
-    box-sizing: border-box; /* Include padding in height calculation */
+    height: 40px;
+    box-sizing: border-box;
+    transition: all 0.2s ease;
+    box-shadow: 0 1px 3px rgba(0, 0, 0, 0.05);
 }
 
+.chat-input:focus {
+    border-color: var(--interactive-accent);
+    outline: none;
+    box-shadow: 0 0 0 2px rgba(var(--interactive-accent-rgb), 0.2);
+}
+
+/* Chat send button with better styling */
 .chat-send-button {
-    padding: 8px 16px;
-    border-radius: 4px;
+    padding: 0;
+    width: 40px;
+    height: 40px;
+    border-radius: 50%;
     background-color: var(--interactive-accent);
     color: var(--text-on-accent);
     cursor: pointer;
     border: none;
-    font-weight: bold;
+    margin-left: 8px;
     display: flex;
     justify-content: center;
     align-items: center;
-}
-
-.chat-send-button svg {
-    width: 18px;
-    height: 18px;
+    transition: all 0.2s ease;
+    box-shadow: 0 1px 3px rgba(0, 0, 0, 0.2);
 }
 
 .chat-send-button:hover {
-    opacity: 0.9;
+    transform: translateY(-1px);
+    box-shadow: 0 3px 5px rgba(0, 0, 0, 0.2);
+    opacity: 0.95;
+}
+
+.chat-send-button:active {
+    transform: translateY(1px);
+    box-shadow: 0 1px 2px rgba(0, 0, 0, 0.2);
+}
+
+.chat-send-button svg {
+    width: 20px;
+    height: 20px;
+}
+
+/* Add extra bottom padding to content containers to accommodate the global chat input */
+.transcript-container, 
+.revised-container,
+.summary-container,
+.chat-container {
+    padding-bottom: 70px;
 }
 
 .empty-chat-message {
@@ -953,7 +1040,7 @@ button:not([disabled]):not(.disabled-button) {
 .revised-content,
 .summary-content,
 .chat-messages-container {
-    margin-top: 50px !important; /* Consistent margin for content below toolbar */
+    margin-top: 0 !important; /* Consistent margin for content below toolbar */
     padding-top: 15px !important; /* Consistent padding at the top */
     padding-left: 15px !important;
     padding-right: 15px !important;
@@ -1110,43 +1197,44 @@ button:not([disabled]):not(.disabled-button) {
     text-align: center;
 }
 
-/* Chat quips cards */
+/* Chat quips cards - smaller and more compact */
 .quips-cards-container {
     display: flex;
     flex-wrap: wrap;
-    gap: 10px;
-    padding: 15px;
+    gap: 8px;
+    padding: 10px;
     justify-content: center;
 }
 
 .quip-card {
     background-color: var(--background-secondary);
     border-radius: 8px;
-    padding: 12px;
+    padding: 8px 12px;
     cursor: pointer;
-    max-width: 300px;
-    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+    max-width: 200px;
+    box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
     transition: transform 0.2s ease, box-shadow 0.2s ease;
-    border-left: 3px solid var(--interactive-accent);
+    border-left: 2px solid var(--interactive-accent);
+    font-size: 0.9em;
 }
 
 .quip-card:hover {
-    transform: translateY(-2px);
-    box-shadow: 0 4px 8px rgba(0, 0, 0, 0.15);
+    transform: translateY(-1px);
+    box-shadow: 0 2px 5px rgba(0, 0, 0, 0.15);
     background-color: var(--background-secondary-alt);
 }
 
 .quip-card-text {
-    font-size: 0.95em;
+    font-size: 0.9em;
     color: var(--text-normal);
     word-break: break-word;
 }
 
-/* Empty quips message */
-.no-quips-message {
-    color: var(--text-muted);
-    text-align: center;
-    margin: 10px 0;
+/* Fix for any remaining style issues */
+.chat-messages-container::after {
+    content: '';
+    clear: both;
+    display: table;
 }
 
 /* Ensure modal button with icon is properly styled */
@@ -1314,25 +1402,28 @@ button:not([disabled]):not(.disabled-button) {
 .loading-spinner-container {
     display: flex;
     align-items: center;
-    justify-content: center;
-    padding: 20px;
-    margin: 10px;
+    padding: 12px 16px;
+    border-radius: 18px;
+    background-color: var(--background-secondary-alt);
+    margin-bottom: 15px;
+    margin-right: auto;
     align-self: flex-start;
+    max-width: 70%;
 }
 
 .loading-spinner {
-    width: 24px;
-    height: 24px;
-    border: 3px solid var(--background-modifier-border);
+    width: 16px;
+    height: 16px;
+    border: 2px solid var(--text-muted);
+    border-bottom-color: transparent;
     border-radius: 50%;
-    border-top-color: var(--text-accent);
+    display: inline-block;
     animation: spin 1s linear infinite;
+    margin-right: 10px;
 }
 
 .loading-message {
     color: var(--text-muted);
-    margin-left: 10px;
-    font-style: italic;
 }
 
 @keyframes spin {
@@ -1505,13 +1596,36 @@ div[class*="markdown-preview-view"] {
     box-shadow: 0 2px 4px rgba(0, 0, 0, 0.05);
 }
 
-/* Chat container layout */
+/* Chat container layout - remove scrolling from this container */
 .chat-container {
     position: relative;
     display: flex;
     flex-direction: column;
     height: 100%;
-    overflow: hidden;
+    overflow: hidden !important; /* Prevent outer scrollbar */
+}
+
+/* Make only the messages container scrollable */
+.chat-messages-container {
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+    overflow-y: auto !important;
+    overflow-x: hidden !important;
+    padding: 15px;
+    padding-bottom: 70px;
+    margin-top: 0;
+    background-color: var(--background-primary);
+    width: 100%;
+    box-sizing: border-box;
+}
+
+/* Chat messages wrapper - ensure proper layout without scrolling */
+.chat-messages-wrapper {
+    width: 100%;
+    display: block;
+    min-height: 100%;
+    overflow: visible !important;
 }
 
 /* Revised content styling */
@@ -1757,7 +1871,7 @@ html body .chat-toolbar-container,
 
 /* Fix the chat messages spacing to account for the fixed toolbar */
 .chat-messages-container {
-    margin-top: 50px !important; /* Match the toolbar height */
+    margin-top: 0 !important; /* Match the toolbar height */
     padding-top: 15px !important;
 }
 
@@ -1766,7 +1880,142 @@ html body .chat-toolbar-container,
 .revised-content,
 .summary-content {
     padding: 15px;
-    margin-top: 50px; /* Space for toolbar */
     width: 100%;
     box-sizing: border-box;
+}
+
+/* Ensure content areas have proper padding and don't scroll under the input */
+.transcript-content, 
+.revised-content,
+.summary-content {
+    padding-bottom: 90px !important; /* Add extra bottom padding to content areas */
+}
+
+/* Adjust the main content containers to ensure proper rendering of scrollable content */
+.transcript-container, 
+.revised-container,
+.summary-container,
+.chat-container {
+    position: relative;
+    overflow-y: auto;
+    height: 100%;
+    margin-bottom: 0 !important;
+    box-sizing: border-box;
+}
+
+/* Ensure global chat input is always on top */
+.global-chat-input-container {
+    z-index: 1000;
+    box-shadow: 0 -2px 10px rgba(0, 0, 0, 0.1);
+}
+
+/* Ensure paragraphs and other content don't get hidden */
+.transcript-paragraph:last-child,
+.revised-content > *:last-child,
+.summary-content > *:last-child {
+    margin-bottom: 100px !important; /* Extra margin on last content elements */
+}
+
+/* Add extra margin for messages to prevent being hidden behind input */
+.chat-message:last-child {
+    margin-bottom: 30px !important;
+}
+
+/* Chat input container styling */
+.chat-input-container {
+    position: fixed;
+    bottom: 0;
+    left: 0;
+    right: 0;
+    width: 100%;
+    padding: 10px 15px;
+    background-color: var(--background-primary);
+    border-top: 1px solid var(--background-modifier-border);
+    z-index: 100;
+    display: flex;
+    align-items: center;
+    box-shadow: 0 -2px 10px rgba(0, 0, 0, 0.1);
+}
+
+/* Adjust for status bar in Obsidian */
+.workspace-leaf-content[data-type="skribe-view"] .chat-input-container {
+    bottom: var(--status-bar-height, 22px);
+}
+
+/* Loading spinner styling */
+.loading-spinner-container {
+    display: flex;
+    align-items: center;
+    padding: 12px 16px;
+    border-radius: 18px;
+    background-color: var(--background-secondary-alt);
+    margin-bottom: 15px;
+    margin-right: auto;
+    align-self: flex-start;
+    max-width: 70%;
+}
+
+.loading-spinner {
+    width: 16px;
+    height: 16px;
+    border: 2px solid var(--text-muted);
+    border-bottom-color: transparent;
+    border-radius: 50%;
+    display: inline-block;
+    animation: spin 1s linear infinite;
+    margin-right: 10px;
+}
+
+.loading-message {
+    color: var(--text-muted);
+}
+
+@keyframes spin {
+    0% { transform: rotate(0deg); }
+    100% { transform: rotate(360deg); }
+}
+
+/* Fix empty message styling */
+.empty-chat-message {
+    color: var(--text-muted);
+    text-align: center;
+    padding: 20px;
+    font-style: italic;
+}
+
+/* Message clearfix */
+.message-clearfix {
+    clear: both;
+    width: 100%;
+    height: 1px;
+    margin: 0;
+    padding: 0;
+}
+
+/* Loading spinner container styling */
+.loading-spinner-container {
+    padding: 12px 16px;
+    margin-bottom: 15px;
+    margin-right: auto;
+    display: flex;
+    align-items: center;
+    border-radius: 18px;
+    background-color: var(--background-secondary-alt);
+    border-bottom-left-radius: 4px;
+    max-width: 70%;
+}
+
+.loading-spinner {
+    width: 16px;
+    height: 16px;
+    border: 2px solid var(--text-muted);
+    border-bottom-color: transparent;
+    border-radius: 50%;
+    display: inline-block;
+    animation: spin 1s linear infinite;
+    margin-right: 10px;
+}
+
+.loading-message {
+    color: var(--text-muted);
 }
