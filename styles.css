@@ -1201,21 +1201,34 @@ button:not([disabled]):not(.disabled-button) {
 .quips-cards-container {
     display: flex;
     flex-wrap: wrap;
-    gap: 8px;
-    padding: 10px;
+    gap: 6px;
+    padding: 6px;
     justify-content: center;
+    margin-top: 0;
+    margin-bottom: 10px;
+    max-height: 36px;
+    overflow-y: hidden;
+    align-content: flex-start;
 }
 
 .quip-card {
     background-color: var(--background-secondary);
-    border-radius: 8px;
-    padding: 8px 12px;
+    border-radius: 6px;
+    padding: 4px 10px;
     cursor: pointer;
     max-width: 200px;
-    box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
+    box-shadow: 0 1px 2px rgba(0, 0, 0, 0.1);
     transition: transform 0.2s ease, box-shadow 0.2s ease;
     border-left: 2px solid var(--interactive-accent);
-    font-size: 0.9em;
+    line-height: 1.2;
+    margin: 2px;
+    height: auto;
+    max-height: 24px;
+    display: flex;
+    align-items: center;
+    padding-top: 2px;
+    padding-bottom: 2px;
+    overflow: hidden;
 }
 
 .quip-card:hover {
@@ -1225,9 +1238,13 @@ button:not([disabled]):not(.disabled-button) {
 }
 
 .quip-card-text {
-    font-size: 0.9em;
     color: var(--text-normal);
     word-break: break-word;
+    margin: 0;
+    padding: 0;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
 }
 
 /* Fix for any remaining style issues */

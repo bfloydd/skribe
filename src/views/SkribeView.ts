@@ -1528,6 +1528,9 @@ export class SkribeView extends ItemView {
         this.chatState.messages = [];
         this.showQuips = true; // Show quips again when chat is cleared
         
+        // Save state after clearing messages
+        this.saveState();
+        
         if (this.chatContainer) {
             const chatMessagesContainer = this.chatContainer.querySelector('.chat-messages-container') as HTMLElement;
             if (chatMessagesContainer) {
@@ -1780,12 +1783,39 @@ export class SkribeView extends ItemView {
             
             // Refresh the view with the restored state
             this.refresh();
+            
+            // Force update all toolbar states after refresh completes
+            setTimeout(() => {
+                this.updateAllToolbarStates();
+                console.log('%c[Skribe] Toolbar states updated after restore', 'background: #FF9800; color: white; padding: 5px; font-weight: bold;');
+            }, 100);
+            
             console.log('%c[Skribe] View refreshed with restored state', 'background: #9C27B0; color: white; padding: 5px; font-weight: bold;');
             return true;
         } catch (error) {
             console.error('Error restoring saved state:', error);
             return false;
         }
+    }
+
+    /**
+     * Update all toolbar states to ensure buttons are properly enabled/disabled
+     * Called after loading state from data.json
+     */
+    private updateAllToolbarStates(): void {
+        // Get fresh command context
+        const context = this.getCommandContext();
+        
+        // Update each toolbar container if it exists
+        const toolbarIds = ['transcript', 'revised', 'summary', 'chat'];
+        
+        toolbarIds.forEach(id => {
+            const container = this.containerEl.querySelector(`.${id}-toolbar-container`) as HTMLElement;
+            if (container) {
+                this.plugin.toolbarService.updateToolbarState(container, context);
+                console.log(`Updated toolbar state for: ${id}`);
+            }
+        });
     }
 
     // Helper to check if user is at bottom of chat and show/hide scroll button
