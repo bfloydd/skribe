@@ -241,10 +241,11 @@ export class SkribeView extends ItemView {
         this.summaryContainer.style.display = this.activeTab === 'summary' ? 'block' : 'none';
         this.chatContainer.style.display = this.activeTab === 'chat' ? 'block' : 'none';
 
-        // Only render the active tab initially to improve performance
-        if (this.activeTab === 'transcript') {
-            await this.renderTranscriptToolbar();
-        } else if (this.activeTab === 'revised') {
+        // Always render transcript content if it exists
+        await this.renderTranscriptToolbar();
+        
+        // Render active tab content if different from transcript
+        if (this.activeTab === 'revised') {
             await this.renderRevisedToolbar();
             if (this.revisedContent) {
                 await this.renderRevisedContent();
@@ -256,6 +257,19 @@ export class SkribeView extends ItemView {
             }
         } else if (this.activeTab === 'chat') {
             this.renderChatInterface();
+        }
+        
+        // Ensure content is initialized for non-active tabs except transcript (already rendered)
+        if (this.activeTab !== 'revised' && this.revisedContent) {
+            // Create toolbar for revised tab even if not active
+            await this.renderRevisedToolbar();
+            await this.renderRevisedContent();
+        }
+        
+        if (this.activeTab !== 'summary' && this.summaryContent) {
+            // Create toolbar for summary tab even if not active
+            await this.renderSummaryToolbar();
+            await this.renderSummaryContent();
         }
         
         // Add global chat input on non-chat tabs
@@ -1538,13 +1552,23 @@ export class SkribeView extends ItemView {
     // Add a method to clear revised content
     public clearRevised() {
         this.revisedContent = '';
-        this.refresh();
+        // Save state after clearing content
+        this.saveState();
+        // Only re-render the revised container
+        if (this.revisedContainer) {
+            this.renderRevisedToolbar();
+        }
     }
 
     // Add a method to clear summary content
     public clearSummary() {
         this.summaryContent = '';
-        this.refresh();
+        // Save state after clearing content
+        this.saveState();
+        // Only re-render the summary container
+        if (this.summaryContainer) {
+            this.renderSummaryToolbar();
+        }
     }
 
     // New method to render just the Revised toolbar
@@ -1724,9 +1748,10 @@ export class SkribeView extends ItemView {
             return false;
         }
         
-        console.log('Loading saved state', {
+        console.log('%c[Skribe] Loading saved state from data.json', 'background: #4CAF50; color: white; padding: 5px; font-weight: bold;', {
             hasContent: !!savedState.content,
             contentLength: savedState.content.length,
+            contentPreview: savedState.content.substring(0, 50) + '...',
             videoUrl: savedState.videoUrl,
             videoTitle: savedState.videoTitle?.substring(0, 30) + '...',
             activeTab: savedState.activeTab,
@@ -1746,9 +1771,16 @@ export class SkribeView extends ItemView {
             this.chatState = savedState.chatState || { messages: [] };
             this.activeTab = savedState.activeTab || 'transcript';
             
+            // Log what content was set
+            console.log('%c[Skribe] State restored to memory', 'background: #2196F3; color: white; padding: 5px; font-weight: bold;', {
+                contentLength: this.content.length,
+                contentPreview: this.content.substring(0, 50) + '...',
+                activeTab: this.activeTab
+            });
+            
             // Refresh the view with the restored state
             this.refresh();
-            console.log('State restored successfully, activeTab:', this.activeTab);
+            console.log('%c[Skribe] View refreshed with restored state', 'background: #9C27B0; color: white; padding: 5px; font-weight: bold;');
             return true;
         } catch (error) {
             console.error('Error restoring saved state:', error);
