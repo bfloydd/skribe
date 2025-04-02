@@ -1213,9 +1213,10 @@ button:not([disabled]):not(.disabled-button) {
     justify-content: center;
     margin-top: 0;
     margin-bottom: 10px;
-    max-height: 36px;
-    overflow-y: hidden;
+    max-height: none; /* Remove fixed height constraint */
+    overflow-y: visible; /* Allow container to expand */
     align-content: flex-start;
+    position: relative;
 }
 
 .quip-card {
@@ -1254,12 +1255,33 @@ button:not([disabled]):not(.disabled-button) {
     text-overflow: ellipsis;
 }
 
-/* Fix for any remaining style issues */
-.chat-messages-container::after {
-    content: '';
-    clear: both;
-    display: table;
+/* Responsive adjustments for quips */
+@media (max-width: 768px) {
+    .quips-cards-container {
+        justify-content: flex-start; /* Left align on smaller screens */
+        max-height: none; /* Ensure no height restriction */
+    }
+    
+    .quip-card {
+        max-width: 150px; /* Smaller cards on mobile */
+    }
 }
+
+/* Extra small screens */
+@media (max-width: 480px) {
+    .quips-cards-container {
+        padding: 4px;
+        gap: 4px;
+    }
+    
+    .quip-card {
+        max-width: 120px; /* Even smaller on very small screens */
+        padding: 3px 8px;
+        margin: 1px;
+    }
+}
+
+/* Remove explicit scrollbar styling */
 
 /* Ensure modal button with icon is properly styled */
 .skribe-modal-button svg {
