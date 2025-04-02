@@ -72,6 +72,9 @@ export class SkribeView extends ItemView {
             this.chatState.videoTitle = videoTitle;
         }
         
+        // Always set active tab to transcript for new content
+        this.activeTab = 'transcript';
+        
         // Save state when content is set
         this.saveState();
         
@@ -238,22 +241,22 @@ export class SkribeView extends ItemView {
         this.summaryContainer.style.display = this.activeTab === 'summary' ? 'block' : 'none';
         this.chatContainer.style.display = this.activeTab === 'chat' ? 'block' : 'none';
 
-        // Always render all toolbars
-        await this.renderTranscriptToolbar();
-        await this.renderRevisedToolbar();
-        await this.renderSummaryToolbar();
-
-        // If there's actual content, render it
-        if (this.revisedContent) {
-            await this.renderRevisedContent();
+        // Only render the active tab initially to improve performance
+        if (this.activeTab === 'transcript') {
+            await this.renderTranscriptToolbar();
+        } else if (this.activeTab === 'revised') {
+            await this.renderRevisedToolbar();
+            if (this.revisedContent) {
+                await this.renderRevisedContent();
+            }
+        } else if (this.activeTab === 'summary') {
+            await this.renderSummaryToolbar();
+            if (this.summaryContent) {
+                await this.renderSummaryContent();
+            }
+        } else if (this.activeTab === 'chat') {
+            this.renderChatInterface();
         }
-        
-        if (this.summaryContent) {
-            await this.renderSummaryContent();
-        }
-
-        // Render chat interface
-        this.renderChatInterface();
         
         // Add global chat input on non-chat tabs
         if (this.activeTab !== 'chat') {
@@ -336,26 +339,18 @@ export class SkribeView extends ItemView {
         // Add click handlers
         transcriptTab.addEventListener('click', () => {
             this.switchToTab('transcript');
-            // Refresh the view to update toolbars
-            this.refresh();
         });
         
         revisedTab.addEventListener('click', () => {
             this.switchToTab('revised');
-            // Refresh the view to update toolbars
-            this.refresh();
         });
         
         summaryTab.addEventListener('click', () => {
             this.switchToTab('summary');
-            // Refresh the view to update toolbars
-            this.refresh();
         });
         
         chatTab.addEventListener('click', () => {
             this.switchToTab('chat');
-            // Refresh the view to update toolbars
-            this.refresh();
         });
     }
     
@@ -1202,9 +1197,9 @@ export class SkribeView extends ItemView {
         if (this.revisedContainer) {
             this.revisedContainer.style.display = tab === 'revised' ? 'block' : 'none';
             
-            // Ensure the revised tab has a toolbar when switching to it
-            if (tab === 'revised' && !this.revisedContent) {
-                // If there's no content and we're switching to it, ensure toolbar is shown
+            // Only render revised toolbar if it's not already rendered
+            if (tab === 'revised' && !this.revisedContent && 
+                !this.revisedContainer.querySelector('.revised-toolbar-container')) {
                 this.renderRevisedToolbar();
             }
         }
@@ -1212,9 +1207,9 @@ export class SkribeView extends ItemView {
         if (this.summaryContainer) {
             this.summaryContainer.style.display = tab === 'summary' ? 'block' : 'none';
             
-            // Ensure the summary tab has a toolbar when switching to it
-            if (tab === 'summary' && !this.summaryContent) {
-                // If there's no content and we're switching to it, ensure toolbar is shown
+            // Only render summary toolbar if it's not already rendered
+            if (tab === 'summary' && !this.summaryContent && 
+                !this.summaryContainer.querySelector('.summary-toolbar-container')) {
                 this.renderSummaryToolbar();
             }
         }
@@ -1224,6 +1219,13 @@ export class SkribeView extends ItemView {
             
             // Focus on chat input when switching to chat tab
             if (tab === 'chat') {
+                // Check if chat interface needs to be rendered
+                const needsRendering = !this.chatContainer.querySelector('.chat-messages-container');
+                
+                if (needsRendering) {
+                    this.renderChatInterface();
+                }
+                
                 // Use setTimeout to ensure the focus happens after the display change
                 setTimeout(() => {
                     // Try the stored reference first
@@ -1253,9 +1255,12 @@ export class SkribeView extends ItemView {
             existingGlobalInput.remove();
         }
         
-        // Then, add global chat input on non-chat tabs
+        // Then, add global chat input on non-chat tabs if it doesn't exist yet
         if (tab !== 'chat') {
-            this.createGlobalChatInput(this.containerEl.children[1] as HTMLElement);
+            const mainContainer = this.containerEl.children[1] as HTMLElement;
+            if (!mainContainer.querySelector('.global-chat-input-container')) {
+                this.createGlobalChatInput(mainContainer);
+            }
         }
         
         // Update tab styles
