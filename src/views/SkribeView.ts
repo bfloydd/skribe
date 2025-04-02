@@ -1186,9 +1186,6 @@ export class SkribeView extends ItemView {
         // Update active tab state
         this.activeTab = tab;
         
-        // Save state when tab is switched
-        this.saveState();
-        
         // Update container visibility
         if (this.transcriptContainer) {
             this.transcriptContainer.style.display = tab === 'transcript' ? 'block' : 'none';
