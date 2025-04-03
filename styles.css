@@ -31,7 +31,7 @@
     align-items: center;
     justify-content: center;
     background-color: var(--background-secondary);
-    margin: 0 4px !important; /* Reduced from 6px to 4px */
+    margin: 0 4px;
     padding: 6px 10px;
     border-radius: 4px;
     flex-shrink: 0;
@@ -96,8 +96,8 @@
     min-height: 0; /* Crucial for flex child scrolling */
     padding-top: 0; /* No padding needed, containers handle this */
     position: relative; /* Create positioning context */
-    padding-bottom: 10px !important; /* Reduced from 90px to 10px */
-    overflow-y: auto !important;
+    padding-bottom: 10px; /* Reduced from 90px to 10px - removed !important */
+    overflow-y: auto; /* Removed !important */
 }
 
 /* UNIFIED TAB CONTAINER STYLES - applies to ALL tab containers but preserves separate content */
@@ -116,7 +116,7 @@
     background-color: var(--background-primary);
     /* No display:none here - JS handles this */
     padding-bottom: 60px; /* Reduced from 70px */
-    margin-bottom: 20px !important;
+    margin-bottom: 20px; /* Removed !important */
 }
 
 /* Remove active container classes since JS handles visibility */
@@ -166,9 +166,9 @@
     display: flex;
     flex-direction: column;
     height: 100%;
-    overflow: hidden !important;
-    padding-bottom: 0 !important;
-    margin-bottom: 0 !important;
+    overflow: hidden !important; /* Keep - needed to prevent outer scrolling issues */
+    padding-bottom: 0 !important; /* Keep - needed for proper layout */
+    margin-bottom: 0 !important; /* Keep - needed for proper layout */
 }
 
 /* Chat messages container */
@@ -180,16 +180,16 @@
     overflow-x: hidden !important;
     padding: 15px;
     padding-bottom: 0 !important;
-    margin-top: 0 !important;
-    margin-bottom: 0 !important;
+    margin-top: 0;
+    margin-bottom: 0;
     background-color: transparent !important;
-    border-radius: 0 !important;
-    gap: unset !important;
+    border-radius: 0;
+    gap: unset;
     width: 100%;
     box-sizing: border-box;
     height: calc(100% - 50px) !important;
     min-height: calc(100% - 50px) !important;
-    padding-top: 15px !important;
+    padding-top: 15px;
 }
 
 /* Chat messages wrapper */
@@ -197,7 +197,7 @@
     width: 100%;
     display: block;
     min-height: 100%;
-    overflow: visible !important;
+    overflow: visible; /* Removed !important */
 }
 
 /* Chat message styling */
@@ -488,27 +488,6 @@ div.nav-folder-content.markdown-preview-view {
     border-right: none !important;
 }
 
-/* Fix the chat messages spacing to account for the fixed toolbar */
-.chat-messages-container {
-    flex: 1;
-    display: flex;
-    flex-direction: column;
-    overflow-y: auto !important;
-    overflow-x: hidden !important;
-    padding: 15px;
-    padding-bottom: 0 !important;
-    margin-top: 0 !important;
-    margin-bottom: 0 !important;
-    background-color: transparent !important;
-    border-radius: 0 !important;
-    gap: unset !important;
-    width: 100%;
-    box-sizing: border-box;
-    height: calc(100% - 50px) !important;
-    min-height: calc(100% - 50px) !important;
-    padding-top: 15px !important;
-}
-
 /* Remove the extra padding element completely */
 .chat-messages-container::after {
     content: none;
@@ -720,8 +699,8 @@ html.is-phone .scroll-to-bottom-button {
     background-color: var(--background-secondary);
     border-radius: 8px;
     max-width: 80%;
-    margin-left: auto !important;
-    margin-right: auto !important;
+    margin-left: auto;
+    margin-right: auto;
     box-shadow: 0 2px 4px rgba(0, 0, 0, 0.05);
 }
 
@@ -914,7 +893,7 @@ div[class*="nav-folder-content"] .transcript-toolbar-container .toolbar-containe
     margin-right: 0 !important;
     background-color: var(--background-primary);
     padding-bottom: 60px;
-    margin-bottom: 20px !important;
+    margin-bottom: 20px; /* Removed !important */
 }
 
 /* Fix for Obsidian's native padding on containers */
@@ -939,8 +918,8 @@ div[class*="markdown-preview-view"] {
     background-color: var(--background-secondary);
     border-radius: 8px;
     max-width: 80%;
-    margin-left: auto !important;
-    margin-right: auto !important;
+    margin-left: auto;
+    margin-right: auto;
     box-shadow: 0 2px 4px rgba(0, 0, 0, 0.05);
 }
 
@@ -950,9 +929,9 @@ div[class*="markdown-preview-view"] {
     display: flex;
     flex-direction: column;
     height: 100%;
-    overflow: hidden !important;
-    padding-bottom: 0 !important;
-    margin-bottom: 0 !important;
+    overflow: hidden !important; /* Keep - needed to prevent outer scrolling issues */
+    padding-bottom: 0 !important; /* Keep - needed for proper layout */
+    margin-bottom: 0 !important; /* Keep - needed for proper layout */
 }
 
 /* Chat messages container */
@@ -982,7 +961,7 @@ div[class*="markdown-preview-view"] {
     width: 100%;
     display: block;
     min-height: 100%;
-    overflow: visible !important;
+    overflow: visible; /* Removed !important */
 }
 
 /* Revised content styling */
@@ -1093,7 +1072,7 @@ div.view-content.skribe-plugin {
 
 /* Add extra margin for messages to prevent being hidden behind input */
 .chat-message:last-child {
-    margin-bottom: 0 !important; /* Further reduced from 5px to 0 */
+    margin-bottom: 0; /* Removed !important */
 }
 
 /* Mobile specific adjustments for chat container */
@@ -1180,16 +1159,16 @@ html body .chat-toolbar-container,
     overflow-x: hidden !important;
     padding: 15px;
     padding-bottom: 0 !important;
-    margin-top: 0 !important;
-    margin-bottom: 0 !important;
+    margin-top: 0;
+    margin-bottom: 0;
     background-color: transparent !important;
-    border-radius: 0 !important;
-    gap: unset !important;
+    border-radius: 0;
+    gap: unset;
     width: 100%;
     box-sizing: border-box;
     height: calc(100% - 50px) !important;
     min-height: calc(100% - 50px) !important;
-    padding-top: 15px !important;
+    padding-top: 15px;
 }
 
 /* UNIFIED CONTENT STYLES - applies to tab content areas while preserving structure */
@@ -1199,7 +1178,7 @@ html body .chat-toolbar-container,
     padding: 15px;
     width: 100%;
     box-sizing: border-box;
-    padding-bottom: 90px !important;
+    padding-bottom: 90px !important; /* Needed for spacing */
 }
 
 /* Ensure content areas have proper padding and don't scroll under the input */
@@ -1231,7 +1210,7 @@ html body .chat-toolbar-container,
 .transcript-paragraph:last-child,
 .revised-content > *:last-child,
 .summary-content > *:last-child {
-    margin-bottom: 100px !important; /* Extra margin on last content elements */
+    margin-bottom: 100px; /* Removed !important */
 }
 
 /* Fix empty message styling */
@@ -1434,13 +1413,13 @@ button.disabled-button:hover {
 .summary-toolbar-container .toolbar-container,
 .revised-toolbar-container .toolbar-container {
     margin: 0;
-    padding: 8px 10px !important; /* Reduced from 12px to 10px */
+    padding: 8px 10px;
     display: flex;
     flex-direction: row;
     align-items: center;
     flex: 1;
     background-color: var(--background-primary) !important;
-    padding-right: 10px !important; /* Reduced from 12px to 10px */
-    width: 100% !important;
-    gap: 6px !important; /* Reduced from 10px to 6px */
+    padding-right: 10px;
+    width: 100%;
+    gap: 6px;
 }
