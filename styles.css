@@ -212,7 +212,6 @@ div[class*="markdown-preview-view"] {
     color: var(--text-accent);
 }
 
-/* Make the Start over button more prominent */
 .toolbar-container button[data-command-id="start-over"] {
     background-color: var(--background-modifier-error);
     color: var(--text-on-accent);
@@ -262,7 +261,6 @@ div[class*="markdown-preview-view"] {
     width: 1px;
 }
 
-/* Scroll to bottom button */
 .scroll-to-bottom-button {
     position: fixed;
     bottom: 130px;
@@ -388,7 +386,6 @@ html.is-phone .scroll-to-bottom-button {
     height: 42px;
 }
 
-/* Global chat input container that appears on all tabs */
 .global-chat-input-container {
     position: fixed;
     bottom: 0;
@@ -411,7 +408,6 @@ html.is-phone .scroll-to-bottom-button {
     bottom: var(--status-bar-height, 22px);
 }
 
-/* Chat input styling */
 .chat-input {
     flex-grow: 1;
     padding: 10px 12px;
@@ -571,7 +567,6 @@ html.is-phone .scroll-to-bottom-button {
 /* =======================
    SETTINGS STYLES
    ======================= */
-/* Settings tab drag and drop styles */
 .quip-item {
     display: flex;
     align-items: center;
@@ -616,7 +611,6 @@ html.is-phone .scroll-to-bottom-button {
     word-break: break-word;
 }
 
-/* Disabled button styles */
 .disabled-button {
     opacity: 0.5 !important;
     cursor: not-allowed !important;
@@ -864,7 +858,6 @@ html body .chat-toolbar-container,
     position: fixed !important;
 }
 
-/* Model indicator styling */
 .model-indicator {
     margin-left: auto;
     margin-right: 10px;
@@ -915,7 +908,6 @@ html body .chat-toolbar-container,
     margin-top: 0;
 }
 
-/* Video URL display */
 .video-url-container {
     text-align: center;
     padding: 2px;
@@ -946,7 +938,6 @@ html body .chat-toolbar-container,
     text-decoration: underline;
 }
 
-/* Audio controls */
 .audio-controls {
     border-top: 0;
     padding: 0;
@@ -966,7 +957,6 @@ html body .chat-toolbar-container,
     margin-top: 0;
 }
 
-/* Content containers */
 .transcript-content, 
 .revised-content,
 .summary-content,
@@ -985,7 +975,6 @@ html body .chat-toolbar-container,
     padding-bottom: 90px !important;
 }
 
-/* Empty content message */
 .empty-content-message {
     text-align: center;
     padding: 20px;
@@ -1000,7 +989,6 @@ html body .chat-toolbar-container,
     box-shadow: 0 2px 4px rgba(0, 0, 0, 0.05);
 }
 
-/* Revised content styling */
 .revised-content {
     font-family: var(--font-text);
     line-height: 1.6;
@@ -1149,7 +1137,6 @@ html body .chat-toolbar-container,
     margin-bottom: 0;
 }
 
-/* Message clearfix */
 .message-clearfix {
     clear: both;
     width: 100%;
@@ -1158,14 +1145,12 @@ html body .chat-toolbar-container,
     padding: 0;
 }
 
-/* Message error state */
 .message-error {
     background-color: rgba(var(--background-modifier-error-rgb), 0.1) !important;
     border-left: 3px solid var(--background-modifier-error) !important;
     padding-left: 12px !important;
 }
 
-/* Empty message styling */
 .empty-chat-message {
     color: var(--text-muted);
     text-align: center;
@@ -1173,7 +1158,6 @@ html body .chat-toolbar-container,
     font-style: italic;
 }
 
-/* Loading spinner */
 .loading-spinner-container {
     display: flex;
     align-items: center;
@@ -1369,7 +1353,6 @@ html body .chat-toolbar-container,
 /* =======================
    INTERACTIVE ELEMENTS
    ======================= */
-/* Global chat input */
 .global-chat-input-container {
     position: fixed;
     bottom: 0;
@@ -1410,7 +1393,6 @@ html body .chat-toolbar-container,
     box-shadow: 0 0 0 2px rgba(var(--interactive-accent-rgb), 0.2);
 }
 
-/* Scroll to bottom button */
 .scroll-to-bottom-button {
     position: fixed;
     bottom: 130px;
@@ -1499,7 +1481,6 @@ html body .chat-toolbar-container,
                 inset 0 1px 1px rgba(255, 255, 255, 0.2);
 }
 
-/* Split button styling */
 .split-button-container {
     display: flex;
     align-items: stretch;
@@ -1571,7 +1552,6 @@ html body .chat-toolbar-container,
     transform: rotate(180deg);
 }
 
-/* Quips dropdown menu */
 .quips-dropdown-menu {
     position: absolute;
     bottom: 60px;
@@ -1604,7 +1584,6 @@ html body .chat-toolbar-container,
     background-color: var(--background-modifier-hover);
 }
 
-/* Quip cards in chat interface */
 .quips-cards-container {
     display: flex;
     flex-direction: row;
