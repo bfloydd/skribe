@@ -35,6 +35,16 @@
     overflow-y: auto;
 }
 
+/* Remove all padding from view-content */
+.workspace-leaf-content .view-content {
+    padding: 0 !important;
+}
+
+/* Ensure view-content.skribe-plugin specifically has no padding */
+div.view-content.skribe-plugin {
+    padding: 0 !important;
+}
+
 /* Container styles for all tab types */
 .transcript-container, 
 .revised-container,
