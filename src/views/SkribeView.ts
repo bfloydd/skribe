@@ -671,7 +671,7 @@ export class SkribeView extends ItemView {
             // Show empty state if no quips and no messages
             const emptyMessage = container.createDiv({
                 cls: 'empty-chat-message',
-                text: 'Ask a question about the transcript...'
+                text: 'Ask a question...'
             });
             return;
         }
@@ -1100,7 +1100,7 @@ export class SkribeView extends ItemView {
         if (this.chatContainer) {
             this.chatContainer.style.display = tab === 'chat' ? 'block' : 'none';
             
-            // Focus on chat input when switching to chat tab
+            // Special rendering for chat tab if needed
             if (tab === 'chat') {
                 // Check if chat interface needs to be rendered
                 const needsRendering = !this.chatContainer.querySelector('.chat-messages-container');
@@ -1109,25 +1109,11 @@ export class SkribeView extends ItemView {
                     this.renderChatInterface();
                 }
                 
-                // Use setTimeout to ensure the focus happens after the display change
-                setTimeout(() => {
-                    // Try the stored reference first
-                    if (this.chatInput) {
-                        this.chatInput.focus();
-                    } else {
-                        // Fallback to finding it in the DOM
-                        const chatInput = this.containerEl.querySelector('.chat-input') as HTMLInputElement;
-                        if (chatInput) {
-                            chatInput.focus();
-                        }
-                    }
-                    
-                    // Check scroll position when switching to chat tab
-                    const chatMessagesContainer = this.chatContainer.querySelector('.chat-messages-container') as HTMLElement;
-                    if (chatMessagesContainer) {
-                        this.checkScrollPosition(chatMessagesContainer);
-                    }
-                }, 50);
+                // Check scroll position when switching to chat tab
+                const chatMessagesContainer = this.chatContainer.querySelector('.chat-messages-container') as HTMLElement;
+                if (chatMessagesContainer) {
+                    this.checkScrollPosition(chatMessagesContainer);
+                }
             }
         }
         
@@ -1146,6 +1132,21 @@ export class SkribeView extends ItemView {
         
         // Update tab styles
         this.updateTabsUI();
+        
+        // Focus on the chat input after switching tabs, regardless of which tab is active
+        // Use setTimeout to ensure the focus happens after the display changes and input is created
+        setTimeout(() => {
+            // Try the stored reference first
+            if (this.chatInput) {
+                this.chatInput.focus();
+            } else {
+                // Fallback to finding it in the DOM
+                const chatInput = this.containerEl.querySelector('.chat-input') as HTMLInputElement;
+                if (chatInput) {
+                    chatInput.focus();
+                }
+            }
+        }, 50);
     }
     
     /**
@@ -1889,7 +1890,7 @@ export class SkribeView extends ItemView {
             cls: 'chat-input',
             attr: {
                 type: 'text',
-                placeholder: 'Ask a question about this content...'
+                placeholder: 'Ask a question...'
             }
         });
         
