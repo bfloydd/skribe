@@ -272,10 +272,8 @@ export class SkribeView extends ItemView {
             await this.renderSummaryContent();
         }
         
-        // Add global chat input on non-chat tabs
-        if (this.activeTab !== 'chat') {
-            this.createGlobalChatInput(container);
-        }
+        // Always add global chat input regardless of active tab
+        this.createGlobalChatInput(container);
     }
 
     private createHeader(container: HTMLElement): HTMLElement {
@@ -515,8 +513,6 @@ export class SkribeView extends ItemView {
             
             // Scroll button click handler
             this.scrollToBottomButton.addEventListener('click', (e: MouseEvent) => {
-                e.preventDefault();
-                e.stopPropagation();
                 this.scrollChatToBottom();
             });
         }
@@ -549,130 +545,6 @@ export class SkribeView extends ItemView {
             // Store reference to remove later
             this.chatContainer.dataset.hasResizeListener = 'true';
         }
-        
-        // Create chat input container (at the bottom)
-        const chatInputContainer = this.chatContainer.createDiv({
-            cls: 'chat-input-container'
-        });
-        
-        // Create chat input
-        const chatInput = chatInputContainer.createEl('input', {
-            cls: 'chat-input',
-            attr: {
-                type: 'text',
-                placeholder: 'Ask a question...'
-            }
-        });
-        
-        // Store a reference to the chat input
-        this.chatInput = chatInput;
-        
-        // Create split button container
-        const splitButtonContainer = chatInputContainer.createDiv({
-            cls: 'split-button-container'
-        });
-        
-        // Create main button part
-        const sendButton = splitButtonContainer.createEl('button', {
-            cls: 'split-button-main'
-        });
-        
-        // Add send icon
-        setIcon(sendButton, 'arrow-right');
-        
-        // Create dropdown part
-        const dropdownButton = splitButtonContainer.createEl('button', {
-            cls: 'split-button-dropdown'
-        });
-        
-        // Add dropdown icon
-        setIcon(dropdownButton, 'chevron-down');
-        
-        // Create dropdown menu (initially hidden)
-        const quipsDropdownMenu = this.chatContainer.createDiv({
-            cls: 'quips-dropdown-menu'
-        });
-        quipsDropdownMenu.style.display = 'none';
-        
-        // Populate dropdown with quips
-        this.populateQuipsDropdown(quipsDropdownMenu);
-        
-        // Toggle dropdown visibility
-        dropdownButton.addEventListener('click', (e) => {
-            e.preventDefault();
-            e.stopPropagation();
-            
-            // Toggle active class
-            dropdownButton.classList.toggle('active');
-            
-            // Toggle dropdown visibility
-            if (quipsDropdownMenu.style.display === 'none') {
-                quipsDropdownMenu.style.display = 'block';
-                // Add event listener to close when clicking outside
-                document.addEventListener('click', closeDropdown);
-            } else {
-                quipsDropdownMenu.style.display = 'none';
-                // Remove event listener when closing
-                document.removeEventListener('click', closeDropdown);
-            }
-        });
-        
-        // Close dropdown when clicking outside
-        const closeDropdown = (e: MouseEvent) => {
-            if (!dropdownButton.contains(e.target as Node) && !quipsDropdownMenu.contains(e.target as Node)) {
-                quipsDropdownMenu.style.display = 'none';
-                dropdownButton.classList.remove('active');
-                document.removeEventListener('click', closeDropdown);
-            }
-        };
-        
-        // Handle send button click
-        const handleSend = async () => {
-            const message = chatInput.value.trim();
-            if (!message) return;
-
-            // Clear input
-            chatInput.value = '';
-            
-            // Hide quips when a message is sent
-            this.showQuips = false;
-            
-            // Hide dropdown if it's open
-            quipsDropdownMenu.style.display = 'none';
-            dropdownButton.classList.remove('active');
-
-            // Add user message to chat
-            this.chatState.messages.push({
-                role: 'user',
-                content: message
-            });
-
-            // Re-render chat messages
-            chatMessagesContainer.empty();
-            this.renderChatMessages(chatMessagesContainer);
-
-            // Scroll to bottom
-            chatMessagesContainer.scrollTop = chatMessagesContainer.scrollHeight;
-            
-            // Force scroll check after sending
-            this.checkScrollPosition(chatMessagesContainer);
-            
-            // Update toolbar state after user message
-            if (chatToolbarContainer) {
-                this.plugin.toolbarService.updateToolbarState(chatToolbarContainer, this.getCommandContext());
-            }
-
-            // Process AI response
-            await this.processAIResponse(chatMessagesContainer);
-        };
-        
-        // Set up event listeners
-        sendButton.addEventListener('click', handleSend);
-        chatInput.addEventListener('keydown', (e) => {
-            if (e.key === 'Enter') {
-                handleSend();
-            }
-        });
         
         // Initialize scroll position check
         setTimeout(() => {
@@ -1244,7 +1116,7 @@ export class SkribeView extends ItemView {
                         this.chatInput.focus();
                     } else {
                         // Fallback to finding it in the DOM
-                        const chatInput = this.chatContainer.querySelector('.chat-input') as HTMLInputElement;
+                        const chatInput = this.containerEl.querySelector('.chat-input') as HTMLInputElement;
                         if (chatInput) {
                             chatInput.focus();
                         }
@@ -1266,12 +1138,10 @@ export class SkribeView extends ItemView {
             existingGlobalInput.remove();
         }
         
-        // Then, add global chat input on non-chat tabs if it doesn't exist yet
-        if (tab !== 'chat') {
-            const mainContainer = this.containerEl.children[1] as HTMLElement;
-            if (!mainContainer.querySelector('.global-chat-input-container')) {
-                this.createGlobalChatInput(mainContainer);
-            }
+        // Always add the global chat input regardless of active tab
+        const mainContainer = this.containerEl.children[1] as HTMLElement;
+        if (!mainContainer.querySelector('.global-chat-input-container')) {
+            this.createGlobalChatInput(mainContainer);
         }
         
         // Update tab styles
@@ -2023,15 +1893,69 @@ export class SkribeView extends ItemView {
             }
         });
         
-        // Create send button
-        const globalSendButton = globalChatInputContainer.createEl('button', {
-            cls: 'chat-send-button'
+        // Store a reference to the chat input
+        this.chatInput = globalChatInput;
+        
+        // Create split button container
+        const splitButtonContainer = globalChatInputContainer.createDiv({
+            cls: 'split-button-container'
+        });
+        
+        // Create main button part
+        const sendButton = splitButtonContainer.createEl('button', {
+            cls: 'split-button-main'
         });
         
         // Add send icon
-        setIcon(globalSendButton, 'arrow-right');
+        setIcon(sendButton, 'arrow-right');
         
-        // Handle send button click - switches to chat tab and submits message
+        // Create dropdown part
+        const dropdownButton = splitButtonContainer.createEl('button', {
+            cls: 'split-button-dropdown'
+        });
+        
+        // Add dropdown icon
+        setIcon(dropdownButton, 'chevron-down');
+        
+        // Create dropdown menu (initially hidden)
+        const quipsDropdownMenu = container.createDiv({
+            cls: 'quips-dropdown-menu'
+        });
+        quipsDropdownMenu.style.display = 'none';
+        
+        // Populate dropdown with quips
+        this.populateQuipsDropdown(quipsDropdownMenu);
+        
+        // Toggle dropdown visibility
+        dropdownButton.addEventListener('click', (e) => {
+            e.preventDefault();
+            e.stopPropagation();
+            
+            // Toggle active class
+            dropdownButton.classList.toggle('active');
+            
+            // Toggle dropdown visibility
+            if (quipsDropdownMenu.style.display === 'none') {
+                quipsDropdownMenu.style.display = 'block';
+                // Add event listener to close when clicking outside
+                document.addEventListener('click', closeDropdown);
+            } else {
+                quipsDropdownMenu.style.display = 'none';
+                // Remove event listener when closing
+                document.removeEventListener('click', closeDropdown);
+            }
+        });
+        
+        // Close dropdown when clicking outside
+        const closeDropdown = (e: MouseEvent) => {
+            if (!dropdownButton.contains(e.target as Node) && !quipsDropdownMenu.contains(e.target as Node)) {
+                quipsDropdownMenu.style.display = 'none';
+                dropdownButton.classList.remove('active');
+                document.removeEventListener('click', closeDropdown);
+            }
+        };
+        
+        // Handle send button click
         const handleGlobalSend = async () => {
             const message = globalChatInput.value.trim();
             if (!message) return;
@@ -2039,12 +1963,19 @@ export class SkribeView extends ItemView {
             // Clear input
             globalChatInput.value = '';
             
+            // Hide quips when a message is sent
+            this.showQuips = false;
+            
+            // Hide dropdown if it's open
+            quipsDropdownMenu.style.display = 'none';
+            dropdownButton.classList.remove('active');
+            
             // Use the helper method to ensure chat interface and process message
             this.ensureChatInterfaceAndProcessMessage(message);
         };
         
         // Set up event listeners
-        globalSendButton.addEventListener('click', handleGlobalSend);
+        sendButton.addEventListener('click', handleGlobalSend);
         globalChatInput.addEventListener('keydown', (e) => {
             if (e.key === 'Enter') {
                 handleGlobalSend();
