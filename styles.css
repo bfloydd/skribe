@@ -999,6 +999,9 @@ html body .chat-toolbar-container,
     margin-left: auto;
     margin-right: auto;
     box-shadow: 0 2px 4px rgba(0, 0, 0, 0.05);
+    font-family: var(--font-interface);
+    font-size: 14px;
+    line-height: 1.5;
 }
 
 .revised-content {
