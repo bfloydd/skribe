@@ -1,6 +1,167 @@
 @import url('https://fonts.googleapis.com/css2?family=Roboto:wght@400;700&display=swap');
 
-/* Top toolbar styling */
+/* =======================
+   LAYOUT STRUCTURE
+   ======================= */
+.skribe-plugin {
+    height: 100%;
+    overflow: hidden;
+    display: flex;
+    flex-direction: column;
+}
+
+.workspace-leaf-content[data-type="skribe-view"] {
+    display: flex;
+    flex-direction: column;
+    height: 100%;
+    overflow: hidden;
+}
+
+.workspace-leaf-content[data-type="skribe-view"] > div {
+    height: 100%;
+    overflow: hidden;
+}
+
+.skribe-content-wrapper {
+    display: flex;
+    flex-direction: column;
+    flex: 1;
+    height: calc(100% - 90px);
+    overflow: hidden;
+    min-height: 0;
+    padding-top: 0;
+    position: relative;
+    padding-bottom: 10px;
+    overflow-y: auto;
+}
+
+/* Container styles for all tab types */
+.transcript-container, 
+.revised-container,
+.summary-container,
+.chat-container {
+    position: relative;
+    width: 100%;
+    height: 100%;
+    overflow-y: auto;
+    box-sizing: border-box;
+    padding: 0;
+    margin: 0;
+    margin-top: 77px;
+    background-color: var(--background-primary);
+    padding-bottom: 60px;
+    margin-bottom: 20px;
+}
+
+/* Container type-specific overrides */
+.transcript-container,
+.revised-container,
+.summary-container {
+    overflow-y: auto;
+}
+
+.chat-container {
+    position: relative;
+    display: flex;
+    flex-direction: column;
+    height: 100%;
+    overflow: hidden !important;
+    padding-bottom: 0 !important;
+    margin-bottom: 0 !important;
+}
+
+/* Obsidian integration fixes */
+.markdown-preview-view {
+    padding-right: 0 !important;
+    margin-right: 0 !important;
+}
+
+.nav-folder-content,
+div[class*="nav-folder-content"],
+.markdown-preview-view,
+div[class*="markdown-preview-view"] {
+    padding-right: 0 !important;
+    margin-right: 0 !important;
+    width: 100% !important;
+    max-width: 100% !important;
+    box-sizing: border-box !important;
+}
+
+/* =======================
+   HEADER AND TABS
+   ======================= */
+.view-header-title-container {
+    position: absolute;
+    left: 0;
+    right: 0;
+    text-align: center;
+    pointer-events: none;
+    top: 0;
+    margin-top: 15px;
+    z-index: 5;
+}
+
+.nav-header {
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    position: relative;
+    padding-top: 0px;
+    padding-bottom: 0px;
+    min-height: 40px;
+}
+
+.nav-buttons-container {
+    display: flex;
+    justify-content: center;
+    gap: 6px;
+    margin-top: 4px;
+}
+
+.skribe-plugin .view-header-title {
+    font-family: 'Roboto', sans-serif;
+    font-weight: 700;
+    font-size: 1.2em;
+    color: var(--text-accent);
+    text-shadow: 1px 1px 2px rgba(0, 0, 0, 0.2);
+    background: linear-gradient(90deg, #ff7e5f, #feb47b);
+    background-clip: text;
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+}
+
+.tabs-container {
+    position: fixed;
+    top: 90px;
+    left: 0;
+    right: 0;
+    z-index: 2;
+    background-color: var(--background-primary);
+    width: 100%;
+    border-bottom: 1px solid var(--background-modifier-border);
+    margin: 0;
+    padding: 0;
+    display: flex;
+}
+
+.tab-item {
+    padding: 8px 16px;
+    cursor: pointer;
+    border-bottom: 2px solid transparent;
+    transition: all 0.2s ease;
+}
+
+.tab-item.active, .tab-item:hover {
+    border-bottom: 2px solid var(--text-accent);
+}
+
+.tab-item.active {
+    font-weight: bold;
+}
+
+/* =======================
+   TOP TOOLBAR STYLES
+   ======================= */
 .toolbar-container[data-toolbar-id="top"] {
     position: absolute;
     left: 10px;
@@ -64,70 +225,13 @@
     color: var(--text-on-accent);
 }
 
-/* Fix for vertical scrolling issue */
-.skribe-plugin {
-    height: 100%;
-    overflow: hidden;
-    display: flex;
-    flex-direction: column;
-}
-
-/* Ensure the container takes full height */
-.workspace-leaf-content[data-type="skribe-view"] {
-    display: flex;
-    flex-direction: column;
-    height: 100%;
-    overflow: hidden;
-}
-
-/* Ensure the container children take full height */
-.workspace-leaf-content[data-type="skribe-view"] > div {
-    height: 100%;
-    overflow: hidden;
-}
-
-/* Content wrapper takes remaining height with adjusted padding for fixed elements */
-.skribe-content-wrapper {
-    display: flex;
-    flex-direction: column;
-    flex: 1;
-    height: calc(100% - 90px); /* Account for header and tabs */
-    overflow: hidden; /* Hide overflow */
-    min-height: 0; /* Crucial for flex child scrolling */
-    padding-top: 0; /* No padding needed, containers handle this */
-    position: relative; /* Create positioning context */
-    padding-bottom: 10px; /* Reduced from 90px to 10px - removed !important */
-    overflow-y: auto; /* Removed !important */
-}
-
-/* UNIFIED TAB CONTAINER STYLES - applies to ALL tab containers but preserves separate content */
-.transcript-container, 
-.revised-container,
-.summary-container,
-.chat-container {
-    position: relative;
-    width: 100%;
-    height: 100%;
-    overflow-y: auto;
-    box-sizing: border-box;
-    padding: 0;
-    margin: 0;
-    margin-top: 77px; /* Reduced from 97px by 20px */
-    background-color: var(--background-primary);
-    /* No display:none here - JS handles this */
-    padding-bottom: 60px; /* Reduced from 70px */
-    margin-bottom: 20px; /* Removed !important */
-}
-
-/* Remove active container classes since JS handles visibility */
-
 /* UNIFIED TOOLBAR STYLES - applies to ALL tab toolbars regardless of parent container */
 .transcript-toolbar-container,
 .revised-toolbar-container,
 .summary-toolbar-container,
 .chat-toolbar-container {
     position: fixed;
-    top: 127px !important; /* Reduced from 147px by 20px */
+    top: 127px !important;
     left: 0;
     right: 0;
     width: 100%;
@@ -144,34 +248,803 @@
     margin: 0;
 }
 
-/* Preserve different container types for different tabs */
-/* Transcript specific container structure */
-.transcript-container {
-    overflow-y: auto; /* Allow scrolling */
+/* Remove the extra padding element completely */
+.chat-messages-container::after {
+    content: none;
+    display: none;
 }
 
-/* Revised specific container structure */
-.revised-container {
-    overflow-y: auto; /* Allow scrolling */
+/* Debugging helper class that can be added to force scrolling for testing */
+.chat-debug-scrollable .chat-messages-container::after {
+    content: '';
+    display: block;
+    height: 1000px;
+    width: 1px;
 }
 
-/* Summary specific container structure */
-.summary-container {
-    overflow-y: auto; /* Allow scrolling */
+/* Scroll to bottom button */
+.scroll-to-bottom-button {
+    position: fixed;
+    bottom: 130px;
+    right: 20px;
+    width: 46px;
+    height: 46px;
+    background: linear-gradient(145deg, var(--interactive-accent), var(--text-accent));
+    color: var(--text-on-accent);
+    border-radius: 50%;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    box-shadow: 0 3px 12px rgba(0, 0, 0, 0.3);
+    border: 1px solid rgba(255, 255, 255, 0.2);
+    cursor: pointer;
+    z-index: 1100 !important;
+    transition: transform 0.15s cubic-bezier(0.175, 0.885, 0.32, 1.275), 
+                opacity 0.15s ease-out, 
+                box-shadow 0.15s ease-out;
+    pointer-events: auto !important;
 }
 
-/* Chat specific container structure - needs to handle the input area */
+.scroll-to-bottom-button.hidden {
+    transform: scale(0.8) translateZ(0);
+    opacity: 0;
+    pointer-events: none;
+    display: none;
+}
+
+.scroll-to-bottom-button::after {
+    content: "New messages";
+    position: absolute;
+    top: -30px;
+    left: 50%;
+    transform: translateX(-50%);
+    background-color: var(--background-secondary);
+    color: var(--text-normal);
+    padding: 4px 8px;
+    border-radius: 4px;
+    font-size: 12px;
+    opacity: 0;
+    pointer-events: none;
+    transition: opacity 0.2s ease;
+    white-space: nowrap;
+    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+}
+
+.scroll-to-bottom-button:hover::after {
+    opacity: 1;
+}
+
+.scroll-to-bottom-button:hover {
+    transform: translateY(-3px) scale(1.05) translateZ(0);
+    box-shadow: 0 5px 15px rgba(0, 0, 0, 0.3), 
+                0 0 20px rgba(var(--interactive-accent-rgb), 0.4),
+                inset 0 1px 1px rgba(255, 255, 255, 0.3);
+    background: linear-gradient(145deg, var(--text-accent), var(--interactive-accent));
+}
+
+.scroll-to-bottom-button:active {
+    transform: translateY(0) scale(0.95) translateZ(0);
+    box-shadow: 0 2px 5px rgba(0, 0, 0, 0.2),
+                0 0 10px rgba(var(--interactive-accent-rgb), 0.2),
+                inset 0 1px 1px rgba(0, 0, 0, 0.1);
+    transition: all 0.1s ease;
+}
+
+.scroll-to-bottom-button svg {
+    width: 24px;
+    height: 24px;
+    fill: var(--text-on-accent);
+    stroke: var(--text-on-accent);
+    filter: drop-shadow(0 1px 1px rgba(0, 0, 0, 0.3));
+    animation: bounce-arrow 2s ease-in-out infinite;
+}
+
+@keyframes bounce-arrow {
+    0%, 100% { transform: translateY(0); }
+    50% { transform: translateY(-5px); }
+}
+
+@keyframes spin {
+    0% { transform: rotate(0deg); }
+    100% { transform: rotate(360deg); }
+}
+
+@keyframes bounce-in {
+    0% { transform: scale(0); opacity: 0; }
+    40% { transform: scale(1.2); opacity: 0.7; }
+    70% { transform: scale(0.9); opacity: 0.9; }
+    100% { transform: scale(1); opacity: 1; }
+}
+
+.loading-indicator {
+    display: inline-block;
+    width: 20px;
+    height: 20px;
+    border: 2px solid var(--background-modifier-border);
+    border-radius: 50%;
+    border-top-color: var(--interactive-accent);
+    animation: rotate 1s linear infinite;
+}
+
+.theme-dark .scroll-to-bottom-button {
+    box-shadow: 0 3px 10px rgba(0, 0, 0, 0.3), 
+                0 0 15px rgba(var(--interactive-accent-rgb), 0.4),
+                inset 0 1px 1px rgba(255, 255, 255, 0.15);
+}
+
+.theme-dark .scroll-to-bottom-button:hover {
+    box-shadow: 0 5px 15px rgba(0, 0, 0, 0.4), 
+                0 0 20px rgba(var(--interactive-accent-rgb), 0.5),
+                inset 0 1px 1px rgba(255, 255, 255, 0.2);
+}
+
+/* Mobile adjustments for the scroll button */
+.is-mobile .scroll-to-bottom-button,
+html.is-mobile .scroll-to-bottom-button,
+html.is-phone .scroll-to-bottom-button {
+    bottom: 130px;
+    right: 15px;
+    width: 42px;
+    height: 42px;
+}
+
+/* Global chat input container that appears on all tabs */
+.global-chat-input-container {
+    position: fixed;
+    bottom: 0;
+    left: 0;
+    right: 0;
+    width: 100%;
+    padding: 10px 15px;
+    background-color: var(--background-primary);
+    border-top: 1px solid var(--background-modifier-border);
+    z-index: 100;
+    display: flex;
+    align-items: center;
+    box-shadow: 0 -2px 10px rgba(0, 0, 0, 0.1);
+    margin-top: 0;
+    gap: 10px;
+}
+
+/* Adjust for status bar in Obsidian */
+.workspace-leaf-content[data-type="skribe-view"] .global-chat-input-container {
+    bottom: var(--status-bar-height, 22px);
+}
+
+/* Chat input styling */
+.chat-input {
+    flex-grow: 1;
+    padding: 10px 12px;
+    border-radius: 20px;
+    border: 1px solid var(--background-modifier-border);
+    background-color: var(--background-secondary);
+    color: var(--text-normal);
+    height: 40px;
+    box-sizing: border-box;
+    transition: all 0.2s ease;
+    box-shadow: 0 1px 3px rgba(0, 0, 0, 0.05);
+}
+
+.chat-input:focus {
+    border-color: var(--interactive-accent);
+    outline: none;
+    box-shadow: 0 0 0 2px rgba(var(--interactive-accent-rgb), 0.2);
+}
+
 .chat-container {
-    position: relative;
+    overflow: visible !important;
+}
+
+/* Animate the dropdown arrow */
+.split-button-dropdown svg {
+    transition: transform 0.2s ease;
+}
+
+.split-button-dropdown.active {
+    background-color: var(--interactive-accent-hover);
+}
+
+.split-button-dropdown.active svg {
+    transform: rotate(180deg);
+}
+
+/* Fix empty message styling */
+.empty-chat-message {
+    color: var(--text-muted);
+    text-align: center;
+    padding: 20px;
+    font-style: italic;
+}
+
+/* Message clearfix */
+.message-clearfix {
+    clear: both;
+    width: 100%;
+    height: 1px;
+    margin: 0;
+    padding: 0;
+}
+
+/* Split button styling - updated for round buttons */
+.split-button-container {
+    display: flex;
+    align-items: stretch;
+    height: 40px;
+    flex-shrink: 0;
+    gap: 8px;
+}
+
+.split-button-main {
+    width: 40px;
+    height: 40px;
+    padding: 0;
+    background-color: var(--interactive-accent);
+    color: var(--text-on-accent);
+    cursor: pointer;
+    border: none;
+    font-weight: bold;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    border-radius: 50%;
+    box-shadow: 0 1px 3px rgba(0, 0, 0, 0.2);
+    transition: all 0.2s ease;
+}
+
+.split-button-dropdown {
+    width: 40px;
+    height: 40px;
+    padding: 0;
+    background-color: var(--interactive-accent);
+    color: var(--text-on-accent);
+    cursor: pointer;
+    border: none;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    border-radius: 50%;
+    box-shadow: 0 1px 3px rgba(0, 0, 0, 0.2);
+    transition: all 0.2s ease;
+}
+
+.split-button-main:hover, .split-button-dropdown:hover {
+    opacity: 0.95;
+    transform: translateY(-1px);
+    box-shadow: 0 3px 5px rgba(0, 0, 0, 0.2);
+}
+
+.split-button-main:active, .split-button-dropdown:active {
+    transform: translateY(1px);
+    box-shadow: 0 1px 2px rgba(0, 0, 0, 0.2);
+}
+
+.split-button-main svg, .split-button-dropdown svg {
+    width: 20px;
+    height: 20px;
+}
+
+/* Update dropdown toggle active state */
+.split-button-dropdown.active {
+    background-color: var(--interactive-accent-hover);
+    transform: translateY(-1px);
+    box-shadow: 0 3px 5px rgba(0, 0, 0, 0.2);
+}
+
+/* Quips dropdown menu - updated for round buttons */
+.quips-dropdown-menu {
+    position: absolute;
+    bottom: 60px;
+    right: 60px;
+    background-color: var(--background-primary);
+    border-radius: 8px;
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+    min-width: 220px;
+    max-width: 300px;
+    max-height: 300px;
+    overflow-y: auto;
+    z-index: 1000;
+    border: 1px solid var(--background-modifier-border);
+    animation: fadeIn 0.2s ease;
+}
+
+@keyframes fadeIn {
+    from { opacity: 0; transform: translateY(10px); }
+    to { opacity: 1; transform: translateY(0); }
+}
+
+.quips-dropdown-item {
+    padding: 10px 12px;
+    cursor: pointer;
+    border-bottom: 1px solid var(--background-modifier-border);
+    transition: background-color 0.2s ease;
+    line-height: 1.4;
+}
+
+.quips-dropdown-item:last-child {
+    border-bottom: none;
+}
+
+.quips-dropdown-item:hover {
+    background-color: var(--background-modifier-hover);
+}
+
+/* =======================
+   SETTINGS STYLES
+   ======================= */
+/* Settings tab drag and drop styles */
+.quip-item {
+    display: flex;
+    align-items: center;
+    padding: 8px;
+    margin-bottom: 6px;
+    border-radius: 4px;
+    border: 1px solid var(--background-modifier-border);
+    background-color: var(--background-primary);
+    transition: background-color 0.2s ease;
+}
+
+.quip-item.dragging {
+    opacity: 0.5;
+    border: 1px dashed var(--interactive-accent);
+    background-color: var(--background-secondary-alt);
+}
+
+.quip-item.drag-over {
+    border: 2px solid var(--interactive-accent);
+    background-color: var(--background-primary-alt);
+}
+
+.quip-edit-container {
+    flex: 1;
+    display: flex;
+    margin-right: 8px;
+}
+
+.quip-button-container {
+    display: flex;
+    gap: 4px;
+}
+
+.quip-controls {
+    display: flex;
+    gap: 4px;
+}
+
+.quip-text {
+    flex: 1;
+    padding: 0 8px;
+    word-break: break-word;
+}
+
+/* Disabled button styles */
+.disabled-button {
+    opacity: 0.5 !important;
+    cursor: not-allowed !important;
+    pointer-events: none !important;
+    background-color: var(--background-secondary-alt) !important;
+}
+
+.toolbar-container button.disabled-button:hover,
+button.disabled-button:hover {
+    transform: none !important;
+    box-shadow: none !important;
+    background-color: var(--background-secondary-alt) !important;
+}
+
+/* =======================
+   DEBUGGING STYLES
+   ======================= */
+/* Debug scrollable mode - explicit styles to ensure proper functionality */
+.chat-debug-scrollable .chat-messages-container {
+    border: 1px dashed var(--text-accent);
+}
+
+.chat-debug-scrollable .chat-messages-container::after {
+    content: '';
+    display: block;
+    height: 1000px;
+    width: 1px;
+    background-color: transparent;
+}
+
+/* Ensure consistent padding and background for all toolbar containers */
+.chat-toolbar-container .toolbar-container,
+.transcript-toolbar-container .toolbar-container,
+.summary-toolbar-container .toolbar-container,
+.revised-toolbar-container .toolbar-container {
+    margin: 0;
+    padding: 8px 10px;
+    display: flex;
+    flex-direction: row;
+    align-items: center;
+    flex: 1;
+    background-color: var(--background-primary) !important;
+    padding-right: 10px;
+    width: 100%;
+    gap: 6px;
+}
+
+/* =======================
+   TOOLBAR STYLING
+   ======================= */
+.toolbar-container {
+    display: flex;
+    flex-direction: row;
+    justify-content: flex-start;
+    align-items: center;
+    gap: 8px;
+    padding: 8px 10px;
+    margin: 0;
+    transition: all 0.3s ease;
+    background-color: transparent;
+    width: 100%;
+}
+
+.toolbar-container[data-toolbar-id="top"] {
+    position: absolute;
+    left: 10px;
+    top: 5px;
+    z-index: 100;
+    justify-content: flex-start;
+}
+
+.toolbar-container button,
+.chat-toolbar-container button,
+.transcript-toolbar-container button,
+.summary-toolbar-container button,
+.revised-toolbar-container button {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    background-color: var(--background-secondary);
+    margin: 0 4px;
+    padding: 6px 10px;
+    border-radius: 4px;
+    flex-shrink: 0;
+    height: 28px;
+    min-width: 28px;
+}
+
+.toolbar-container button:hover:not(.disabled-button) {
+    background-color: var(--background-modifier-hover);
+    color: var(--text-accent);
+    transform: translateY(-1px);
+    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+}
+
+.toolbar-container button.active {
+    background-color: var(--background-modifier-active-hover);
+    color: var(--text-accent);
+}
+
+.toolbar-container button[data-command-id="start-over"] {
+    background-color: var(--background-modifier-error);
+    color: var(--text-on-accent);
+    font-weight: bold;
+    margin-right: 10px;
+}
+
+.toolbar-container button[data-command-id="start-over"]:hover {
+    background-color: var(--text-accent);
+    color: var(--text-on-accent);
+}
+
+.toolbar-container button svg {
+    width: 16px;
+    height: 16px;
+}
+
+.composite-toolbar {
+    border-top: 1px solid var(--background-modifier-border);
+    padding-top: 8px;
+}
+
+.toolbar-container[data-toolbar-id="transcript"],
+.toolbar-container[data-toolbar-id="revised"],
+.toolbar-container[data-toolbar-id="chat"],
+.toolbar-container[data-toolbar-id="summary"] {
+    background-color: transparent !important;
+}
+
+/* All toolbars positioning */
+.chat-toolbar-container,
+.transcript-toolbar-container,
+.summary-toolbar-container,
+.revised-toolbar-container {
+    position: fixed;
+    top: 127px !important; /* Position below tabs */
+    left: 0;
+    right: 0;
+    z-index: 100;
+    background-color: var(--background-primary) !important;
+    border-bottom: 1px solid var(--background-modifier-border) !important;
+    box-shadow: 0 3px 8px rgba(0, 0, 0, 0.1);
+    width: 100%;
+    margin: 0;
+    padding: 0;
+    height: 50px !important;
+    min-height: 50px !important;
+    max-height: 50px !important;
+    display: flex !important;
+    visibility: visible !important;
+    opacity: 1 !important;
+    align-items: center;
+    border-top: none !important;
+    border-left: none !important;
+    border-right: none !important;
+}
+
+/* Ensure all toolbar containers maintain consistent styles */
+.chat-toolbar-container,
+.transcript-toolbar-container,
+.summary-toolbar-container,
+.revised-toolbar-container {
+    position: fixed;
+    top: 127px !important;
+    left: 0 !important;
+    right: 0 !important;
+    z-index: 100 !important;
+    width: 100% !important;
+    max-width: 100% !important;
+    height: 50px !important;
+    min-height: 50px !important;
+    max-height: 50px !important;
+    background-color: var(--background-primary) !important;
+    border-bottom: 1px solid var(--background-modifier-border) !important;
+    box-shadow: 0 3px 8px rgba(0, 0, 0, 0.1);
+    display: flex !important;
+    visibility: visible !important;
+    opacity: 1 !important;
+    align-items: center !important;
+    padding: 0 !important;
+    margin: 0 !important;
+    padding-right: 0 !important;
+    margin-right: 0 !important;
+}
+
+/* Fix for ALL toolbar containers to ensure they take full width */
+.transcript-toolbar-container,
+.summary-toolbar-container,
+.revised-toolbar-container,
+.chat-toolbar-container {
+    right: 0 !important;
+    width: 100% !important;
+    max-width: 100% !important;
+    box-sizing: border-box !important;
+    padding-right: 0 !important;
+    margin-right: 0 !important;
+}
+
+/* Ensure consistent padding and background for all toolbar containers */
+.chat-toolbar-container .toolbar-container,
+.transcript-toolbar-container .toolbar-container,
+.summary-toolbar-container .toolbar-container,
+.revised-toolbar-container .toolbar-container {
+    margin: 0;
+    padding: 8px 10px;
+    display: flex;
+    flex-direction: row;
+    align-items: center;
+    flex: 1;
+    background-color: var(--background-primary) !important;
+    padding-right: 10px;
+    width: 100%;
+    gap: 6px;
+}
+
+/* Chat toolbar specific overrides */
+.chat-toolbar-container {
+    position: fixed !important;
+    top: 127px !important;
+    left: 0 !important;
+    right: 0 !important;
+    z-index: 100 !important;
+    width: 100% !important;
+    height: 50px !important;
+    min-height: 50px !important;
+    max-height: 50px !important;
+    background-color: var(--background-primary) !important;
+    border-bottom: 1px solid var(--background-modifier-border) !important;
+    display: flex !important;
+    visibility: visible !important;
+    opacity: 1 !important;
+    margin: 0 !important;
+    padding: 0 !important;
+    box-shadow: 0 3px 8px rgba(0, 0, 0, 0.1) !important;
+    align-items: center !important;
+}
+
+/* High-specificity override for chat toolbar */
+.chat-container .chat-toolbar-container,
+body .chat-toolbar-container,
+html body .chat-toolbar-container,
+.workspace-leaf-content .chat-toolbar-container {
+    top: 127px !important;
+    transform: none !important;
+    position: fixed !important;
+}
+
+/* Model indicator styling */
+.model-indicator {
+    margin-left: auto;
+    margin-right: 10px;
+    padding: 4px 8px;
+    font-size: 0.8em;
+    color: var(--text-muted);
+    background-color: var(--background-secondary);
+    border-radius: 4px;
+    display: inline-flex;
+    align-items: center;
+    gap: 4px;
+    height: 24px;
+    font-weight: 500;
+    box-shadow: 0 1px 2px rgba(0, 0, 0, 0.1);
+    z-index: 3;
+}
+
+.model-indicator::before {
+    content: "";
+    display: inline-block;
+    width: 8px;
+    height: 8px;
+    background-color: var(--interactive-accent);
+    border-radius: 50%;
+    animation: pulse 2s infinite;
+}
+
+.dark .model-indicator::before {
+    box-shadow: 0 0 4px var(--interactive-accent);
+}
+
+/* =======================
+   CONTENT STYLING
+   ======================= */
+.transcript-paragraph {
+    margin-bottom: 0.5em;
+    line-height: 1.4;
+    font-size: 1.1em;
+    padding: 0 0 0.2em 0;
+}
+
+.transcript-paragraph:hover {
+    background-color: var(--background-secondary-alt);
+    transition: background-color 0.2s ease;
+}
+
+.markdown-preview-view :first-child.transcript-paragraph {
+    margin-top: 0;
+}
+
+/* Video URL display */
+.video-url-container {
+    text-align: center;
+    padding: 2px;
+    margin-bottom: 5px;
+    border-bottom: 1px solid var(--background-modifier-border);
+    width: 100%;
+}
+
+.video-title {
+    font-weight: bold;
+    font-size: 1.1em;
+    margin-bottom: 4px;
+    color: var(--text-accent);
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    max-width: 90%;
+    margin: 0 auto 4px;
+}
+
+.video-url-link {
+    color: var(--text-accent);
+    text-decoration: none;
+    font-size: 0.9em;
+}
+
+.video-url-link:hover {
+    text-decoration: underline;
+}
+
+/* Audio controls */
+.audio-controls {
+    border-top: 0;
+    padding: 0;
+    margin-top: -2px;
+    position: absolute;
+    width: 100%;
+    top: 40px;
+    left: 0;
+    height: calc(100% - 22px);
+    display: flex;
+    align-items: flex-start;
+    justify-content: center;
+}
+
+.audio-controls .nav-buttons-container {
+    justify-content: center;
+    margin-top: 0;
+}
+
+/* Content containers */
+.transcript-content, 
+.revised-content,
+.summary-content,
+.chat-messages-container {
+    width: 100% !important;
+    max-width: 100% !important;
+    box-sizing: border-box !important;
+}
+
+.transcript-content,
+.revised-content,
+.summary-content {
+    padding: 15px;
+    width: 100%;
+    box-sizing: border-box;
+    padding-bottom: 90px !important;
+}
+
+/* Empty content message */
+.empty-content-message {
+    text-align: center;
+    padding: 20px;
+    color: var(--text-muted);
+    font-style: italic;
+    margin-top: 40px;
+    background-color: var(--background-secondary);
+    border-radius: 8px;
+    max-width: 80%;
+    margin-left: auto;
+    margin-right: auto;
+    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.05);
+}
+
+/* Revised content styling */
+.revised-content {
+    font-family: var(--font-text);
+    line-height: 1.6;
+}
+
+.revised-content p {
+    margin-bottom: 1em;
+}
+
+.revised-content h1, 
+.revised-content h2, 
+.revised-content h3, 
+.revised-content h4, 
+.revised-content h5, 
+.revised-content h6 {
+    margin-top: 1.5em;
+    margin-bottom: 0.5em;
+}
+
+/* Special handling for empty states */
+.summary-container:has(.empty-content-message),
+.revised-container:has(.empty-content-message) {
+    overflow-y: hidden;
+}
+
+.summary-content:has(.empty-content-message),
+.revised-content:has(.empty-content-message) {
     display: flex;
     flex-direction: column;
-    height: 100%;
-    overflow: hidden !important; /* Keep - needed to prevent outer scrolling issues */
-    padding-bottom: 0 !important; /* Keep - needed for proper layout */
-    margin-bottom: 0 !important; /* Keep - needed for proper layout */
+    align-items: center;
+    justify-content: flex-start;
+    height: calc(100% - 60px);
+    overflow: hidden;
+    padding-top: 20px;
 }
 
-/* Chat messages container */
+.summary-content:has(.empty-content-message) .empty-content-message,
+.revised-content:has(.empty-content-message) .empty-content-message {
+    margin-top: 0;
+}
+
+/* =======================
+   CHAT MESSAGE STYLING
+   ======================= */
 .chat-messages-container {
     flex: 1;
     display: flex;
@@ -192,15 +1065,18 @@
     padding-top: 15px;
 }
 
-/* Chat messages wrapper */
+.chat-messages-container::after {
+    content: none;
+    display: none;
+}
+
 .chat-messages-wrapper {
     width: 100%;
     display: block;
     min-height: 100%;
-    overflow: visible; /* Removed !important */
+    overflow: visible;
 }
 
-/* Chat message styling */
 .chat-message {
     padding: 12px 16px;
     border-radius: 18px;
@@ -269,237 +1145,269 @@
     cursor: text;
 }
 
-/* Toolbar styling */
-.toolbar-container {
-    display: flex;
-    flex-direction: row;
-    justify-content: flex-start;
-    align-items: center;
-    gap: 8px;
-    padding: 8px 10px;
-    margin: 0;
-    transition: all 0.3s ease;
-    background-color: transparent;
-    width: 100%;
+.chat-message:last-child {
+    margin-bottom: 0;
 }
 
-.toolbar-container button svg {
+/* Message clearfix */
+.message-clearfix {
+    clear: both;
+    width: 100%;
+    height: 1px;
+    margin: 0;
+    padding: 0;
+}
+
+/* Message error state */
+.message-error {
+    background-color: rgba(var(--background-modifier-error-rgb), 0.1) !important;
+    border-left: 3px solid var(--background-modifier-error) !important;
+    padding-left: 12px !important;
+}
+
+/* Empty message styling */
+.empty-chat-message {
+    color: var(--text-muted);
+    text-align: center;
+    padding: 20px;
+    font-style: italic;
+}
+
+/* Loading spinner */
+.loading-spinner-container {
+    display: flex;
+    align-items: center;
+    padding: 12px 16px;
+    border-radius: 18px;
+    background-color: var(--background-secondary-alt);
+    margin-bottom: 15px;
+    margin-right: auto;
+    align-self: flex-start;
+    max-width: 70%;
+    border-bottom-left-radius: 4px;
+}
+
+.loading-spinner {
     width: 16px;
     height: 16px;
+    border: 2px solid var(--text-muted);
+    border-bottom-color: transparent;
+    border-radius: 50%;
+    display: inline-block;
+    animation: spin 1s linear infinite;
+    margin-right: 10px;
 }
 
-.composite-toolbar {
-    border-top: 1px solid var(--background-modifier-border);
-    padding-top: 8px;
+.loading-message {
+    color: var(--text-muted);
 }
 
-/* Tab-specific toolbars */
-.toolbar-container[data-toolbar-id="transcript"],
-.toolbar-container[data-toolbar-id="revised"],
-.toolbar-container[data-toolbar-id="chat"],
-.toolbar-container[data-toolbar-id="summary"] {
-    background-color: transparent !important;
+/* =======================
+   ANIMATIONS & EFFECTS
+   ======================= */
+@keyframes pulse {
+    0% { opacity: 0.6; }
+    50% { opacity: 1; }
+    100% { opacity: 0.6; }
 }
 
-/* Existing styles */
-.transcript-paragraph {
-    margin-bottom: 0.5em;
-    line-height: 1.4;
-    font-size: 1.1em;
-    padding: 0 0 0.2em 0;
+@keyframes fadeIn {
+    from { opacity: 0; transform: translateY(10px); }
+    to { opacity: 1; transform: translateY(0); }
 }
 
-.transcript-paragraph:hover {
-    background-color: var(--background-secondary-alt);
-    transition: background-color 0.2s ease;
+@keyframes rotate {
+    from { transform: rotate(0deg); }
+    to { transform: rotate(360deg); }
 }
 
-.view-header-title-container {
-    position: absolute;
-    left: 0;
-    right: 0;
-    text-align: center;
-    pointer-events: none;
-    top: 0;
-    margin-top: 15px; /* Add space for the title */
-    z-index: 5; /* Ensure title appears above tabs */
+.thinking-dots {
+    display: inline-flex;
+    width: 20px;
+    justify-content: space-between;
 }
 
-.nav-header {
+.thinking-dots span {
+    width: 4px;
+    height: 4px;
+    background-color: var(--text-muted);
+    border-radius: 50%;
+    animation: pulse 1.4s infinite;
+    display: inline-block;
+}
+
+.thinking-dots span:nth-child(2) {
+    animation-delay: 0.2s;
+}
+
+.thinking-dots span:nth-child(3) {
+    animation-delay: 0.4s;
+}
+
+.pulse {
+    animation: pulse 2s infinite ease-in-out;
+}
+
+/* =======================
+   UTILITY CLASSES
+   ======================= */
+.hidden {
+    display: none !important;
+}
+
+.invisible {
+    visibility: hidden !important;
+}
+
+.disabled {
+    pointer-events: none !important;
+    opacity: 0.5 !important;
+}
+
+.no-select {
+    user-select: none !important;
+}
+
+.flex-center {
     display: flex;
     justify-content: center;
     align-items: center;
-    position: relative;
-    padding-top: 0px;
-    padding-bottom: 0px;
-    min-height: 40px;
 }
 
-.nav-buttons-container {
+.flex-between {
     display: flex;
-    justify-content: center;
-    gap: 6px;
-    margin-top: 4px;
+    justify-content: space-between;
+    align-items: center;
 }
 
-.skribe-plugin .view-header-title {
-    font-family: 'Roboto', sans-serif;
-    font-weight: 700;
-    font-size: 1.2em;
-    color: var(--text-accent);
-    text-shadow: 1px 1px 2px rgba(0, 0, 0, 0.2);
-    background: linear-gradient(90deg, #ff7e5f, #feb47b);
-    background-clip: text;
-    -webkit-background-clip: text;
-    -webkit-text-fill-color: transparent;
-}
-
-.audio-controls {
-    border-top: 0;
-    padding: 0;
-    margin-top: -2px;
-    position: absolute;
-    width: 100%;
-    top: 40px;
-    left: 0;
-    height: calc(100% - 22px);
+.icon-button {
+    background: none;
+    border: none;
+    cursor: pointer;
+    padding: 4px;
+    margin: 0;
     display: flex;
-    align-items: flex-start;
+    align-items: center;
     justify-content: center;
+    transition: opacity 0.2s ease;
 }
 
-.audio-controls .nav-buttons-container {
-    justify-content: center;
-    margin-top: 0;
+.icon-button:hover {
+    opacity: 0.8;
 }
 
-.markdown-preview-view .nav-header {
-    padding-top: 0;
-    padding-bottom: 0;
-    min-height: 40px;
-}
-
-.nav-folder-content {
-    margin-top: 4px;
-}
-
-.markdown-preview-view :first-child.transcript-paragraph {
-    margin-top: 0;
-}
-
-.markdown-preview-view {
-    padding-right: 0 !important;
-    margin-right: 0 !important;
-}
-
-/* If needed, also target the container directly */
-div.nav-folder-content.markdown-preview-view {
-    padding-top: 0;
-    margin-top: 0;
-}
-
-/* Video URL display */
-.video-url-container {
-    text-align: center;
-    padding: 2px;
-    margin-bottom: 5px;
-    border-bottom: 1px solid var(--background-modifier-border);
-    width: 100%;
-}
-
-.video-title {
-    font-weight: bold;
-    font-size: 1.1em;
-    margin-bottom: 4px;
-    color: var(--text-accent);
+.truncate {
     white-space: nowrap;
     overflow: hidden;
     text-overflow: ellipsis;
-    max-width: 90%;
-    margin: 0 auto 4px;
 }
 
-.video-url-link {
-    color: var(--text-accent);
-    text-decoration: none;
-    font-size: 0.9em;
-}
+.mt-0 { margin-top: 0; }
+.mb-0 { margin-bottom: 0; }
+.ml-0 { margin-left: 0; }
+.mr-0 { margin-right: 0; }
+.m-0 { margin: 0; }
 
-.video-url-link:hover {
-    text-decoration: underline;
-}
+.pt-0 { padding-top: 0; }
+.pb-0 { padding-bottom: 0; }
+.pl-0 { padding-left: 0; }
+.pr-0 { padding-right: 0; }
+.p-0 { padding: 0; }
 
-/* Tabs - position below title */
-.tabs-container {
-    position: fixed;
-    top: 90px; /* Reduced from 110px by 20px */
-    left: 0;
-    right: 0;
-    z-index: 2;
-    background-color: var(--background-primary);
-    width: 100%;
-    border-bottom: 1px solid var(--background-modifier-border);
-    margin: 0;
-    padding: 0;
-    display: flex;
-}
-
-.tab-item {
-    padding: 8px 16px;
-    cursor: pointer;
-    border-bottom: 2px solid transparent;
-    transition: all 0.2s ease;
-}
-
-.tab-item.active, .tab-item:hover {
-    border-bottom: 2px solid var(--text-accent);
-}
-
-.tab-item.active {
-    font-weight: bold;
-}
-
-/* All toolbars - basic positioning */
-.chat-toolbar-container,
-.transcript-toolbar-container,
-.summary-toolbar-container,
-.revised-toolbar-container {
-    position: fixed;
-    top: 127px !important; /* Reduced from 147px by 20px */
-    left: 0;
-    right: 0;
-    z-index: 100;
-    background-color: var(--background-primary) !important;
-    border-bottom: 1px solid var(--background-modifier-border) !important;
-    box-shadow: 0 3px 8px rgba(0, 0, 0, 0.1);
-    width: 100%;
-    margin: 0;
-    padding: 0;
-    height: 50px !important;
-    min-height: 50px !important;
-    max-height: 50px !important;
-    display: flex !important;
-    visibility: visible !important;
-    opacity: 1 !important;
-    align-items: center;
-    /* Remove any accent borders that might be inconsistent */
-    border-top: none !important;
-    border-left: none !important;
-    border-right: none !important;
-}
-
-/* Remove the extra padding element completely */
-.chat-messages-container::after {
-    content: none;
+.responsive-hidden {
     display: none;
 }
 
-/* Debugging helper class that can be added to force scrolling for testing */
-.chat-debug-scrollable .chat-messages-container::after {
-    content: '';
-    display: block;
-    height: 1000px; /* Force scrollable area */
-    width: 1px;
+@media (max-width: 768px) {
+    .mobile-hidden {
+        display: none !important;
+    }
+    
+    .mobile-only {
+        display: block !important;
+    }
+    
+    .responsive-hidden {
+        display: block;
+    }
+    
+    .global-chat-input-container {
+        padding: 8px;
+    }
+    
+    .chat-input {
+        height: 38px;
+        padding: 8px 10px;
+    }
+    
+    .split-button-container {
+        gap: 4px;
+    }
+    
+    .toolbar-container {
+        padding: 6px 8px;
+    }
+    
+    .button-container-with-label {
+        margin: 0 2px;
+    }
+    
+    .toolbar-button {
+        width: 34px;
+        height: 34px;
+    }
+    
+    .chat-message {
+        padding: 10px;
+    }
+}
+
+.fade-in {
+    animation: fadeIn 0.3s ease forwards;
+}
+
+/* =======================
+   INTERACTIVE ELEMENTS
+   ======================= */
+/* Global chat input */
+.global-chat-input-container {
+    position: fixed;
+    bottom: 0;
+    left: 0;
+    right: 0;
+    width: 100%;
+    padding: 10px 15px;
+    background-color: var(--background-primary);
+    border-top: 1px solid var(--background-modifier-border);
+    z-index: 100;
+    display: flex;
+    align-items: center;
+    box-shadow: 0 -2px 10px rgba(0, 0, 0, 0.1);
+    margin-top: 0;
+    gap: 10px;
+}
+
+.workspace-leaf-content[data-type="skribe-view"] .global-chat-input-container {
+    bottom: var(--status-bar-height, 22px);
+}
+
+.chat-input {
+    flex-grow: 1;
+    padding: 10px 12px;
+    border-radius: 20px;
+    border: 1px solid var(--background-modifier-border);
+    background-color: var(--background-secondary);
+    color: var(--text-normal);
+    height: 40px;
+    box-sizing: border-box;
+    transition: all 0.2s ease;
+    box-shadow: 0 1px 3px rgba(0, 0, 0, 0.05);
+}
+
+.chat-input:focus {
+    border-color: var(--interactive-accent);
+    outline: none;
+    box-shadow: 0 0 0 2px rgba(var(--interactive-accent-rgb), 0.2);
 }
 
 /* Scroll to bottom button */
@@ -518,22 +1426,20 @@ div.nav-folder-content.markdown-preview-view {
     box-shadow: 0 3px 12px rgba(0, 0, 0, 0.3);
     border: 1px solid rgba(255, 255, 255, 0.2);
     cursor: pointer;
-    z-index: 1100 !important; /* Higher z-index to ensure clickability */
+    z-index: 1100 !important;
     transition: transform 0.15s cubic-bezier(0.175, 0.885, 0.32, 1.275), 
                 opacity 0.15s ease-out, 
                 box-shadow 0.15s ease-out;
     pointer-events: auto !important;
 }
 
-/* Hidden class for the scroll button */
 .scroll-to-bottom-button.hidden {
     transform: scale(0.8) translateZ(0);
     opacity: 0;
     pointer-events: none;
-    display: none;  /* Actually hide it completely */
+    display: none;
 }
 
-/* Button label that appears on hover */
 .scroll-to-bottom-button::after {
     content: "New messages";
     position: absolute;
@@ -581,31 +1487,6 @@ div.nav-folder-content.markdown-preview-view {
     animation: bounce-arrow 2s ease-in-out infinite;
 }
 
-@keyframes bounce-arrow {
-    0%, 100% { transform: translateY(0); }
-    50% { transform: translateY(3px); }
-}
-
-@keyframes bounce-in {
-    0% { transform: scale(0); opacity: 0; }
-    40% { transform: scale(1.2); opacity: 0.7; }
-    70% { transform: scale(0.9); opacity: 0.9; }
-    100% { transform: scale(1); opacity: 1; }
-}
-
-/* Pulse animation when new messages arrive */
-@keyframes pulse {
-    0% {
-        box-shadow: 0 0 0 0 rgba(var(--interactive-accent-rgb), 0.7);
-    }
-    70% {
-        box-shadow: 0 0 0 5px rgba(var(--interactive-accent-rgb), 0);
-    }
-    100% {
-        box-shadow: 0 0 0 0 rgba(var(--interactive-accent-rgb), 0);
-    }
-}
-
 .theme-dark .scroll-to-bottom-button {
     box-shadow: 0 3px 10px rgba(0, 0, 0, 0.3), 
                 0 0 15px rgba(var(--interactive-accent-rgb), 0.4),
@@ -618,625 +1499,13 @@ div.nav-folder-content.markdown-preview-view {
                 inset 0 1px 1px rgba(255, 255, 255, 0.2);
 }
 
-/* Mobile adjustments for the scroll button */
-.is-mobile .scroll-to-bottom-button,
-html.is-mobile .scroll-to-bottom-button,
-html.is-phone .scroll-to-bottom-button {
-    bottom: 130px;
-    right: 15px;
-    width: 42px;
-    height: 42px;
-}
-
-/* Global chat input container that appears on all tabs */
-.global-chat-input-container {
-    position: fixed;
-    bottom: 0;
-    left: 0;
-    right: 0;
-    width: 100%;
-    padding: 10px 15px;
-    background-color: var(--background-primary);
-    border-top: 1px solid var(--background-modifier-border);
-    z-index: 100;
-    display: flex;
-    align-items: center;
-    box-shadow: 0 -2px 10px rgba(0, 0, 0, 0.1);
-    margin-top: 0;
-    gap: 10px; /* Add spacing between input and buttons */
-}
-
-/* Adjust for status bar in Obsidian */
-.workspace-leaf-content[data-type="skribe-view"] .global-chat-input-container {
-    bottom: var(--status-bar-height, 22px);
-}
-
-/* Chat input styling */
-.chat-input {
-    flex-grow: 1;
-    padding: 10px 12px;
-    border-radius: 20px;
-    border: 1px solid var(--background-modifier-border);
-    background-color: var(--background-secondary);
-    color: var(--text-normal);
-    height: 40px;
-    box-sizing: border-box;
-    transition: all 0.2s ease;
-    box-shadow: 0 1px 3px rgba(0, 0, 0, 0.05);
-}
-
-.chat-input:focus {
-    border-color: var(--interactive-accent);
-    outline: none;
-    box-shadow: 0 0 0 2px rgba(var(--interactive-accent-rgb), 0.2);
-}
-
-/* Ensure the dropdown menu doesn't get hidden */
-.chat-container {
-    overflow: visible !important;
-}
-
-/* Animate the dropdown arrow */
-.split-button-dropdown svg {
-    transition: transform 0.2s ease;
-}
-
-.split-button-dropdown.active {
-    background-color: var(--interactive-accent-hover);
-}
-
-.split-button-dropdown.active svg {
-    transform: rotate(180deg);
-}
-
-/* Empty content message */
-.empty-content-message {
-    text-align: center;
-    padding: 20px;
-    color: var(--text-muted);
-    font-style: italic;
-    margin-top: 40px;
-    background-color: var(--background-secondary);
-    border-radius: 8px;
-    max-width: 80%;
-    margin-left: auto;
-    margin-right: auto;
-    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.05);
-}
-
-/* Special handling for empty states in summary and revised tabs */
-.summary-container:has(.empty-content-message),
-.revised-container:has(.empty-content-message) {
-    overflow-y: hidden;
-}
-
-.summary-content:has(.empty-content-message),
-.revised-content:has(.empty-content-message) {
-    display: flex;
-    flex-direction: column;
-    align-items: center;
-    justify-content: flex-start;
-    height: calc(100% - 60px); /* Account for toolbar height */
-    overflow: hidden;
-    padding-top: 20px; /* Add padding to the top */
-}
-
-.summary-content:has(.empty-content-message) .empty-content-message,
-.revised-content:has(.empty-content-message) .empty-content-message {
-    margin-top: 0;
-}
-
-/* Loading spinner styles */
-.loading-spinner-container {
-    display: flex;
-    align-items: center;
-    padding: 12px 16px;
-    border-radius: 18px;
-    background-color: var(--background-secondary-alt);
-    margin-bottom: 15px;
-    margin-right: auto;
-    align-self: flex-start;
-    max-width: 70%;
-    border-bottom-left-radius: 4px;
-}
-
-.loading-spinner {
-    width: 16px;
-    height: 16px;
-    border: 2px solid var(--text-muted);
-    border-bottom-color: transparent;
-    border-radius: 50%;
-    display: inline-block;
-    animation: spin 1s linear infinite;
-    margin-right: 10px;
-}
-
-.loading-message {
-    color: var(--text-muted);
-}
-
-@keyframes spin {
-    0% { transform: rotate(0deg); }
-    100% { transform: rotate(360deg); }
-}
-
-/* Message error state */
-.message-error {
-    background-color: rgba(var(--background-modifier-error-rgb), 0.1) !important;
-    border-left: 3px solid var(--background-modifier-error) !important;
-    padding-left: 12px !important;
-}
-
-/* Model indicator styling */
-.model-indicator {
-    margin-left: auto;
-    margin-right: 10px;
-    padding: 4px 8px;
-    font-size: 0.8em;
-    color: var(--text-muted);
-    background-color: var(--background-secondary);
-    border-radius: 4px;
-    display: inline-flex;
-    align-items: center;
-    gap: 4px;
-    height: 24px;
-    font-weight: 500;
-    box-shadow: 0 1px 2px rgba(0, 0, 0, 0.1);
-    z-index: 3;
-}
-
-/* Model indicator pulse animation */
-.model-indicator::before {
-    content: "";
-    display: inline-block;
-    width: 8px;
-    height: 8px;
-    background-color: var(--interactive-accent);
-    border-radius: 50%;
-    animation: pulse 2s infinite;
-}
-
-.dark .model-indicator::before {
-    box-shadow: 0 0 4px var(--interactive-accent);
-}
-
-/* Fix for transcript container with nav-folder-content class */
-.nav-folder-content.transcript-container,
-.nav-folder-content.markdown-preview-view.transcript-container,
-div[class*="nav-folder-content"][class*="transcript-container"] {
-    padding: 0 !important;
-    margin: 0 !important;
-    width: 100% !important;
-    box-sizing: border-box !important;
-}
-
-/* Ensure all toolbar containers maintain consistent styles */
-.chat-toolbar-container,
-.transcript-toolbar-container,
-.summary-toolbar-container,
-.revised-toolbar-container {
-    position: fixed;
-    top: 127px !important;
-    left: 0 !important;
-    right: 0 !important;
-    z-index: 100 !important;
-    width: 100% !important;
-    max-width: 100% !important;
-    height: 50px !important;
-    min-height: 50px !important;
-    max-height: 50px !important;
-    background-color: var(--background-primary) !important;
-    border-bottom: 1px solid var(--background-modifier-border) !important;
-    box-shadow: 0 3px 8px rgba(0, 0, 0, 0.1);
-    display: flex !important;
-    visibility: visible !important;
-    opacity: 1 !important;
-    align-items: center !important;
-    padding: 0 !important;
-    margin: 0 !important;
-    padding-right: 0 !important;
-    margin-right: 0 !important;
-}
-
-/* Ensure the toolbar container inside nav-folder fills the width */
-.nav-folder-content .transcript-toolbar-container .toolbar-container,
-div[class*="nav-folder-content"] .transcript-toolbar-container .toolbar-container {
-    width: 100% !important;
-    padding-right: 0 !important;
-    margin-right: 0 !important;
-    flex: 1 !important;
-}
-
-/* Remove all padding/margin from the right side of ALL containers */
-.markdown-preview-view {
-    padding-right: 0 !important;
-    margin-right: 0 !important;
-}
-
-/* Fix for ALL toolbar containers to ensure they take full width */
-.transcript-toolbar-container,
-.summary-toolbar-container,
-.revised-toolbar-container,
-.chat-toolbar-container {
-    right: 0 !important;
-    width: 100% !important;
-    max-width: 100% !important;
-    box-sizing: border-box !important;
-    padding-right: 0 !important;
-    margin-right: 0 !important;
-}
-
-/* Force all content containers to take full width */
-.transcript-content, 
-.revised-content,
-.summary-content,
-.chat-messages-container {
-    width: 100% !important;
-    max-width: 100% !important;
-    box-sizing: border-box !important;
-}
-
-/* Force all container elements to have consistent styling */
-.transcript-container, 
-.revised-container,
-.summary-container,
-.chat-container {
-    position: relative;
-    width: 100% !important;
-    height: 100%;
-    overflow-y: auto;
-    box-sizing: border-box !important;
-    padding: 0;
-    margin: 0;
-    margin-top: 77px;
-    padding-right: 0 !important;
-    margin-right: 0 !important;
-    background-color: var(--background-primary);
-    padding-bottom: 60px;
-    margin-bottom: 20px; /* Removed !important */
-}
-
-/* Fix for Obsidian's native padding on containers */
-.nav-folder-content,
-div[class*="nav-folder-content"],
-.markdown-preview-view,
-div[class*="markdown-preview-view"] {
-    padding-right: 0 !important;
-    margin-right: 0 !important;
-    width: 100% !important;
-    max-width: 100% !important;
-    box-sizing: border-box !important;
-}
-
-/* Ensure proper centering for empty states and content containers */
-.empty-content-message {
-    text-align: center;
-    padding: 20px;
-    color: var(--text-muted);
-    font-style: italic;
-    margin-top: 40px;
-    background-color: var(--background-secondary);
-    border-radius: 8px;
-    max-width: 80%;
-    margin-left: auto;
-    margin-right: auto;
-    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.05);
-}
-
-/* Chat container layout */
-.chat-container {
-    position: relative;
-    display: flex;
-    flex-direction: column;
-    height: 100%;
-    overflow: hidden !important; /* Keep - needed to prevent outer scrolling issues */
-    padding-bottom: 0 !important; /* Keep - needed for proper layout */
-    margin-bottom: 0 !important; /* Keep - needed for proper layout */
-}
-
-/* Chat messages container */
-.chat-messages-container {
-    flex: 1;
-    display: flex;
-    flex-direction: column;
-    overflow-y: auto !important;
-    overflow-x: hidden !important;
-    padding: 15px;
-    padding-bottom: 0 !important;
-    margin-top: 0 !important;
-    margin-bottom: 0 !important;
-    background-color: var(--background-primary);
-    width: 100%;
-    box-sizing: border-box;
-    height: calc(100% - 50px) !important;
-    min-height: calc(100% - 50px) !important;
-    padding-top: 15px !important;
-    background-color: transparent !important;
-    border-radius: 0 !important;
-    gap: unset !important;
-}
-
-/* Chat messages wrapper */
-.chat-messages-wrapper {
-    width: 100%;
-    display: block;
-    min-height: 100%;
-    overflow: visible; /* Removed !important */
-}
-
-/* Revised content styling */
-.revised-content {
-    font-family: var(--font-text);
-    line-height: 1.6;
-}
-
-.revised-content p {
-    margin-bottom: 1em;
-}
-
-.revised-content h1, 
-.revised-content h2, 
-.revised-content h3, 
-.revised-content h4, 
-.revised-content h5, 
-.revised-content h6 {
-    margin-top: 1.5em;
-    margin-bottom: 0.5em;
-}
-
-/* Mobile specific adjustments */
-html.is-mobile,
-html.is-phone,
-.is-mobile,
-.is-phone,
-body.is-mobile,
-.is-tablet {
-    /* Mobile-specific tab positioning */
-    .tabs-container {
-        top: 20px !important;
-        position: fixed !important;
-        z-index: 200 !important;
-    }
-    
-    /* Mobile-specific toolbar positioning */
-    .chat-toolbar-container,
-    .transcript-toolbar-container,
-    .summary-toolbar-container,
-    .revised-toolbar-container {
-        top: 57px !important;
-        position: fixed !important;
-        z-index: 1000 !important;
-        display: flex !important;
-        height: 50px !important;
-        background-color: var(--background-primary) !important;
-        opacity: 1 !important;
-        visibility: visible !important;
-        border-bottom: 1px solid var(--background-modifier-border) !important;
-        left: 0 !important;
-        right: 0 !important;
-        width: 100% !important;
-        box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1) !important;
-    }
-    
-    /* Mobile-specific content containers */
-    .transcript-container,
-    .revised-container,
-    .summary-container,
-    .chat-container {
-        margin-top: 22px !important;
-        padding-top: 0 !important;
-        overflow-y: auto !important;
-        position: relative !important;
-        z-index: 1 !important;
-        margin-bottom: 0 !important;
-    }
-    
-    /* Mobile-specific chat container adjustments */
-    .chat-container {
-        padding-bottom: 0 !important;
-        margin-bottom: -10px !important;
-    }
-    
-    .chat-messages-container {
-        padding-bottom: 0 !important;
-        margin-bottom: -30px !important;
-    }
-    
-    /* Mobile-specific header adjustments */
-    .nav-header {
-        padding-bottom: 0 !important;
-        margin-bottom: 0 !important;
-        min-height: 30px !important;
-    }
-    
-    .nav-buttons-container {
-        margin-top: 0 !important;
-        margin-bottom: 0 !important;
-        padding-bottom: 0 !important;
-    }
-    
-    /* Mobile adjustments for scroll button */
-    .scroll-to-bottom-button {
-        bottom: 130px;
-        right: 15px;
-        width: 42px;
-        height: 42px;
-    }
-}
-
-/* Reduce bottom padding for the plugin container */
-div.view-content.skribe-plugin {
-    padding-bottom: 12px !important;
-    padding: 0;
-}
-
-/* Add extra margin for messages to prevent being hidden behind input */
-.chat-message:last-child {
-    margin-bottom: 0; /* Removed !important */
-}
-
-/* Mobile specific adjustments for chat container */
-html.is-mobile .chat-container,
-html.is-phone .chat-container,
-.is-mobile .chat-container,
-.is-phone .chat-container,
-body.is-mobile .chat-container,
-.is-tablet .chat-container {
-    padding-bottom: 0 !important; /* No padding */
-    margin-bottom: -10px !important; /* Negative margin to push down */
-}
-
-html.is-mobile .chat-messages-container,
-html.is-phone .chat-messages-container,
-.is-mobile .chat-messages-container,
-.is-phone .chat-messages-container,
-body.is-mobile .chat-messages-container,
-.is-tablet .chat-messages-container {
-    padding-bottom: 0 !important; /* No padding */
-    margin-bottom: -30px !important; /* Negative margin to push down */
-}
-
-/* Override any potential text selection disabling */
-.skribe-plugin,
-.skribe-content-wrapper,
-.chat-container,
-.markdown-preview-view,
-.workspace-leaf-content[data-type="skribe-view"] {
-    user-select: text !important;
-    -webkit-user-select: text !important;
-    -moz-user-select: text !important;
-    -ms-user-select: text !important;
-}
-
-/* Chat toolbar specific overrides to ensure it matches perfectly with other toolbars */
-.chat-toolbar-container {
-    position: fixed !important;
-    top: 127px !important;
-    left: 0 !important;
-    right: 0 !important;
-    z-index: 100 !important;
-    width: 100% !important;
-    height: 50px !important;
-    min-height: 50px !important;
-    max-height: 50px !important;
-    background-color: var(--background-primary) !important;
-    border-bottom: 1px solid var(--background-modifier-border) !important;
-    display: flex !important;
-    visibility: visible !important;
-    opacity: 1 !important;
-    margin: 0 !important;
-    padding: 0 !important;
-    box-shadow: 0 3px 8px rgba(0, 0, 0, 0.1) !important;
-    align-items: center !important;
-}
-
-/* Chat toolbar container special override - repeated for various browser specificity issues */
-.chat-container .chat-toolbar-container,
-body .chat-toolbar-container,
-html body .chat-toolbar-container,
-.workspace-leaf-content .chat-toolbar-container {
-    top: 127px !important;
-    transform: none !important;
-    position: fixed !important;
-}
-
-/* WebKit-specific positioning fix */
-@media screen and (-webkit-min-device-pixel-ratio:0) {
-    /* Removing WebKit-specific overrides for chat toolbar */
-}
-
-/* Firefox-specific fix */
-@-moz-document url-prefix() {
-    /* Removing Firefox-specific overrides for chat toolbar */
-}
-
-/* Fix the chat messages spacing to account for the fixed toolbar */
-.chat-messages-container {
-    flex: 1;
-    display: flex;
-    flex-direction: column;
-    overflow-y: auto !important;
-    overflow-x: hidden !important;
-    padding: 15px;
-    padding-bottom: 0 !important;
-    margin-top: 0;
-    margin-bottom: 0;
-    background-color: transparent !important;
-    border-radius: 0;
-    gap: unset;
-    width: 100%;
-    box-sizing: border-box;
-    height: calc(100% - 50px) !important;
-    min-height: calc(100% - 50px) !important;
-    padding-top: 15px;
-}
-
-/* UNIFIED CONTENT STYLES - applies to tab content areas while preserving structure */
-.transcript-content,
-.revised-content,
-.summary-content {
-    padding: 15px;
-    width: 100%;
-    box-sizing: border-box;
-    padding-bottom: 90px !important; /* Needed for spacing */
-}
-
-/* Ensure content areas have proper padding and don't scroll under the input */
-.transcript-content, 
-.revised-content,
-.summary-content {
-    padding-bottom: 90px !important; /* Add extra bottom padding to content areas */
-}
-
-/* Adjust the main content containers to ensure proper rendering of scrollable content */
-.transcript-container, 
-.revised-container,
-.summary-container,
-.chat-container {
-    position: relative;
-    overflow-y: auto;
-    height: 100%;
-    margin-bottom: 0 !important;
-    box-sizing: border-box;
-}
-
-/* Ensure global chat input is always on top */
-.global-chat-input-container {
-    z-index: 1000;
-    box-shadow: 0 -2px 10px rgba(0, 0, 0, 0.1);
-}
-
-/* Ensure paragraphs and other content don't get hidden */
-.transcript-paragraph:last-child,
-.revised-content > *:last-child,
-.summary-content > *:last-child {
-    margin-bottom: 100px; /* Removed !important */
-}
-
-/* Fix empty message styling */
-.empty-chat-message {
-    color: var(--text-muted);
-    text-align: center;
-    padding: 20px;
-    font-style: italic;
-}
-
-/* Message clearfix */
-.message-clearfix {
-    clear: both;
-    width: 100%;
-    height: 1px;
-    margin: 0;
-    padding: 0;
-}
-
-/* Split button styling - updated for round buttons */
+/* Split button styling */
 .split-button-container {
     display: flex;
     align-items: stretch;
-    height: 40px; /* Adjusted height to match round buttons */
-    flex-shrink: 0; /* Prevent shrinking */
-    gap: 8px; /* Add gap between buttons */
+    height: 40px;
+    flex-shrink: 0;
+    gap: 8px;
 }
 
 .split-button-main {
@@ -1251,7 +1520,7 @@ html body .chat-toolbar-container,
     display: flex;
     justify-content: center;
     align-items: center;
-    border-radius: 50%; /* Make the button circular */
+    border-radius: 50%;
     box-shadow: 0 1px 3px rgba(0, 0, 0, 0.2);
     transition: all 0.2s ease;
 }
@@ -1267,7 +1536,7 @@ html body .chat-toolbar-container,
     display: flex;
     justify-content: center;
     align-items: center;
-    border-radius: 50%; /* Make the button circular */
+    border-radius: 50%;
     box-shadow: 0 1px 3px rgba(0, 0, 0, 0.2);
     transition: all 0.2s ease;
 }
@@ -1288,18 +1557,25 @@ html body .chat-toolbar-container,
     height: 20px;
 }
 
-/* Update dropdown toggle active state */
 .split-button-dropdown.active {
     background-color: var(--interactive-accent-hover);
     transform: translateY(-1px);
     box-shadow: 0 3px 5px rgba(0, 0, 0, 0.2);
 }
 
-/* Quips dropdown menu - updated for round buttons */
+.split-button-dropdown svg {
+    transition: transform 0.2s ease;
+}
+
+.split-button-dropdown.active svg {
+    transform: rotate(180deg);
+}
+
+/* Quips dropdown menu */
 .quips-dropdown-menu {
     position: absolute;
-    bottom: 60px; /* Position above the input bar */
-    right: 60px; /* Adjusted to align with the dropdown button */
+    bottom: 60px;
+    right: 60px;
     background-color: var(--background-primary);
     border-radius: 8px;
     box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
@@ -1310,11 +1586,6 @@ html body .chat-toolbar-container,
     z-index: 1000;
     border: 1px solid var(--background-modifier-border);
     animation: fadeIn 0.2s ease;
-}
-
-@keyframes fadeIn {
-    from { opacity: 0; transform: translateY(10px); }
-    to { opacity: 1; transform: translateY(0); }
 }
 
 .quips-dropdown-item {
@@ -1333,93 +1604,136 @@ html body .chat-toolbar-container,
     background-color: var(--background-modifier-hover);
 }
 
-/* Settings tab drag and drop styles */
-.quip-item {
+/* Quip cards in chat interface */
+.quips-cards-container {
     display: flex;
+    flex-direction: row;
+    flex-wrap: wrap;
+    gap: 12px;
+    padding: 15px 0;
+    width: 100%;
+}
+
+.quip-card {
+    background-color: var(--background-primary);
+    border-radius: 8px;
+    padding: 12px 16px;
+    cursor: pointer;
+    box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
+    transition: all 0.2s ease;
+    min-width: 150px;
+    max-width: fit-content;
+    margin: 0;
+    border-left: 4px solid var(--interactive-accent);
+    position: relative;
+    flex: 0 1 auto;
+    box-sizing: border-box;
+}
+
+.quip-card:hover {
+    background-color: var(--background-secondary-alt);
+    transform: translateX(2px);
+    box-shadow: 0 2px 5px rgba(0, 0, 0, 0.15);
+    border-left-width: 6px;
+}
+
+.quip-card:active {
+    transform: translateX(1px);
+    box-shadow: 0 1px 2px rgba(0, 0, 0, 0.1);
+}
+
+.quip-card-text {
+    color: var(--text-normal);
+    font-size: 0.95em;
+    line-height: 1.4;
+}
+
+@media (max-width: 768px) {
+    .quips-cards-container {
+        flex-direction: column;
+    }
+    
+    .quip-card {
+        width: 100%;
+        max-width: none;
+    }
+}
+
+/* =======================
+   WELCOME PAGE STYLING
+   ======================= */
+.skribe-plugin .empty-state-center-container {
+    display: flex;
+    flex-direction: column;
     align-items: center;
-    padding: 8px;
-    margin-bottom: 6px;
+    justify-content: center;
+    height: 100%;
+    width: 100%;
+    position: absolute;
+    top: 0;
+    left: 0;
+    padding: 20px;
+    box-sizing: border-box;
+    text-align: center;
+}
+
+.skribe-plugin .empty-state-container {
+    max-width: 440px !important;
+    width: 85% !important;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    gap: 20px;
+    margin: 0 auto;
+}
+
+.skribe-plugin .empty-state-logo-container {
+    display: flex;
+    justify-content: center;
+    margin-bottom: 10px;
+}
+
+.skribe-plugin .empty-state-logo {
+    width: 128px !important;
+    height: auto !important;
+    margin-bottom: 20px !important;
+}
+
+.skribe-plugin .empty-state-message {
+    font-size: 1.5em;
+    margin: 15px 0;
+    color: var(--text-normal);
+    text-align: center;
+}
+
+.skribe-plugin .empty-state-input-container {
+    width: 100%;
+    display: flex !important;
+    gap: 10px;
+    justify-content: center;
+    align-items: center;
+}
+
+.skribe-plugin .empty-state-url-input {
+    flex: 1;
+    min-width: 250px;
+    height: 40px;
+    padding: 8px 12px;
     border-radius: 4px;
     border: 1px solid var(--background-modifier-border);
     background-color: var(--background-primary);
-    transition: background-color 0.2s ease;
+    color: var(--text-normal);
 }
 
-.quip-item.dragging {
-    opacity: 0.5;
-    border: 1px dashed var(--interactive-accent);
-    background-color: var(--background-secondary-alt);
-}
-
-.quip-item.drag-over {
-    border: 2px solid var(--interactive-accent);
-    background-color: var(--background-primary-alt);
-}
-
-.quip-edit-container {
-    flex: 1;
-    display: flex;
-    margin-right: 8px;
-}
-
-.quip-button-container {
-    display: flex;
-    gap: 4px;
-}
-
-.quip-controls {
-    display: flex;
-    gap: 4px;
-}
-
-.quip-text {
-    flex: 1;
-    padding: 0 8px;
-    word-break: break-word;
-}
-
-/* Disabled button styles */
-.disabled-button {
-    opacity: 0.5 !important;
-    cursor: not-allowed !important;
-    pointer-events: none !important;
-    background-color: var(--background-secondary-alt) !important;
-}
-
-/* Make sure this style isn't overridden by hover effects */
-.toolbar-container button.disabled-button:hover,
-button.disabled-button:hover {
-    transform: none !important;
-    box-shadow: none !important;
-    background-color: var(--background-secondary-alt) !important;
-}
-
-/* Debug scrollable mode - explicit styles to ensure proper functionality */
-.chat-debug-scrollable .chat-messages-container {
-    border: 1px dashed var(--text-accent);
-}
-
-.chat-debug-scrollable .chat-messages-container::after {
-    content: '';
-    display: block;
-    height: 1000px;
-    width: 1px;
-    background-color: transparent;
-}
-
-/* Ensure consistent padding and background for all toolbar containers */
-.chat-toolbar-container .toolbar-container,
-.transcript-toolbar-container .toolbar-container,
-.summary-toolbar-container .toolbar-container,
-.revised-toolbar-container .toolbar-container {
-    margin: 0;
-    padding: 8px 10px;
-    display: flex;
-    flex-direction: row;
-    align-items: center;
-    flex: 1;
-    background-color: var(--background-primary) !important;
-    padding-right: 10px;
-    width: 100%;
-    gap: 6px;
+.skribe-plugin .empty-state-get-button {
+    background-color: var(--interactive-accent);
+    color: var(--text-on-accent);
+    border: none;
+    border-radius: 4px;
+    padding: 8px 12px;
+    cursor: pointer;
+    font-weight: 500;
+    height: 40px;
+    min-width: 80px;
 }
