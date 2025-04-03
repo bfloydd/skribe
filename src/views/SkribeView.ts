@@ -599,26 +599,13 @@ export class SkribeView extends ItemView {
                 dropdownMenu.style.display = 'none';
                 
                 // Remove active class from dropdown button
-                const dropdownButton = this.chatContainer.querySelector('.split-button-dropdown') as HTMLElement;
+                const dropdownButton = document.querySelector('.split-button-dropdown') as HTMLElement;
                 if (dropdownButton) {
                     dropdownButton.classList.remove('active');
                 }
                 
-                // Add user message
-                this.chatState.messages.push({
-                    role: 'user',
-                    content: quip
-                });
-                
-                // Re-render chat messages
-                const chatMessagesContainer = this.chatContainer.querySelector('.chat-messages-container') as HTMLElement;
-                if (chatMessagesContainer) {
-                    chatMessagesContainer.empty();
-                    this.renderChatMessages(chatMessagesContainer);
-                    
-                    // Process AI response
-                    this.processAIResponse(chatMessagesContainer);
-                }
+                // Use the helper method to switch to chat tab and process the message
+                this.ensureChatInterfaceAndProcessMessage(quip);
             });
         });
     }

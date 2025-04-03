@@ -734,6 +734,7 @@ html.is-phone .scroll-to-bottom-button {
     align-items: center;
     box-shadow: 0 -2px 10px rgba(0, 0, 0, 0.1);
     margin-top: 0;
+    gap: 10px; /* Add spacing between input and buttons */
 }
 
 /* Adjust for status bar in Obsidian */
@@ -1413,4 +1414,107 @@ html body .chat-toolbar-container,
 
 .loading-message {
     color: var(--text-muted);
+}
+
+/* Split button styling - updated for round buttons */
+.split-button-container {
+    display: flex;
+    align-items: stretch;
+    height: 40px; /* Adjusted height to match round buttons */
+    flex-shrink: 0; /* Prevent shrinking */
+    gap: 8px; /* Add gap between buttons */
+}
+
+.split-button-main {
+    width: 40px;
+    height: 40px;
+    padding: 0;
+    background-color: var(--interactive-accent);
+    color: var(--text-on-accent);
+    cursor: pointer;
+    border: none;
+    font-weight: bold;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    border-radius: 50%; /* Make the button circular */
+    box-shadow: 0 1px 3px rgba(0, 0, 0, 0.2);
+    transition: all 0.2s ease;
+}
+
+.split-button-dropdown {
+    width: 40px;
+    height: 40px;
+    padding: 0;
+    background-color: var(--interactive-accent);
+    color: var(--text-on-accent);
+    cursor: pointer;
+    border: none;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    border-radius: 50%; /* Make the button circular */
+    box-shadow: 0 1px 3px rgba(0, 0, 0, 0.2);
+    transition: all 0.2s ease;
+}
+
+.split-button-main:hover, .split-button-dropdown:hover {
+    opacity: 0.95;
+    transform: translateY(-1px);
+    box-shadow: 0 3px 5px rgba(0, 0, 0, 0.2);
+}
+
+.split-button-main:active, .split-button-dropdown:active {
+    transform: translateY(1px);
+    box-shadow: 0 1px 2px rgba(0, 0, 0, 0.2);
+}
+
+.split-button-main svg, .split-button-dropdown svg {
+    width: 20px;
+    height: 20px;
+}
+
+/* Update dropdown toggle active state */
+.split-button-dropdown.active {
+    background-color: var(--interactive-accent-hover);
+    transform: translateY(-1px);
+    box-shadow: 0 3px 5px rgba(0, 0, 0, 0.2);
+}
+
+/* Quips dropdown menu - updated for round buttons */
+.quips-dropdown-menu {
+    position: absolute;
+    bottom: 60px; /* Position above the input bar */
+    right: 60px; /* Adjusted to align with the dropdown button */
+    background-color: var(--background-primary);
+    border-radius: 8px;
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+    min-width: 220px;
+    max-width: 300px;
+    max-height: 300px;
+    overflow-y: auto;
+    z-index: 1000;
+    border: 1px solid var(--background-modifier-border);
+    animation: fadeIn 0.2s ease;
+}
+
+@keyframes fadeIn {
+    from { opacity: 0; transform: translateY(10px); }
+    to { opacity: 1; transform: translateY(0); }
+}
+
+.quips-dropdown-item {
+    padding: 10px 12px;
+    cursor: pointer;
+    border-bottom: 1px solid var(--background-modifier-border);
+    transition: background-color 0.2s ease;
+    line-height: 1.4;
+}
+
+.quips-dropdown-item:last-child {
+    border-bottom: none;
+}
+
+.quips-dropdown-item:hover {
+    background-color: var(--background-modifier-hover);
 }
