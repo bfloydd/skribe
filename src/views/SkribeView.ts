@@ -165,8 +165,18 @@ export class SkribeView extends ItemView {
                 cls: 'empty-state-get-button'
             });
             
-            // Add send icon
-            setIcon(getButton, 'arrow-right');
+            // Check if we're on mobile
+            const isMobile = document.body.classList.contains('is-mobile') || 
+                     document.documentElement.classList.contains('is-mobile') || 
+                     document.documentElement.classList.contains('is-phone');
+            
+            if (isMobile) {
+                // For mobile, use text instead of SVG icon
+                getButton.textContent = '→';
+            } else {
+                // Add send icon for desktop
+                setIcon(getButton, 'arrow-right');
+            }
             
             getButton.style.padding = '8px 16px';
             getButton.style.borderRadius = '4px';
@@ -508,7 +518,20 @@ export class SkribeView extends ItemView {
         if (!this.scrollToBottomButton) {
             this.scrollToBottomButton = document.createElement('div');
             this.scrollToBottomButton.className = 'scroll-to-bottom-button hidden';
-            this.scrollToBottomButton.innerHTML = '<svg viewBox="0 0 24 24"><path fill="currentColor" d="M7.41,8.58L12,13.17L16.59,8.58L18,10L12,16L6,10L7.41,8.58Z"></path></svg>';
+            
+            // Check if we're on mobile
+            const isMobile = document.body.classList.contains('is-mobile') || 
+                      document.documentElement.classList.contains('is-mobile') || 
+                      document.documentElement.classList.contains('is-phone');
+            
+            if (isMobile) {
+                // For mobile, use text instead of SVG icon
+                this.scrollToBottomButton.textContent = '↓';
+            } else {
+                // For desktop, use SVG icon
+                this.scrollToBottomButton.innerHTML = '<svg viewBox="0 0 24 24"><path fill="currentColor" d="M7.41,8.58L12,13.17L16.59,8.58L18,10L12,16L6,10L7.41,8.58Z"></path></svg>';
+            }
+            
             document.body.appendChild(this.scrollToBottomButton);
             
             // Scroll button click handler
@@ -1702,12 +1725,32 @@ export class SkribeView extends ItemView {
     
     // Helper methods to show/hide scroll button with animation
     private showScrollButton(): void {
-        if (!this.scrollToBottomButton) return;
+        if (!this.scrollToBottomButton) {
+            // Create the button
+            this.scrollToBottomButton = this.containerEl.createEl('button', {
+                cls: 'scroll-to-bottom-button'
+            });
+            
+            // Check if we're on mobile
+            const isMobile = document.body.classList.contains('is-mobile') || 
+                      document.documentElement.classList.contains('is-mobile') || 
+                      document.documentElement.classList.contains('is-phone');
+            
+            if (isMobile) {
+                // For mobile, use text instead of SVG icon
+                this.scrollToBottomButton.textContent = '↓';
+            } else {
+                // For desktop, use SVG icon
+                this.scrollToBottomButton.innerHTML = '<svg viewBox="0 0 24 24"><path fill="currentColor" d="M7.41,8.58L12,13.17L16.59,8.58L18,10L12,16L6,10L7.41,8.58Z"></path></svg>';
+            }
+            
+            this.scrollToBottomButton.addEventListener('click', () => {
+                this.scrollChatToBottom();
+            });
+        }
+        
+        // Show the button
         this.scrollToBottomButton.classList.remove('hidden');
-        this.scrollToBottomButton.style.display = 'flex';
-        this.scrollToBottomButton.style.opacity = '1';
-        this.scrollToBottomButton.style.visibility = 'visible';
-        this.scrollToBottomButton.style.pointerEvents = 'auto';
     }
     
     private hideScrollButton(): void {
@@ -1894,16 +1937,31 @@ export class SkribeView extends ItemView {
             cls: 'split-button-main'
         });
         
-        // Add send icon
-        setIcon(sendButton, 'arrow-right');
+        // Check if we're on mobile
+        const isMobile = document.body.classList.contains('is-mobile') || 
+                         document.documentElement.classList.contains('is-mobile') || 
+                         document.documentElement.classList.contains('is-phone');
+        
+        if (isMobile) {
+            // For mobile, use text instead of SVG icon
+            sendButton.textContent = '↑';
+        } else {
+            // Desktop: Add send icon
+            setIcon(sendButton, 'arrow-right');
+        }
         
         // Create dropdown part
         const dropdownButton = splitButtonContainer.createEl('button', {
             cls: 'split-button-dropdown'
         });
         
-        // Add dropdown icon
-        setIcon(dropdownButton, 'chevron-down');
+        if (isMobile) {
+            // For mobile, use text instead of SVG icon
+            dropdownButton.textContent = '↓';
+        } else {
+            // Desktop: Add dropdown icon
+            setIcon(dropdownButton, 'chevron-down');
+        }
         
         // Create dropdown menu (initially hidden)
         const quipsDropdownMenu = container.createDiv({

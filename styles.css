@@ -395,6 +395,9 @@ html.is-phone .scroll-to-bottom-button {
     right: 15px;
     width: 42px;
     height: 42px;
+    font-size: 24px;
+    line-height: 1;
+    font-weight: bold;
 }
 
 .global-chat-input-container {
@@ -1358,6 +1361,21 @@ html body .chat-toolbar-container,
     
     .chat-message {
         padding: 10px;
+    }
+    
+    /* Mobile text button styling */
+    .split-button-main, 
+    .split-button-dropdown {
+        font-size: 18px;
+        line-height: 1;
+        font-weight: bold;
+    }
+    
+    /* Style the welcome screen button on mobile */
+    .empty-state-get-button {
+        font-size: 18px;
+        line-height: 1;
+        font-weight: bold;
     }
 }
 
