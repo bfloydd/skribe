@@ -22,18 +22,19 @@
     width: 100%;
 }
 
-.toolbar-container button {
-    background-color: var(--background-secondary);
-    border: none;
-    border-radius: 4px;
-    padding: 6px 10px;
-    cursor: pointer;
-    display: flex;
+.toolbar-container button,
+.chat-toolbar-container button,
+.transcript-toolbar-container button,
+.summary-toolbar-container button,
+.revised-toolbar-container button {
+    display: inline-flex;
     align-items: center;
     justify-content: center;
-    color: var(--text-normal);
-    transition: all 0.2s ease;
-    margin: 0 4px;
+    background-color: var(--background-secondary);
+    margin: 0 4px !important; /* Reduced from 6px to 4px */
+    padding: 6px 10px;
+    border-radius: 4px;
+    flex-shrink: 0;
     height: 28px;
     min-width: 28px;
 }
@@ -165,12 +166,12 @@
     display: flex;
     flex-direction: column;
     height: 100%;
-    overflow: visible !important; /* Prevent outer scrollbar */
-    padding-bottom: 0 !important; /* Override padding */
-    margin-bottom: 0 !important; /* Override margin */
+    overflow: hidden !important;
+    padding-bottom: 0 !important;
+    margin-bottom: 0 !important;
 }
 
-/* Chat messages container - ensure proper sequential order */
+/* Chat messages container */
 .chat-messages-container {
     flex: 1;
     display: flex;
@@ -179,13 +180,24 @@
     overflow-x: hidden !important;
     padding: 15px;
     padding-bottom: 0 !important;
-    margin-top: 0;
+    margin-top: 0 !important;
     margin-bottom: 0 !important;
-    background-color: var(--background-primary);
+    background-color: transparent !important;
+    border-radius: 0 !important;
+    gap: unset !important;
     width: 100%;
     box-sizing: border-box;
-    height: calc(100% - 50px) !important; /* Adjust height to fill available space */
-    min-height: calc(100% - 50px) !important; /* Ensure minimum height */
+    height: calc(100% - 50px) !important;
+    min-height: calc(100% - 50px) !important;
+    padding-top: 15px !important;
+}
+
+/* Chat messages wrapper */
+.chat-messages-wrapper {
+    width: 100%;
+    display: block;
+    min-height: 100%;
+    overflow: visible !important;
 }
 
 /* Chat message styling */
@@ -198,9 +210,12 @@
     margin-bottom: 15px;
     user-select: text;
     -webkit-user-select: text;
+    -moz-user-select: text;
+    -ms-user-select: text;
     box-shadow: 0 1px 2px rgba(0, 0, 0, 0.1);
     line-height: 1.5;
     clear: both;
+    cursor: text;
 }
 
 .user-message {
@@ -238,6 +253,20 @@
 
 .assistant-message li {
     margin-bottom: 5px;
+}
+
+/* Ensure text inside messages is selectable */
+.chat-message *,
+.chat-message p,
+.chat-message span,
+.chat-message div,
+.chat-message code,
+.chat-message pre {
+    user-select: text;
+    -webkit-user-select: text;
+    -moz-user-select: text;
+    -ms-user-select: text;
+    cursor: text;
 }
 
 /* Toolbar styling */
@@ -461,128 +490,23 @@ div.nav-folder-content.markdown-preview-view {
 
 /* Fix the chat messages spacing to account for the fixed toolbar */
 .chat-messages-container {
-    margin-top: 0 !important; /* Match the toolbar height */
-    padding-top: 15px !important;
-    padding-bottom: 20px !important; /* Ensure consistent padding */
-}
-
-/* Make model indicator consistent across all toolbars */
-.model-indicator {
-    margin-left: auto !important;
-    margin-right: 10px !important;
-    padding: 4px 8px !important;
-    font-size: 0.8em !important;
-    color: var(--text-muted) !important;
-    background-color: var(--background-secondary) !important;
-    border-radius: 4px !important;
-    height: 24px !important;
-    z-index: 3 !important;
-}
-
-/* Remove ALL tab-specific toolbar styling differences */
-.transcript-toolbar-container,
-.revised-toolbar-container,
-.summary-toolbar-container,
-.chat-toolbar-container {
-    border-bottom: 1px solid var(--background-modifier-border) !important;
-}
-
-/* Ensure consistent padding and background for all toolbar containers */
-.chat-toolbar-container .toolbar-container,
-.transcript-toolbar-container .toolbar-container,
-.summary-toolbar-container .toolbar-container,
-.revised-toolbar-container .toolbar-container {
-    margin: 0;
-    padding: 8px 0;
-    display: flex;
-    flex-direction: row;
-    align-items: center;
     flex: 1;
-    background-color: var(--background-primary) !important;
-    padding-right: 0 !important;
-    width: 100% !important;
-}
-
-/* Ensure consistent button styling across all toolbars */
-.toolbar-container button,
-.chat-toolbar-container button,
-.transcript-toolbar-container button,
-.summary-toolbar-container button,
-.revised-toolbar-container button {
-    display: inline-flex;
-    align-items: center;
-    justify-content: center;
-    background-color: var(--background-secondary);
-    margin: 0 4px;
-    padding: 6px 10px;
-    border-radius: 4px;
-    flex-shrink: 0;
-    height: 28px;
-    min-width: 28px;
-}
-
-/* Make all buttons have consistent hover styles */
-.toolbar-container button:hover:not(.disabled-button),
-.chat-toolbar-container button:hover:not(.disabled-button),
-.transcript-toolbar-container button:hover:not(.disabled-button),
-.summary-toolbar-container button:hover:not(.disabled-button),
-.revised-toolbar-container button:hover:not(.disabled-button) {
-    background-color: var(--background-modifier-hover);
-    transform: translateY(-1px);
-    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
-}
-
-/* Chat message styling */
-.chat-message {
-    padding: 10px;
-    border-radius: 5px;
-    max-width: 80%;
-    word-wrap: break-word;
-    overflow-wrap: break-word;
-    margin: 0 10px 10px;
-    user-select: text;
-    -webkit-user-select: text;
-    -moz-user-select: text;
-    -ms-user-select: text;
-    cursor: text;
-}
-
-.user-message {
-    align-self: flex-end;
-    background-color: var(--interactive-accent);
-    color: var(--text-on-accent);
-}
-
-.assistant-message {
-    align-self: flex-start;
-    background-color: var(--background-primary);
-}
-
-/* Ensure text inside messages is selectable */
-.chat-message *,
-.chat-message p,
-.chat-message span,
-.chat-message div,
-.chat-message code,
-.chat-message pre {
-    user-select: text;
-    -webkit-user-select: text;
-    -moz-user-select: text;
-    -ms-user-select: text;
-    cursor: text;
-}
-
-/* Reset any special chat messages container styles to match unified content styles */
-.chat-messages-container {
-    margin-top: 0 !important;
-    padding-top: 15px !important;
+    display: flex;
+    flex-direction: column;
+    overflow-y: auto !important;
+    overflow-x: hidden !important;
+    padding: 15px;
     padding-bottom: 0 !important;
+    margin-top: 0 !important;
+    margin-bottom: 0 !important;
     background-color: transparent !important;
     border-radius: 0 !important;
     gap: unset !important;
-    flex-direction: unset !important;
-    overflow-y: auto !important;
-    height: calc(100% - 50px) !important; /* Ensure consistent height calculation */
+    width: 100%;
+    box-sizing: border-box;
+    height: calc(100% - 50px) !important;
+    min-height: calc(100% - 50px) !important;
+    padding-top: 15px !important;
 }
 
 /* Remove the extra padding element completely */
@@ -692,9 +616,15 @@ div.nav-folder-content.markdown-preview-view {
 
 /* Pulse animation when new messages arrive */
 @keyframes pulse {
-    0% { box-shadow: 0 0 0 0 rgba(var(--interactive-accent-rgb), 0.5); }
-    70% { box-shadow: 0 0 0 10px rgba(var(--interactive-accent-rgb), 0); }
-    100% { box-shadow: 0 0 0 0 rgba(var(--interactive-accent-rgb), 0); }
+    0% {
+        box-shadow: 0 0 0 0 rgba(var(--interactive-accent-rgb), 0.7);
+    }
+    70% {
+        box-shadow: 0 0 0 5px rgba(var(--interactive-accent-rgb), 0);
+    }
+    100% {
+        box-shadow: 0 0 0 0 rgba(var(--interactive-accent-rgb), 0);
+    }
 }
 
 .theme-dark .scroll-to-bottom-button {
@@ -713,7 +643,7 @@ div.nav-folder-content.markdown-preview-view {
 .is-mobile .scroll-to-bottom-button,
 html.is-mobile .scroll-to-bottom-button,
 html.is-phone .scroll-to-bottom-button {
-    bottom: 130px; /* Adjusted to match input container placement */
+    bottom: 130px;
     right: 15px;
     width: 42px;
     height: 42px;
@@ -828,6 +758,7 @@ html.is-phone .scroll-to-bottom-button {
     margin-right: auto;
     align-self: flex-start;
     max-width: 70%;
+    border-bottom-left-radius: 4px;
 }
 
 .loading-spinner {
@@ -872,7 +803,7 @@ html.is-phone .scroll-to-bottom-button {
     height: 24px;
     font-weight: 500;
     box-shadow: 0 1px 2px rgba(0, 0, 0, 0.1);
-    z-index: 3; /* Above toolbar and content */
+    z-index: 3;
 }
 
 /* Model indicator pulse animation */
@@ -884,18 +815,6 @@ html.is-phone .scroll-to-bottom-button {
     background-color: var(--interactive-accent);
     border-radius: 50%;
     animation: pulse 2s infinite;
-}
-
-@keyframes pulse {
-    0% {
-        box-shadow: 0 0 0 0 rgba(var(--interactive-accent-rgb), 0.7);
-    }
-    70% {
-        box-shadow: 0 0 0 5px rgba(var(--interactive-accent-rgb), 0);
-    }
-    100% {
-        box-shadow: 0 0 0 0 rgba(var(--interactive-accent-rgb), 0);
-    }
 }
 
 .dark .model-indicator::before {
@@ -912,25 +831,32 @@ div[class*="nav-folder-content"][class*="transcript-container"] {
     box-sizing: border-box !important;
 }
 
-/* Fix for transcript toolbar container in nav-folder-content */
-.nav-folder-content .transcript-toolbar-container,
-div[class*="nav-folder-content"] .transcript-toolbar-container {
-    padding: 0 !important;
-    margin: 0 !important;
-    width: 100% !important; 
-    left: 0 !important;
-    right: 0 !important;
-    max-width: none !important;
-}
-
-/* Ensure all toolbar containers maintain 100% width */
+/* Ensure all toolbar containers maintain consistent styles */
 .chat-toolbar-container,
 .transcript-toolbar-container,
 .summary-toolbar-container,
 .revised-toolbar-container {
+    position: fixed;
+    top: 127px !important;
+    left: 0 !important;
+    right: 0 !important;
+    z-index: 100 !important;
     width: 100% !important;
-    max-width: none !important;
-    box-sizing: border-box !important;
+    max-width: 100% !important;
+    height: 50px !important;
+    min-height: 50px !important;
+    max-height: 50px !important;
+    background-color: var(--background-primary) !important;
+    border-bottom: 1px solid var(--background-modifier-border) !important;
+    box-shadow: 0 3px 8px rgba(0, 0, 0, 0.1);
+    display: flex !important;
+    visibility: visible !important;
+    opacity: 1 !important;
+    align-items: center !important;
+    padding: 0 !important;
+    margin: 0 !important;
+    padding-right: 0 !important;
+    margin-right: 0 !important;
 }
 
 /* Ensure the toolbar container inside nav-folder fills the width */
@@ -969,26 +895,29 @@ div[class*="nav-folder-content"] .transcript-toolbar-container .toolbar-containe
     width: 100% !important;
     max-width: 100% !important;
     box-sizing: border-box !important;
-    /* Remove fixed right padding/margin that prevents centering */
-    /* padding-right: 0 !important;
-    margin-right: 0 !important; */
 }
 
-/* Force all container elements to have no right padding/margin */
+/* Force all container elements to have consistent styling */
 .transcript-container, 
 .revised-container,
 .summary-container,
 .chat-container {
+    position: relative;
+    width: 100% !important;
+    height: 100%;
+    overflow-y: auto;
+    box-sizing: border-box !important;
+    padding: 0;
+    margin: 0;
+    margin-top: 77px;
     padding-right: 0 !important;
     margin-right: 0 !important;
-    width: 100% !important;
-    box-sizing: border-box !important;
-    /* Allow proper padding for content centering */
-    /* padding-right: 0 !important;
-    margin-right: 0 !important; */
+    background-color: var(--background-primary);
+    padding-bottom: 60px;
+    margin-bottom: 20px !important;
 }
 
-/* Fix for Obsidian's native padding on containers - make more targeted */
+/* Fix for Obsidian's native padding on containers */
 .nav-folder-content,
 div[class*="nav-folder-content"],
 .markdown-preview-view,
@@ -1015,18 +944,18 @@ div[class*="markdown-preview-view"] {
     box-shadow: 0 2px 4px rgba(0, 0, 0, 0.05);
 }
 
-/* Chat container layout - remove scrolling from this container */
+/* Chat container layout */
 .chat-container {
     position: relative;
     display: flex;
     flex-direction: column;
     height: 100%;
-    overflow: hidden !important; /* Prevent outer scrollbar */
-    padding-bottom: 0 !important; /* Override padding */
-    margin-bottom: 0 !important; /* Override margin */
+    overflow: hidden !important;
+    padding-bottom: 0 !important;
+    margin-bottom: 0 !important;
 }
 
-/* Make only the messages container scrollable */
+/* Chat messages container */
 .chat-messages-container {
     flex: 1;
     display: flex;
@@ -1035,16 +964,20 @@ div[class*="markdown-preview-view"] {
     overflow-x: hidden !important;
     padding: 15px;
     padding-bottom: 0 !important;
-    margin-top: 0;
+    margin-top: 0 !important;
     margin-bottom: 0 !important;
     background-color: var(--background-primary);
     width: 100%;
     box-sizing: border-box;
-    height: calc(100% - 50px) !important; /* Adjust height to fill available space */
-    min-height: calc(100% - 50px) !important; /* Ensure minimum height */
+    height: calc(100% - 50px) !important;
+    min-height: calc(100% - 50px) !important;
+    padding-top: 15px !important;
+    background-color: transparent !important;
+    border-radius: 0 !important;
+    gap: unset !important;
 }
 
-/* Chat messages wrapper - ensure proper layout without scrolling */
+/* Chat messages wrapper */
 .chat-messages-wrapper {
     width: 100%;
     display: block;
@@ -1072,136 +1005,84 @@ div[class*="markdown-preview-view"] {
     margin-bottom: 0.5em;
 }
 
-/* Mobile specific adjustments for chat container */
-html.is-mobile .chat-container,
-html.is-phone .chat-container,
-.is-mobile .chat-container,
-.is-phone .chat-container,
-body.is-mobile .chat-container,
-.is-tablet .chat-container {
-    padding-bottom: 0 !important; /* No padding */
-    margin-bottom: 60px !important; /* Add margin to create space at bottom */
-    margin-top: 27px !important; /* Reduced by 70px to match desktop adjustment */
-}
-
-html.is-mobile .chat-messages-container,
-html.is-phone .chat-messages-container,
-.is-mobile .chat-messages-container,
-.is-phone .chat-messages-container,
-body.is-mobile .chat-messages-container,
-.is-tablet .chat-messages-container {
-    padding-bottom: 0 !important; /* No padding */
-    margin-bottom: 0 !important; /* Reset negative margin */
-}
-
-/* Mobile-specific positioning - adjust for consistent placement */
-html.is-mobile .tabs-container,
-html.is-mobile body .tabs-container,
-html.is-phone .tabs-container,
-.is-mobile .tabs-container,
-.is-phone .tabs-container,
-body.is-mobile .tabs-container,
-.is-tablet .tabs-container {
-    top: 20px !important; /* Reduced from 40px by 20px */
-    position: fixed !important;
-    z-index: 200 !important;
-}
-
-/* Final toolbar position for mobile - fixed below tabs */
-html.is-mobile .chat-toolbar-container,
-html.is-mobile .transcript-toolbar-container,
-html.is-mobile .summary-toolbar-container,
-html.is-mobile .revised-toolbar-container,
-html.is-phone .chat-toolbar-container,
-html.is-phone .transcript-toolbar-container,
-html.is-phone .summary-toolbar-container,
-html.is-phone .revised-toolbar-container,
-.is-mobile .chat-toolbar-container,
-.is-mobile .transcript-toolbar-container,
-.is-mobile .summary-toolbar-container,
-.is-mobile .revised-toolbar-container,
-.is-phone .chat-toolbar-container,
-.is-phone .transcript-toolbar-container,
-.is-phone .summary-toolbar-container,
-.is-phone .revised-toolbar-container,
-body.is-mobile .chat-toolbar-container,
-body.is-mobile .transcript-toolbar-container,
-body.is-mobile .summary-toolbar-container,
-body.is-mobile .revised-toolbar-container,
-.is-tablet .chat-toolbar-container,
-.is-tablet .transcript-toolbar-container,
-.is-tablet .summary-toolbar-container,
-.is-tablet .revised-toolbar-container {
-    top: 57px !important; /* Reduced from 77px by 20px */
-    position: fixed !important;
-    z-index: 1000 !important;
-    display: flex !important;
-    height: 50px !important;
-    background-color: var(--background-primary) !important;
-    opacity: 1 !important;
-    visibility: visible !important;
-    border-bottom: 1px solid var(--background-modifier-border) !important;
-    left: 0 !important;
-    right: 0 !important;
-    width: 100% !important;
-    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1) !important;
-}
-
-/* Final content position for mobile */
-html.is-mobile .transcript-container,
-html.is-mobile .revised-container,
-html.is-mobile .summary-container,
-html.is-mobile .chat-container,
-html.is-phone .transcript-container,
-html.is-phone .revised-container,
-html.is-phone .summary-container,
-html.is-phone .chat-container,
-.is-mobile .transcript-container,
-.is-mobile .revised-container,
-.is-mobile .summary-container,
-.is-mobile .chat-container,
-.is-phone .transcript-container,
-.is-phone .revised-container,
-.is-phone .summary-container,
-.is-phone .chat-container,
-body.is-mobile .transcript-container,
-body.is-mobile .revised-container,
-body.is-mobile .summary-container,
-body.is-mobile .chat-container,
-.is-tablet .transcript-container,
-.is-tablet .revised-container,
-.is-tablet .summary-container,
-.is-tablet .chat-container {
-    margin-top: 22px !important; /* Reduced by 70px from 92px */
-    padding-top: 0 !important;
-    overflow-y: auto !important;
-    position: relative !important;
-    z-index: 1 !important;
-    margin-bottom: 0 !important; /* Ensure no bottom margin */
-}
-
-/* Mobile-specific fix for nav-header and refresh button padding */
-html.is-mobile .nav-header,
-html.is-phone .nav-header,
-.is-mobile .nav-header,
-.is-phone .nav-header,
-body.is-mobile .nav-header,
-.is-tablet .nav-header {
-    padding-bottom: 0 !important;
-    margin-bottom: 0 !important;
-    min-height: 30px !important; /* Reduce min-height to bring refresh button closer */
-}
-
-/* Fix any padding on the refresh button container on mobile */
-html.is-mobile .nav-buttons-container,
-html.is-phone .nav-buttons-container,
-.is-mobile .nav-buttons-container,
-.is-phone .nav-buttons-container,
-body.is-mobile .nav-buttons-container,
-.is-tablet .nav-buttons-container {
-    margin-top: 0 !important;
-    margin-bottom: 0 !important;
-    padding-bottom: 0 !important;
+/* Mobile specific adjustments */
+html.is-mobile,
+html.is-phone,
+.is-mobile,
+.is-phone,
+body.is-mobile,
+.is-tablet {
+    /* Mobile-specific tab positioning */
+    .tabs-container {
+        top: 20px !important;
+        position: fixed !important;
+        z-index: 200 !important;
+    }
+    
+    /* Mobile-specific toolbar positioning */
+    .chat-toolbar-container,
+    .transcript-toolbar-container,
+    .summary-toolbar-container,
+    .revised-toolbar-container {
+        top: 57px !important;
+        position: fixed !important;
+        z-index: 1000 !important;
+        display: flex !important;
+        height: 50px !important;
+        background-color: var(--background-primary) !important;
+        opacity: 1 !important;
+        visibility: visible !important;
+        border-bottom: 1px solid var(--background-modifier-border) !important;
+        left: 0 !important;
+        right: 0 !important;
+        width: 100% !important;
+        box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1) !important;
+    }
+    
+    /* Mobile-specific content containers */
+    .transcript-container,
+    .revised-container,
+    .summary-container,
+    .chat-container {
+        margin-top: 22px !important;
+        padding-top: 0 !important;
+        overflow-y: auto !important;
+        position: relative !important;
+        z-index: 1 !important;
+        margin-bottom: 0 !important;
+    }
+    
+    /* Mobile-specific chat container adjustments */
+    .chat-container {
+        padding-bottom: 0 !important;
+        margin-bottom: -10px !important;
+    }
+    
+    .chat-messages-container {
+        padding-bottom: 0 !important;
+        margin-bottom: -30px !important;
+    }
+    
+    /* Mobile-specific header adjustments */
+    .nav-header {
+        padding-bottom: 0 !important;
+        margin-bottom: 0 !important;
+        min-height: 30px !important;
+    }
+    
+    .nav-buttons-container {
+        margin-top: 0 !important;
+        margin-bottom: 0 !important;
+        padding-bottom: 0 !important;
+    }
+    
+    /* Mobile adjustments for scroll button */
+    .scroll-to-bottom-button {
+        bottom: 130px;
+        right: 15px;
+        width: 42px;
+        height: 42px;
+    }
 }
 
 /* Reduce bottom padding for the plugin container */
@@ -1292,9 +1173,23 @@ html body .chat-toolbar-container,
 
 /* Fix the chat messages spacing to account for the fixed toolbar */
 .chat-messages-container {
-    margin-top: 0 !important; /* Match the toolbar height */
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+    overflow-y: auto !important;
+    overflow-x: hidden !important;
+    padding: 15px;
+    padding-bottom: 0 !important;
+    margin-top: 0 !important;
+    margin-bottom: 0 !important;
+    background-color: transparent !important;
+    border-radius: 0 !important;
+    gap: unset !important;
+    width: 100%;
+    box-sizing: border-box;
+    height: calc(100% - 50px) !important;
+    min-height: calc(100% - 50px) !important;
     padding-top: 15px !important;
-    padding-bottom: 20px !important; /* Ensure consistent padding */
 }
 
 /* UNIFIED CONTENT STYLES - applies to tab content areas while preserving structure */
@@ -1304,6 +1199,7 @@ html body .chat-toolbar-container,
     padding: 15px;
     width: 100%;
     box-sizing: border-box;
+    padding-bottom: 90px !important;
 }
 
 /* Ensure content areas have proper padding and don't scroll under the input */
@@ -1338,39 +1234,6 @@ html body .chat-toolbar-container,
     margin-bottom: 100px !important; /* Extra margin on last content elements */
 }
 
-/* Loading spinner styling */
-.loading-spinner-container {
-    display: flex;
-    align-items: center;
-    padding: 12px 16px;
-    border-radius: 18px;
-    background-color: var(--background-secondary-alt);
-    margin-bottom: 15px;
-    margin-right: auto;
-    align-self: flex-start;
-    max-width: 70%;
-}
-
-.loading-spinner {
-    width: 16px;
-    height: 16px;
-    border: 2px solid var(--text-muted);
-    border-bottom-color: transparent;
-    border-radius: 50%;
-    display: inline-block;
-    animation: spin 1s linear infinite;
-    margin-right: 10px;
-}
-
-.loading-message {
-    color: var(--text-muted);
-}
-
-@keyframes spin {
-    0% { transform: rotate(0deg); }
-    100% { transform: rotate(360deg); }
-}
-
 /* Fix empty message styling */
 .empty-chat-message {
     color: var(--text-muted);
@@ -1386,34 +1249,6 @@ html body .chat-toolbar-container,
     height: 1px;
     margin: 0;
     padding: 0;
-}
-
-/* Loading spinner container styling */
-.loading-spinner-container {
-    padding: 12px 16px;
-    margin-bottom: 15px;
-    margin-right: auto;
-    display: flex;
-    align-items: center;
-    border-radius: 18px;
-    background-color: var(--background-secondary-alt);
-    border-bottom-left-radius: 4px;
-    max-width: 70%;
-}
-
-.loading-spinner {
-    width: 16px;
-    height: 16px;
-    border: 2px solid var(--text-muted);
-    border-bottom-color: transparent;
-    border-radius: 50%;
-    display: inline-block;
-    animation: spin 1s linear infinite;
-    margin-right: 10px;
-}
-
-.loading-message {
-    color: var(--text-muted);
 }
 
 /* Split button styling - updated for round buttons */
@@ -1517,4 +1352,95 @@ html body .chat-toolbar-container,
 
 .quips-dropdown-item:hover {
     background-color: var(--background-modifier-hover);
+}
+
+/* Settings tab drag and drop styles */
+.quip-item {
+    display: flex;
+    align-items: center;
+    padding: 8px;
+    margin-bottom: 6px;
+    border-radius: 4px;
+    border: 1px solid var(--background-modifier-border);
+    background-color: var(--background-primary);
+    transition: background-color 0.2s ease;
+}
+
+.quip-item.dragging {
+    opacity: 0.5;
+    border: 1px dashed var(--interactive-accent);
+    background-color: var(--background-secondary-alt);
+}
+
+.quip-item.drag-over {
+    border: 2px solid var(--interactive-accent);
+    background-color: var(--background-primary-alt);
+}
+
+.quip-edit-container {
+    flex: 1;
+    display: flex;
+    margin-right: 8px;
+}
+
+.quip-button-container {
+    display: flex;
+    gap: 4px;
+}
+
+.quip-controls {
+    display: flex;
+    gap: 4px;
+}
+
+.quip-text {
+    flex: 1;
+    padding: 0 8px;
+    word-break: break-word;
+}
+
+/* Disabled button styles */
+.disabled-button {
+    opacity: 0.5 !important;
+    cursor: not-allowed !important;
+    pointer-events: none !important;
+    background-color: var(--background-secondary-alt) !important;
+}
+
+/* Make sure this style isn't overridden by hover effects */
+.toolbar-container button.disabled-button:hover,
+button.disabled-button:hover {
+    transform: none !important;
+    box-shadow: none !important;
+    background-color: var(--background-secondary-alt) !important;
+}
+
+/* Debug scrollable mode - explicit styles to ensure proper functionality */
+.chat-debug-scrollable .chat-messages-container {
+    border: 1px dashed var(--text-accent);
+}
+
+.chat-debug-scrollable .chat-messages-container::after {
+    content: '';
+    display: block;
+    height: 1000px;
+    width: 1px;
+    background-color: transparent;
+}
+
+/* Ensure consistent padding and background for all toolbar containers */
+.chat-toolbar-container .toolbar-container,
+.transcript-toolbar-container .toolbar-container,
+.summary-toolbar-container .toolbar-container,
+.revised-toolbar-container .toolbar-container {
+    margin: 0;
+    padding: 8px 10px !important; /* Reduced from 12px to 10px */
+    display: flex;
+    flex-direction: row;
+    align-items: center;
+    flex: 1;
+    background-color: var(--background-primary) !important;
+    padding-right: 10px !important; /* Reduced from 12px to 10px */
+    width: 100% !important;
+    gap: 6px !important; /* Reduced from 10px to 6px */
 }
