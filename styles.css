@@ -198,6 +198,7 @@ div[class*="markdown-preview-view"] {
     flex-shrink: 0;
     height: 28px;
     min-width: 28px;
+    cursor: pointer;
 }
 
 .toolbar-container button:hover:not(.disabled-button) {
@@ -697,6 +698,7 @@ button.disabled-button:hover {
     flex-shrink: 0;
     height: 28px;
     min-width: 28px;
+    cursor: pointer;
 }
 
 .toolbar-container button:hover:not(.disabled-button) {
