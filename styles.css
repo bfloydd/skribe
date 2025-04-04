@@ -948,6 +948,10 @@ html body .chat-toolbar-container,
     font-weight: 500;
     box-shadow: 0 1px 2px rgba(0, 0, 0, 0.1);
     z-index: 3;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    max-width: 120px;
 }
 
 .model-indicator::before {
@@ -955,9 +959,11 @@ html body .chat-toolbar-container,
     display: inline-block;
     width: 8px;
     height: 8px;
+    min-width: 8px;
     background-color: var(--interactive-accent);
     border-radius: 50%;
     animation: pulse 2s infinite;
+    margin-right: 4px;
 }
 
 .dark .model-indicator::before {
@@ -1007,6 +1013,13 @@ html body .chat-toolbar-container,
     color: var(--text-accent);
     text-decoration: none;
     font-size: 0.9em;
+    /* Make URL stay on one line with ellipsis */
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    display: block;
+    max-width: 90%;
+    margin: 0 auto;
 }
 
 .video-url-link:hover {
