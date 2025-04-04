@@ -44,9 +44,8 @@ div.view-content.skribe-plugin {
     box-sizing: border-box;
     padding: 0;
     margin: 0;
-    margin-top: 77px;
+    margin-top: 32px;
     background-color: var(--background-primary);
-    margin-bottom: 20px;
     flex: 1;
 }
 
@@ -141,6 +140,43 @@ div[class*="markdown-preview-view"] {
     width: 100% !important;
     max-width: 100% !important;
     box-sizing: border-box !important;
+}
+
+/* Ensure text is selectable in all content areas */
+.transcript-content,
+.revised-content,
+.summary-content {
+    user-select: text;
+    -webkit-user-select: text;
+    -moz-user-select: text;
+    -ms-user-select: text;
+    cursor: text;
+}
+
+/* Ensure all elements inside content areas are selectable */
+.transcript-content *,
+.transcript-content p,
+.transcript-content span,
+.transcript-content div,
+.transcript-content code,
+.transcript-content pre,
+.revised-content *,
+.revised-content p,
+.revised-content span,
+.revised-content div,
+.revised-content code,
+.revised-content pre,
+.summary-content *,
+.summary-content p,
+.summary-content span,
+.summary-content div,
+.summary-content code,
+.summary-content pre {
+    user-select: text;
+    -webkit-user-select: text;
+    -moz-user-select: text;
+    -ms-user-select: text;
+    cursor: text;
 }
 
 /* =======================
