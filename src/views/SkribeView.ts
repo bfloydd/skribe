@@ -467,7 +467,7 @@ export class SkribeView extends ItemView {
         
         // Add chat messages
         this.renderChatMessages(chatContentEl);
-        
+
         // Context menu handler to enable text selection
         const contextMenuHandler = (e: MouseEvent) => {
             // Only proceed if we're not trying to select text
@@ -535,19 +535,24 @@ export class SkribeView extends ItemView {
             });
         }
         
-        // Scroll handler to check position
+        // Debounced scroll handler - declare timeout variable for later use with MutationObserver
+        let scrollTimeout: NodeJS.Timeout | null = null;
         const scrollHandler = (e: Event) => {
-            this.checkScrollPosition(chatContentEl);
+            if (scrollTimeout) clearTimeout(scrollTimeout);
+            scrollTimeout = setTimeout(() => {
+                this.checkScrollPosition(chatContentEl);
+                scrollTimeout = null;
+            }, 50);
         };
-        
+
         // Add scroll event listener
         chatContentEl.addEventListener('scroll', scrollHandler);
-        
-        // Add resize observer to update scroll button visibility when container resizes
+
+        // Use ResizeObserver for resize events
         const resizeHandler = () => {
             this.checkScrollPosition(chatContentEl);
         };
-        
+
         // Set up resize observer
         if (typeof ResizeObserver !== 'undefined') {
             const resizeObserver = new ResizeObserver(resizeHandler);
@@ -563,26 +568,38 @@ export class SkribeView extends ItemView {
             // Store reference to remove later
             this.chatContainer.dataset.hasResizeListener = 'true';
         }
-        
-        // Initialize scroll position check
-        setTimeout(() => {
-            this.checkScrollPosition(chatContentEl);
-        }, 100);
 
-        setTimeout(() => {
-            this.checkScrollPosition(chatContentEl);
-        }, 500);
+        // Use MutationObserver instead of DOMNodeInserted for more efficient DOM change detection
+        if (typeof MutationObserver !== 'undefined') {
+            const contentObserver = new MutationObserver((mutations) => {
+                // Only check once after batched DOM changes
+                if (scrollTimeout) clearTimeout(scrollTimeout);
+                scrollTimeout = setTimeout(() => {
+                    this.checkScrollPosition(chatContentEl);
+                    scrollTimeout = null;
+                }, 100);
+            });
+            
+            // Observe content changes
+            contentObserver.observe(chatContentEl, { childList: true, subtree: true });
+            
+            // Store reference to disconnect later
+            this.chatContainer.dataset.mutationObserverId = String(Math.random());
+            (this as any)[`mutationObserver_${this.chatContainer.dataset.mutationObserverId}`] = contentObserver;
+        }
 
-        setTimeout(() => {
+        // Progressive checking that stops after stable state - more efficient than multiple timeouts
+        const checkAfterRender = (count = 0) => {
             this.checkScrollPosition(chatContentEl);
-        }, 1000);
+            
+            // Only continue if container is still in DOM and we haven't checked too many times
+            if (this.chatContainer.isConnected && count < 3) {
+                setTimeout(() => checkAfterRender(count + 1), 300);
+            }
+        };
 
-        // Ensure we check in both initial renders and after any dynamic content loads
-        chatContentEl.addEventListener('DOMNodeInserted', () => {
-            setTimeout(() => {
-                this.checkScrollPosition(chatContentEl);
-            }, 100);
-        });
+        // Initial check
+        setTimeout(() => checkAfterRender(), 100);
     }
     
     // Helper to populate the quips dropdown
@@ -704,26 +721,24 @@ export class SkribeView extends ItemView {
             });
         });
         
-        // Check scroll position after rendering messages
-        setTimeout(() => {
+        // Progressive check for scroll position instead of multiple timeouts
+        const checkAfterMessagesRender = (count = 0) => {
             this.checkScrollPosition(container);
             
             // Always scroll to bottom when first displaying messages
-            if (container.scrollHeight > container.clientHeight) {
+            if (count === 0 && container.scrollHeight > container.clientHeight) {
                 container.scrollTop = container.scrollHeight;
                 this.isAtBottom = true;
             }
             
-            // Double-check scroll position after scrolling
-            setTimeout(() => {
-                this.checkScrollPosition(container);
-            }, 100);
-        }, 100);
-
-        // Additional check after all animations and layout calculations are complete
-        setTimeout(() => {
-            this.checkScrollPosition(container);
-        }, 500);
+            // Only continue if container is still in DOM and we haven't checked too many times
+            if (container.isConnected && count < 2) {
+                setTimeout(() => checkAfterMessagesRender(count + 1), 250);
+            }
+        };
+        
+        // Start the progressive check
+        setTimeout(() => checkAfterMessagesRender(), 100);
     }
     
     // Helper method to process AI response
@@ -1381,7 +1396,35 @@ export class SkribeView extends ItemView {
             this.scrollToBottomButton = null;
         }
         
-        // Note: We don't need to manually remove event listeners or clear interval timers
+        // Clean up any MutationObservers
+        if (this.chatContainer) {
+            // Clean up MutationObserver if one was created
+            if (this.chatContainer.dataset.mutationObserverId) {
+                const observerId = this.chatContainer.dataset.mutationObserverId;
+                const observer = (this as any)[`mutationObserver_${observerId}`];
+                if (observer) {
+                    observer.disconnect();
+                    delete (this as any)[`mutationObserver_${observerId}`];
+                }
+            }
+            
+            // Clean up ResizeObserver if one was created
+            if (this.chatContainer.dataset.resizeObserverId) {
+                const observerId = this.chatContainer.dataset.resizeObserverId;
+                const observer = (this as any)[`resizeObserver_${observerId}`];
+                if (observer) {
+                    observer.disconnect();
+                    delete (this as any)[`resizeObserver_${observerId}`];
+                }
+            }
+            
+            // Remove resize event listener if added
+            if (this.chatContainer.dataset.hasResizeListener === 'true') {
+                window.removeEventListener('resize', this.checkScrollPosition.bind(this));
+            }
+        }
+        
+        // Note: We don't need to manually remove all event listeners
         // as they are registered through Obsidian's register system and will be automatically cleaned up
         
         return Promise.resolve();
