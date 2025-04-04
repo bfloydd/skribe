@@ -495,14 +495,19 @@ body.is-mobile .revised-toolbar-container {
 /* Mobile adjustments for the scroll button */
 .is-mobile .scroll-to-bottom-button,
 html.is-mobile .scroll-to-bottom-button,
-html.is-phone .scroll-to-bottom-button {
-    bottom: 130px;
-    right: 15px;
-    width: 42px;
-    height: 42px;
-    font-size: 24px;
-    line-height: 1;
-    font-weight: bold;
+html.is-phone .scroll-to-bottom-button,
+body.is-mobile .scroll-to-bottom-button {
+    bottom: 70px !important;
+    right: 15px !important;
+    width: 42px !important;
+    height: 42px !important;
+    font-size: 24px !important;
+    line-height: 1 !important;
+    font-weight: bold !important;
+    z-index: 1200 !important;
+    display: flex !important;
+    align-items: center !important;
+    justify-content: center !important;
 }
 
 .chat-input {

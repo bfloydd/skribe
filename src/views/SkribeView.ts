@@ -568,6 +568,21 @@ export class SkribeView extends ItemView {
         setTimeout(() => {
             this.checkScrollPosition(chatContentEl);
         }, 100);
+
+        setTimeout(() => {
+            this.checkScrollPosition(chatContentEl);
+        }, 500);
+
+        setTimeout(() => {
+            this.checkScrollPosition(chatContentEl);
+        }, 1000);
+
+        // Ensure we check in both initial renders and after any dynamic content loads
+        chatContentEl.addEventListener('DOMNodeInserted', () => {
+            setTimeout(() => {
+                this.checkScrollPosition(chatContentEl);
+            }, 100);
+        });
     }
     
     // Helper to populate the quips dropdown
@@ -696,8 +711,19 @@ export class SkribeView extends ItemView {
             // Always scroll to bottom when first displaying messages
             if (container.scrollHeight > container.clientHeight) {
                 container.scrollTop = container.scrollHeight;
+                this.isAtBottom = true;
             }
+            
+            // Double-check scroll position after scrolling
+            setTimeout(() => {
+                this.checkScrollPosition(container);
+            }, 100);
         }, 100);
+
+        // Additional check after all animations and layout calculations are complete
+        setTimeout(() => {
+            this.checkScrollPosition(container);
+        }, 500);
     }
     
     // Helper method to process AI response
@@ -1658,17 +1684,25 @@ export class SkribeView extends ItemView {
 
     // Helper to check if user is at bottom of chat and show/hide scroll button
     private checkScrollPosition(container: HTMLElement): void {
-        // Ensure we have a valid container and scroll button
-        if (!container || !this.scrollToBottomButton) {
+        // Ensure we have a valid container
+        if (!container) {
             return;
         }
-      
+    
         // Calculate if we're at the bottom with a generous threshold
         const scrollRemaining = container.scrollHeight - container.scrollTop - container.clientHeight;
         const atBottom = scrollRemaining < 30; // Increased threshold for better UX
         
-        // Only update if state has changed
-        if (this.isAtBottom !== atBottom) {
+        console.log('Scroll check:', { 
+            scrollHeight: container.scrollHeight,
+            scrollTop: container.scrollTop,
+            clientHeight: container.clientHeight,
+            scrollRemaining, 
+            atBottom 
+        });
+        
+        // Only update if state has changed or scrollToBottomButton is not properly initialized
+        if (this.isAtBottom !== atBottom || !this.scrollToBottomButton) {
             this.isAtBottom = atBottom;
             
             // Show/hide scroll button based on position
@@ -1682,39 +1716,53 @@ export class SkribeView extends ItemView {
     
     // Helper methods to show/hide scroll button with animation
     private showScrollButton(): void {
-        if (!this.scrollToBottomButton) {
-            // Create the button
-            this.scrollToBottomButton = this.containerEl.createEl('button', {
-                cls: 'scroll-to-bottom-button'
-            });
-            
-            // Check if we're on mobile
-            const isMobile = document.body.classList.contains('is-mobile') || 
-                      document.documentElement.classList.contains('is-mobile') || 
-                      document.documentElement.classList.contains('is-phone');
-            
-            if (isMobile) {
-                // For mobile, use text instead of SVG icon
-                this.scrollToBottomButton.textContent = '↓';
-            } else {
-                // For desktop, use SVG icon
-                this.scrollToBottomButton.innerHTML = '<svg viewBox="0 0 24 24"><path fill="currentColor" d="M7.41,8.58L12,13.17L16.59,8.58L18,10L12,16L6,10L7.41,8.58Z"></path></svg>';
-            }
-            
-            this.scrollToBottomButton.addEventListener('click', () => {
-                this.scrollChatToBottom();
-            });
+        // Always recreate the button each time to ensure proper visibility
+        if (this.scrollToBottomButton) {
+            this.scrollToBottomButton.remove();
         }
         
-        // Show the button
+        // Create the button directly on document body for highest z-index
+        this.scrollToBottomButton = document.createElement('div');
+        this.scrollToBottomButton.className = 'scroll-to-bottom-button';
+        
+        // Check if we're on mobile
+        const isMobile = document.body.classList.contains('is-mobile') || 
+                  document.documentElement.classList.contains('is-mobile') || 
+                  document.documentElement.classList.contains('is-phone');
+        
+        if (isMobile) {
+            // For mobile, use text instead of SVG icon
+            this.scrollToBottomButton.textContent = '↓';
+        } else {
+            // For desktop, use SVG icon
+            this.scrollToBottomButton.innerHTML = '<svg viewBox="0 0 24 24"><path fill="currentColor" d="M7.41,8.58L12,13.17L16.59,8.58L18,10L12,16L6,10L7.41,8.58Z"></path></svg>';
+        }
+        
+        document.body.appendChild(this.scrollToBottomButton);
+        
+        // Scroll button click handler
+        this.scrollToBottomButton.addEventListener('click', (e: MouseEvent) => {
+            this.scrollChatToBottom();
+        });
+        
+        // Remove 'hidden' class and ensure button is displayed properly
         this.scrollToBottomButton.classList.remove('hidden');
+        this.scrollToBottomButton.style.display = 'flex';
+        this.scrollToBottomButton.style.visibility = 'visible';
+        this.scrollToBottomButton.style.opacity = '1';
     }
     
     private hideScrollButton(): void {
         if (!this.scrollToBottomButton) return;
         this.scrollToBottomButton.classList.add('hidden');
-        this.scrollToBottomButton.style.display = 'none';
-        this.scrollToBottomButton.style.pointerEvents = 'none';
+        
+        // Use a setTimeout to ensure the animation completes before fully hiding the button
+        setTimeout(() => {
+            if (this.scrollToBottomButton) {
+                this.scrollToBottomButton.style.display = 'none';
+                this.scrollToBottomButton.style.pointerEvents = 'none';
+            }
+        }, 150);
     }
     
     // Helper to scroll chat to bottom
