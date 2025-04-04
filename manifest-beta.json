@@ -1,7 +1,7 @@
 {
 	"id": "skribe",
 	"name": "Skribe",
-	"version": "0.3.7",
+	"version": "0.3.8",
 	"minAppVersion": "0.15.0",
 	"description": "Video Research (YouTube): Transcribe, Summarize, and Chat",
 	"author": "Ben Floyd",
