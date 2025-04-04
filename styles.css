@@ -22,19 +22,6 @@
     overflow: hidden;
 }
 
-.skribe-content-wrapper {
-    display: flex;
-    flex-direction: column;
-    flex: 1;
-    height: calc(100% - 90px);
-    overflow: hidden;
-    min-height: 0;
-    padding-top: 0;
-    position: relative;
-    padding-bottom: 10px;
-    overflow-y: auto;
-}
-
 /* Remove all padding from view-content */
 .workspace-leaf-content .view-content {
     padding: 0 !important;
@@ -53,14 +40,59 @@ div.view-content.skribe-plugin {
     position: relative;
     width: 100%;
     height: 100%;
-    overflow-y: auto;
+    overflow: hidden !important; /* Prevent container scrolling */
     box-sizing: border-box;
     padding: 0;
     margin: 0;
     margin-top: 77px;
     background-color: var(--background-primary);
-    padding-bottom: 60px;
     margin-bottom: 20px;
+    flex: 1;
+}
+
+/* Toolbar container positioning for all tabs */
+.transcript-toolbar-container,
+.revised-toolbar-container,
+.summary-toolbar-container,
+.chat-toolbar-container {
+    position: absolute;
+    top: 0;
+    left: 0;
+    right: 0;
+    height: 50px;
+    z-index: 10;
+    background-color: var(--background-primary);
+    border-bottom: 1px solid var(--background-modifier-border);
+}
+
+/* Content positioning for all tabs - absolute positioned to fill available space */
+.transcript-content,
+.revised-content,
+.summary-content,
+.chat-content {
+    position: absolute;
+    top: 50px; /* Below toolbar */
+    left: 0;
+    right: 0;
+    bottom: 60px; /* Above input - match input height */
+    overflow-y: auto;
+    overflow-x: hidden;
+    padding: 15px;
+    background-color: transparent;
+}
+
+/* Chat content specific overrides */
+.chat-content {
+    display: flex;
+    flex-direction: column;
+}
+
+/* Adjust for status bar in Obsidian */
+.workspace-leaf-content[data-type="skribe-view"] .transcript-content,
+.workspace-leaf-content[data-type="skribe-view"] .revised-content,
+.workspace-leaf-content[data-type="skribe-view"] .summary-content,
+.workspace-leaf-content[data-type="skribe-view"] .chat-content {
+    bottom: calc(60px + var(--status-bar-height, 22px)); /* Adjust for status bar */
 }
 
 /* Container type-specific overrides */
@@ -70,14 +102,28 @@ div.view-content.skribe-plugin {
     overflow-y: auto;
 }
 
+/* Chat container - NO scrolling, only the content should scroll */
 .chat-container {
+    overflow: hidden !important; /* Prevent any scrolling on container */
+    padding-bottom: 0 !important;
     position: relative;
+}
+
+/* Chat content specific overrides */
+.chat-content {
+    position: absolute;
+    top: 50px; /* Position below toolbar */
+    left: 0;
+    right: 0;
+    bottom: 60px; /* Position above input */
+    overflow-y: auto !important;
+    overflow-x: hidden !important;
+    padding: 15px;
+    margin: 0;
+    background-color: transparent !important;
+    border-radius: 0;
     display: flex;
     flex-direction: column;
-    height: 100%;
-    overflow: hidden !important;
-    padding-bottom: 0 !important;
-    margin-bottom: 0 !important;
 }
 
 /* Obsidian integration fixes */
@@ -259,13 +305,13 @@ div[class*="markdown-preview-view"] {
 }
 
 /* Remove the extra padding element completely */
-.chat-messages-container::after {
+.chat-content::after {
     content: none;
     display: none;
 }
 
 /* Debugging helper class that can be added to force scrolling for testing */
-.chat-debug-scrollable .chat-messages-container::after {
+.chat-debug-scrollable .chat-content::after {
     content: '';
     display: block;
     height: 1000px;
@@ -274,7 +320,7 @@ div[class*="markdown-preview-view"] {
 
 .scroll-to-bottom-button {
     position: fixed;
-    bottom: 130px;
+    bottom: calc(60px + var(--status-bar-height, 22px) + 10px); /* Position above input + status bar */
     right: 20px;
     width: 46px;
     height: 46px;
@@ -398,28 +444,6 @@ html.is-phone .scroll-to-bottom-button {
     font-size: 24px;
     line-height: 1;
     font-weight: bold;
-}
-
-.global-chat-input-container {
-    position: fixed;
-    bottom: 0;
-    left: 0;
-    right: 0;
-    width: 100%;
-    padding: 10px 15px;
-    background-color: var(--background-primary);
-    border-top: 1px solid var(--background-modifier-border);
-    z-index: 100;
-    display: flex;
-    align-items: center;
-    box-shadow: 0 -2px 10px rgba(0, 0, 0, 0.1);
-    margin-top: 0;
-    gap: 10px;
-}
-
-/* Adjust for status bar in Obsidian */
-.workspace-leaf-content[data-type="skribe-view"] .global-chat-input-container {
-    bottom: var(--status-bar-height, 22px);
 }
 
 .chat-input {
@@ -642,12 +666,12 @@ button.disabled-button:hover {
 /* =======================
    DEBUGGING STYLES
    ======================= */
-/* Debug scrollable mode - explicit styles to ensure proper functionality */
-.chat-debug-scrollable .chat-messages-container {
+/* Debug scrollable mode - update for the new chat-content structure */
+.chat-debug-scrollable .chat-content {
     border: 1px dashed var(--text-accent);
 }
 
-.chat-debug-scrollable .chat-messages-container::after {
+.chat-debug-scrollable .chat-content::after {
     content: '';
     display: block;
     height: 1000px;
@@ -761,26 +785,26 @@ button.disabled-button:hover {
 .summary-toolbar-container,
 .revised-toolbar-container {
     position: fixed;
-    top: 127px !important; /* Position below tabs */
+    top: 127px !important;
     left: 0;
     right: 0;
     z-index: 100;
-    background-color: var(--background-primary) !important;
-    border-bottom: 1px solid var(--background-modifier-border) !important;
+    background-color: var(--background-primary);
+    border-bottom: 1px solid var(--background-modifier-border);
     box-shadow: 0 3px 8px rgba(0, 0, 0, 0.1);
     width: 100%;
     margin: 0;
     padding: 0;
-    height: 50px !important;
-    min-height: 50px !important;
-    max-height: 50px !important;
-    display: flex !important;
-    visibility: visible !important;
-    opacity: 1 !important;
+    height: 50px;
+    min-height: 50px;
+    max-height: 50px;
+    display: flex;
+    visibility: visible;
+    opacity: 1;
     align-items: center;
-    border-top: none !important;
-    border-left: none !important;
-    border-right: none !important;
+    border-top: none;
+    border-left: none;
+    border-right: none;
 }
 
 /* Ensure all toolbar containers maintain consistent styles */
@@ -972,24 +996,6 @@ html body .chat-toolbar-container,
     margin-top: 0;
 }
 
-.transcript-content, 
-.revised-content,
-.summary-content,
-.chat-messages-container {
-    width: 100% !important;
-    max-width: 100% !important;
-    box-sizing: border-box !important;
-}
-
-.transcript-content,
-.revised-content,
-.summary-content {
-    padding: 15px;
-    width: 100%;
-    box-sizing: border-box;
-    padding-bottom: 90px !important;
-}
-
 .empty-content-message {
     text-align: center;
     padding: 20px;
@@ -1029,7 +1035,7 @@ html body .chat-toolbar-container,
 /* Special handling for empty states */
 .summary-container:has(.empty-content-message),
 .revised-container:has(.empty-content-message) {
-    overflow-y: hidden;
+    overflow: hidden;
 }
 
 .summary-content:has(.empty-content-message),
@@ -1038,8 +1044,6 @@ html body .chat-toolbar-container,
     flex-direction: column;
     align-items: center;
     justify-content: flex-start;
-    height: calc(100% - 60px);
-    overflow: hidden;
     padding-top: 20px;
 }
 
@@ -1051,37 +1055,7 @@ html body .chat-toolbar-container,
 /* =======================
    CHAT MESSAGE STYLING
    ======================= */
-.chat-messages-container {
-    flex: 1;
-    display: flex;
-    flex-direction: column;
-    overflow-y: auto !important;
-    overflow-x: hidden !important;
-    padding: 15px;
-    padding-bottom: 0 !important;
-    margin-top: 0;
-    margin-bottom: 0;
-    background-color: transparent !important;
-    border-radius: 0;
-    gap: unset;
-    width: 100%;
-    box-sizing: border-box;
-    height: calc(100% - 50px) !important;
-    min-height: calc(100% - 50px) !important;
-    padding-top: 15px;
-}
-
-.chat-messages-container::after {
-    content: none;
-    display: none;
-}
-
-.chat-messages-wrapper {
-    width: 100%;
-    display: block;
-    min-height: 100%;
-    overflow: visible;
-}
+/* Chat content styling is defined above with absolute positioning */
 
 .chat-message {
     padding: 12px 16px;
@@ -1391,7 +1365,8 @@ html body .chat-toolbar-container,
     bottom: 0;
     left: 0;
     right: 0;
-    width: 100%;
+    height: 60px;
+    box-sizing: border-box;
     padding: 10px 15px;
     background-color: var(--background-primary);
     border-top: 1px solid var(--background-modifier-border);
@@ -1399,10 +1374,10 @@ html body .chat-toolbar-container,
     display: flex;
     align-items: center;
     box-shadow: 0 -2px 10px rgba(0, 0, 0, 0.1);
-    margin-top: 0;
     gap: 10px;
 }
 
+/* Adjust for status bar in Obsidian */
 .workspace-leaf-content[data-type="skribe-view"] .global-chat-input-container {
     bottom: var(--status-bar-height, 22px);
 }
@@ -1428,7 +1403,7 @@ html body .chat-toolbar-container,
 
 .scroll-to-bottom-button {
     position: fixed;
-    bottom: 130px;
+    bottom: calc(60px + var(--status-bar-height, 22px) + 10px); /* Position above input + status bar */
     right: 20px;
     width: 46px;
     height: 46px;

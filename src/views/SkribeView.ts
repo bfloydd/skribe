@@ -220,28 +220,23 @@ export class SkribeView extends ItemView {
         // Create tabs
         this.createTabs(container);
 
-        // Create content containers
-        const contentWrapper = container.createDiv({
-            cls: 'skribe-content-wrapper'
-        });
-
-        // Create transcript container
-        this.transcriptContainer = contentWrapper.createDiv({
+        // Create transcript container directly in the main container
+        this.transcriptContainer = container.createDiv({
             cls: 'transcript-container'
         });
         
         // Create revised container
-        this.revisedContainer = contentWrapper.createDiv({
+        this.revisedContainer = container.createDiv({
             cls: 'revised-container'
         });
         
         // Create summary container
-        this.summaryContainer = contentWrapper.createDiv({
+        this.summaryContainer = container.createDiv({
             cls: 'summary-container'
         });
 
         // Create chat container
-        this.chatContainer = contentWrapper.createDiv({
+        this.chatContainer = container.createDiv({
             cls: 'chat-container'
         });
         
@@ -465,13 +460,13 @@ export class SkribeView extends ItemView {
         });
         modelIndicator.innerText = `Model: ${this.plugin.settings.model}`;
         
-        // Create a single scrollable container for messages
-        const chatMessagesContainer = this.chatContainer.createDiv({
-            cls: 'chat-messages-container'
+        // Create a single scrollable container for messages - use chat-content to match other tabs
+        const chatContentEl = this.chatContainer.createDiv({
+            cls: 'chat-content'
         });
         
         // Add chat messages
-        this.renderChatMessages(chatMessagesContainer);
+        this.renderChatMessages(chatContentEl);
         
         // Context menu handler to enable text selection
         const contextMenuHandler = (e: MouseEvent) => {
@@ -511,8 +506,8 @@ export class SkribeView extends ItemView {
             menu.showAtMouseEvent(e);
         };
         
-        // Add context menu handler to messages container
-        chatMessagesContainer.addEventListener('contextmenu', contextMenuHandler);
+        // Add context menu handler to content container
+        chatContentEl.addEventListener('contextmenu', contextMenuHandler);
         
         // Add scroll to bottom button (fixed to document body, not inside container)
         if (!this.scrollToBottomButton) {
@@ -542,21 +537,21 @@ export class SkribeView extends ItemView {
         
         // Scroll handler to check position
         const scrollHandler = (e: Event) => {
-            this.checkScrollPosition(chatMessagesContainer);
+            this.checkScrollPosition(chatContentEl);
         };
         
         // Add scroll event listener
-        chatMessagesContainer.addEventListener('scroll', scrollHandler);
+        chatContentEl.addEventListener('scroll', scrollHandler);
         
         // Add resize observer to update scroll button visibility when container resizes
         const resizeHandler = () => {
-            this.checkScrollPosition(chatMessagesContainer);
+            this.checkScrollPosition(chatContentEl);
         };
         
         // Set up resize observer
         if (typeof ResizeObserver !== 'undefined') {
             const resizeObserver = new ResizeObserver(resizeHandler);
-            resizeObserver.observe(chatMessagesContainer);
+            resizeObserver.observe(chatContentEl);
             
             // Store reference to disconnect later
             this.chatContainer.dataset.resizeObserverId = String(Math.random());
@@ -571,7 +566,7 @@ export class SkribeView extends ItemView {
         
         // Initialize scroll position check
         setTimeout(() => {
-            this.checkScrollPosition(chatMessagesContainer);
+            this.checkScrollPosition(chatContentEl);
         }, 100);
     }
     
@@ -637,64 +632,26 @@ export class SkribeView extends ItemView {
         // Clear the container first
         container.empty();
         
-        // Check if we should show quips
-        if (this.showQuips && this.chatState.messages.length === 0) {
-            // Show quip cards if any are defined in settings
-            if (this.plugin.settings.quips && this.plugin.settings.quips.length > 0) {
-                const quipsContainer = container.createDiv({
-                    cls: 'quips-cards-container'
+        // Check if chat has any messages
+        if (!this.chatState.messages || this.chatState.messages.length === 0) {
+            // Show welcome message with quips if there are no messages
+            if (this.showQuips && this.plugin.settings.quips && this.plugin.settings.quips.length > 0) {
+                // Create quips cards
+                this.renderQuipsCards(container);
+            } else {
+                // Show empty message
+                container.createDiv({
+                    cls: 'empty-chat-message',
+                    text: this.getRandomWelcomeMessage()
                 });
-                
-                this.plugin.settings.quips.forEach(quip => {
-                    const quipCard = quipsContainer.createDiv({
-                        cls: 'quip-card'
-                    });
-                    
-                    const quipText = quipCard.createDiv({
-                        cls: 'quip-card-text',
-                        text: quip
-                    });
-                    
-                    // Add click handler to submit quip as chat message
-                    quipCard.addEventListener('click', () => {
-                        // Hide quips
-                        this.showQuips = false;
-                        
-                        // Add user message
-                        this.chatState.messages.push({
-                            role: 'user',
-                            content: quip
-                        });
-                        
-                        // Re-render chat messages
-                        container.empty();
-                        this.renderChatMessages(container);
-                        
-                        // Process AI response
-                        this.processAIResponse(container);
-                    });
-                });
-                
-                return;
             }
-            
-            // Show empty state if no quips and no messages
-            const emptyMessage = container.createDiv({
-                cls: 'empty-chat-message',
-                text: 'Ask a question...'
-            });
             return;
         }
-
-        // Create a wrapper for messages that ensures they're in sequence
-        const messagesWrapper = container.createDiv({
-            cls: 'chat-messages-wrapper'
-        });
 
         // Display messages in sequential order
         this.chatState.messages.forEach(async (message, index) => {
             // Create message element with appropriate class
-            const messageEl = messagesWrapper.createDiv({
+            const messageEl = container.createDiv({
                 cls: `chat-message ${message.role}-message`
             });
 
@@ -724,7 +681,7 @@ export class SkribeView extends ItemView {
             }
             
             // Add a clear fix after each message to ensure proper layout
-            messagesWrapper.createDiv({
+            container.createDiv({
                 cls: 'message-clearfix',
                 attr: {
                     style: 'clear: both; width: 100%;'
@@ -1113,16 +1070,16 @@ export class SkribeView extends ItemView {
             // Special rendering for chat tab if needed
             if (tab === 'chat') {
                 // Check if chat interface needs to be rendered
-                const needsRendering = !this.chatContainer.querySelector('.chat-messages-container');
+                const needsRendering = !this.chatContainer.querySelector('.chat-content');
                 
                 if (needsRendering) {
                     this.renderChatInterface();
                 }
                 
                 // Check scroll position when switching to chat tab
-                const chatMessagesContainer = this.chatContainer.querySelector('.chat-messages-container') as HTMLElement;
-                if (chatMessagesContainer) {
-                    this.checkScrollPosition(chatMessagesContainer);
+                const chatContentEl = this.chatContainer.querySelector('.chat-content') as HTMLElement;
+                if (chatContentEl) {
+                    this.checkScrollPosition(chatContentEl);
                 }
             }
         }
@@ -1413,10 +1370,10 @@ export class SkribeView extends ItemView {
         this.saveState();
         
         if (this.chatContainer) {
-            const chatMessagesContainer = this.chatContainer.querySelector('.chat-messages-container') as HTMLElement;
-            if (chatMessagesContainer) {
-                chatMessagesContainer.empty();
-                this.renderChatMessages(chatMessagesContainer);
+            const chatContentEl = this.chatContainer.querySelector('.chat-content') as HTMLElement;
+            if (chatContentEl) {
+                chatContentEl.empty();
+                this.renderChatMessages(chatContentEl);
                 
                 // Reset scroll state
                 this.isAtBottom = true;
@@ -1763,12 +1720,12 @@ export class SkribeView extends ItemView {
     // Helper to scroll chat to bottom
     private scrollChatToBottom(): void {
         // Find the chat messages container directly
-        const chatMessagesContainer = this.chatContainer.querySelector('.chat-messages-container') as HTMLElement;
-        if (!chatMessagesContainer) return;
+        const chatContentEl = this.chatContainer.querySelector('.chat-content') as HTMLElement;
+        if (!chatContentEl) return;
         
         // Use smooth scrolling for better UX
-        chatMessagesContainer.scrollTo({
-            top: chatMessagesContainer.scrollHeight,
+        chatContentEl.scrollTo({
+            top: chatContentEl.scrollHeight,
             behavior: 'smooth'
         });
         
@@ -1785,7 +1742,7 @@ export class SkribeView extends ItemView {
         chatContainer.classList.toggle('chat-debug-scrollable');
         
         // Get messages container
-        const messagesContainer = chatContainer.querySelector('.chat-messages-container') as HTMLElement;
+        const messagesContainer = chatContainer.querySelector('.chat-content') as HTMLElement;
         if (!messagesContainer) return;
         
         // Force check after toggling
@@ -1828,7 +1785,7 @@ export class SkribeView extends ItemView {
         if (debugButton) {
             debugButton.addEventListener('click', () => {
                 // Find chat messages container
-                const messagesContainer = this.chatContainer.querySelector('.chat-messages-container') as HTMLElement;
+                const messagesContainer = this.chatContainer.querySelector('.chat-content') as HTMLElement;
                 if (!messagesContainer) {
                     new Notice('Debug failed - no messages container found');
                     return;
@@ -1899,10 +1856,10 @@ export class SkribeView extends ItemView {
             this.renderChatInterface();
             
             // Get the chat messages container
-            const chatMessagesContainer = this.chatContainer?.querySelector('.chat-messages-container') as HTMLElement;
-            if (chatMessagesContainer) {
+            const chatContentEl = this.chatContainer?.querySelector('.chat-content') as HTMLElement;
+            if (chatContentEl) {
                 // Process AI response
-                await this.processAIResponse(chatMessagesContainer);
+                await this.processAIResponse(chatContentEl);
             } else {
                 console.error('Chat messages container not found after refresh');
             }
