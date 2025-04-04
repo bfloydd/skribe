@@ -261,465 +261,6 @@ body.is-mobile .tabs-container {
 /* =======================
    TOP TOOLBAR STYLES
    ======================= */
-.toolbar-container[data-toolbar-id="top"] {
-    position: absolute;
-    left: 10px;
-    top: 5px;
-    z-index: 100;
-    justify-content: flex-start;
-}
-
-.toolbar-container {
-    display: flex;
-    flex-direction: row;
-    justify-content: flex-start;
-    align-items: center;
-    gap: 8px;
-    padding: 8px 10px;
-    margin: 0;
-    transition: all 0.3s ease;
-    background-color: transparent;
-    width: 100%;
-}
-
-.toolbar-container button,
-.chat-toolbar-container button,
-.transcript-toolbar-container button,
-.summary-toolbar-container button,
-.revised-toolbar-container button {
-    display: inline-flex;
-    align-items: center;
-    justify-content: center;
-    background-color: var(--background-secondary);
-    margin: 0 4px;
-    padding: 6px 10px;
-    border-radius: 4px;
-    flex-shrink: 0;
-    height: 28px;
-    min-width: 28px;
-    cursor: pointer;
-}
-
-.toolbar-container button:hover:not(.disabled-button) {
-    background-color: var(--background-modifier-hover);
-    color: var(--text-accent);
-    transform: translateY(-1px);
-    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
-}
-
-.toolbar-container button.active {
-    background-color: var(--background-modifier-active-hover);
-    color: var(--text-accent);
-}
-
-.toolbar-container button[data-command-id="start-over"] {
-    background-color: var(--background-modifier-error);
-    color: var(--text-on-accent);
-    font-weight: bold;
-    margin-right: 10px;
-}
-
-.toolbar-container button[data-command-id="start-over"]:hover {
-    background-color: var(--text-accent);
-    color: var(--text-on-accent);
-}
-
-/* Mobile adjustments for tabs and toolbars - using Obsidian's class-based detection */
-html.is-mobile .chat-toolbar-container,
-html.is-mobile .transcript-toolbar-container,
-html.is-mobile .summary-toolbar-container,
-html.is-mobile .revised-toolbar-container,
-html.is-phone .chat-toolbar-container,
-html.is-phone .transcript-toolbar-container,
-html.is-phone .summary-toolbar-container,
-html.is-phone .revised-toolbar-container,
-body.is-mobile .chat-toolbar-container,
-body.is-mobile .transcript-toolbar-container,
-body.is-mobile .summary-toolbar-container,
-body.is-mobile .revised-toolbar-container {
-    top: 88px !important;
-}
-
-/* UNIFIED TOOLBAR STYLES - applies to ALL tab toolbars regardless of parent container */
-.transcript-toolbar-container,
-.revised-toolbar-container,
-.summary-toolbar-container,
-.chat-toolbar-container {
-    position: fixed;
-    top: 127px !important;
-    left: 0;
-    right: 0;
-    width: 100%;
-    height: 50px;
-    min-height: 50px;
-    max-height: 50px;
-    z-index: 100;
-    background-color: var(--background-primary);
-    border-bottom: 1px solid var(--background-modifier-border);
-    box-shadow: 0 3px 8px rgba(0, 0, 0, 0.1);
-    display: flex;
-    align-items: center;
-    padding: 0;
-    margin: 0;
-}
-
-/* Remove the extra padding element completely */
-.chat-content::after {
-    content: none;
-    display: none;
-}
-
-/* Debugging helper class that can be added to force scrolling for testing */
-.chat-debug-scrollable .chat-content::after {
-    content: '';
-    display: block;
-    height: 1000px;
-    width: 1px;
-}
-
-.scroll-to-bottom-button {
-    position: fixed;
-    bottom: calc(60px + var(--status-bar-height, 22px) + 10px); /* Position above input + status bar */
-    right: 20px;
-    width: 36px;
-    height: 36px;
-    background: var(--background-secondary-alt);
-    color: var(--text-normal);
-    border-radius: 50%;
-    display: flex;
-    justify-content: center;
-    align-items: center;
-    box-shadow: 0 1px 3px rgba(0, 0, 0, 0.2);
-    border: 1px solid var(--background-modifier-border);
-    cursor: pointer;
-    z-index: 1100 !important;
-    transition: transform 0.15s cubic-bezier(0.175, 0.885, 0.32, 1.275), 
-                opacity 0.15s ease-out;
-    pointer-events: auto !important;
-    opacity: 0.8;
-}
-
-.scroll-to-bottom-button.hidden {
-    transform: scale(0.8) translateZ(0);
-    opacity: 0;
-    pointer-events: none;
-    display: none;
-}
-
-.scroll-to-bottom-button::after {
-    content: "New messages";
-    position: absolute;
-    top: -30px;
-    left: 50%;
-    transform: translateX(-50%);
-    background-color: var(--background-secondary);
-    color: var(--text-normal);
-    padding: 4px 8px;
-    border-radius: 4px;
-    font-size: 12px;
-    opacity: 0;
-    pointer-events: none;
-    transition: opacity 0.2s ease;
-    white-space: nowrap;
-    box-shadow: 0 1px 2px rgba(0, 0, 0, 0.1);
-}
-
-.scroll-to-bottom-button:hover::after {
-    opacity: 1;
-}
-
-.scroll-to-bottom-button:hover {
-    transform: translateY(-2px);
-    opacity: 1;
-    box-shadow: 0 2px 5px rgba(0, 0, 0, 0.2);
-}
-
-.scroll-to-bottom-button:active {
-    transform: translateY(0) scale(0.95);
-    box-shadow: 0 1px 2px rgba(0, 0, 0, 0.1);
-    transition: all 0.1s ease;
-}
-
-.scroll-to-bottom-button svg {
-    width: 18px;
-    height: 18px;
-    fill: var(--text-muted);
-    stroke: var(--text-muted);
-    animation: none;
-}
-
-/* Mobile adjustments for the scroll button */
-.is-mobile .scroll-to-bottom-button,
-html.is-mobile .scroll-to-bottom-button,
-html.is-phone .scroll-to-bottom-button,
-body.is-mobile .scroll-to-bottom-button {
-    bottom: 70px !important;
-    right: 15px !important;
-    width: 32px !important;
-    height: 32px !important;
-    font-size: 18px !important;
-    line-height: 1 !important;
-    font-weight: normal !important;
-    z-index: 1200 !important;
-    display: flex !important;
-    align-items: center !important;
-    justify-content: center !important;
-    opacity: 0.7 !important;
-}
-
-.chat-input {
-    flex-grow: 1;
-    padding: 10px 12px;
-    border-radius: 20px;
-    border: 1px solid var(--background-modifier-border);
-    background-color: var(--background-secondary);
-    color: var(--text-normal);
-    height: 40px;
-    box-sizing: border-box;
-    transition: all 0.2s ease;
-    box-shadow: 0 1px 3px rgba(0, 0, 0, 0.05);
-}
-
-.chat-input:focus {
-    border-color: var(--interactive-accent);
-    outline: none;
-    box-shadow: 0 0 0 2px rgba(var(--interactive-accent-rgb), 0.2);
-}
-
-.chat-container {
-    overflow: visible !important;
-}
-
-/* Animate the dropdown arrow */
-.split-button-dropdown svg {
-    transition: transform 0.2s ease;
-}
-
-.split-button-dropdown.active {
-    background-color: var(--interactive-accent-hover);
-}
-
-.split-button-dropdown.active svg {
-    transform: rotate(180deg);
-}
-
-/* Fix empty message styling */
-.empty-chat-message {
-    color: var(--text-muted);
-    text-align: center;
-    padding: 20px;
-    font-style: italic;
-}
-
-/* Message clearfix */
-.message-clearfix {
-    clear: both;
-    width: 100%;
-    height: 1px;
-    margin: 0;
-    padding: 0;
-}
-
-/* Split button styling - updated for round buttons */
-.split-button-container {
-    display: flex;
-    align-items: stretch;
-    height: 40px;
-    flex-shrink: 0;
-    gap: 8px;
-}
-
-.split-button-main {
-    width: 40px;
-    height: 40px;
-    padding: 0;
-    background-color: var(--interactive-accent);
-    color: var(--text-on-accent);
-    cursor: pointer;
-    border: none;
-    font-weight: bold;
-    display: flex;
-    justify-content: center;
-    align-items: center;
-    border-radius: 50%;
-    box-shadow: 0 1px 3px rgba(0, 0, 0, 0.2);
-    transition: all 0.2s ease;
-}
-
-.split-button-dropdown {
-    width: 40px;
-    height: 40px;
-    padding: 0;
-    background-color: var(--interactive-accent);
-    color: var(--text-on-accent);
-    cursor: pointer;
-    border: none;
-    display: flex;
-    justify-content: center;
-    align-items: center;
-    border-radius: 50%;
-    box-shadow: 0 1px 3px rgba(0, 0, 0, 0.2);
-    transition: all 0.2s ease;
-}
-
-.split-button-main:hover, .split-button-dropdown:hover {
-    opacity: 0.95;
-    transform: translateY(-1px);
-    box-shadow: 0 3px 5px rgba(0, 0, 0, 0.2);
-}
-
-.split-button-main:active, .split-button-dropdown:active {
-    transform: translateY(1px);
-    box-shadow: 0 1px 2px rgba(0, 0, 0, 0.2);
-}
-
-.split-button-main svg, .split-button-dropdown svg {
-    width: 20px;
-    height: 20px;
-}
-
-/* Update dropdown toggle active state */
-.split-button-dropdown.active {
-    background-color: var(--interactive-accent-hover);
-    transform: translateY(-1px);
-    box-shadow: 0 3px 5px rgba(0, 0, 0, 0.2);
-}
-
-/* Quips dropdown menu - updated for round buttons */
-.quips-dropdown-menu {
-    position: absolute;
-    bottom: 60px;
-    right: 60px;
-    background-color: var(--background-primary);
-    border-radius: 8px;
-    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
-    min-width: 220px;
-    max-width: 300px;
-    max-height: 300px;
-    overflow-y: auto;
-    z-index: 1000;
-    border: 1px solid var(--background-modifier-border);
-    animation: fadeIn 0.2s ease;
-}
-
-@keyframes fadeIn {
-    from { opacity: 0; transform: translateY(10px); }
-    to { opacity: 1; transform: translateY(0); }
-}
-
-.quips-dropdown-item {
-    padding: 10px 12px;
-    cursor: pointer;
-    border-bottom: 1px solid var(--background-modifier-border);
-    transition: background-color 0.2s ease;
-    line-height: 1.4;
-}
-
-.quips-dropdown-item:last-child {
-    border-bottom: none;
-}
-
-.quips-dropdown-item:hover {
-    background-color: var(--background-modifier-hover);
-}
-
-/* =======================
-   SETTINGS STYLES
-   ======================= */
-.quip-item {
-    display: flex;
-    align-items: center;
-    padding: 8px;
-    margin-bottom: 6px;
-    border-radius: 4px;
-    border: 1px solid var(--background-modifier-border);
-    background-color: var(--background-primary);
-    transition: background-color 0.2s ease;
-}
-
-.quip-item.dragging {
-    opacity: 0.5;
-    border: 1px dashed var(--interactive-accent);
-    background-color: var(--background-secondary-alt);
-}
-
-.quip-item.drag-over {
-    border: 2px solid var(--interactive-accent);
-    background-color: var(--background-primary-alt);
-}
-
-.quip-edit-container {
-    flex: 1;
-    display: flex;
-    margin-right: 8px;
-}
-
-.quip-button-container {
-    display: flex;
-    gap: 4px;
-}
-
-.quip-controls {
-    display: flex;
-    gap: 4px;
-}
-
-.quip-text {
-    flex: 1;
-    padding: 0 8px;
-    word-break: break-word;
-}
-
-.disabled-button {
-    opacity: 0.5 !important;
-    cursor: not-allowed !important;
-    pointer-events: none !important;
-    background-color: var(--background-secondary-alt) !important;
-}
-
-.toolbar-container button.disabled-button:hover,
-button.disabled-button:hover {
-    transform: none !important;
-    box-shadow: none !important;
-    background-color: var(--background-secondary-alt) !important;
-}
-
-/* =======================
-   DEBUGGING STYLES
-   ======================= */
-/* Debug scrollable mode - update for the new chat-content structure */
-.chat-debug-scrollable .chat-content {
-    border: 1px dashed var(--text-accent);
-}
-
-.chat-debug-scrollable .chat-content::after {
-    content: '';
-    display: block;
-    height: 1000px;
-    width: 1px;
-    background-color: transparent;
-}
-
-/* Ensure consistent padding and background for all toolbar containers */
-.chat-toolbar-container .toolbar-container,
-.transcript-toolbar-container .toolbar-container,
-.summary-toolbar-container .toolbar-container,
-.revised-toolbar-container .toolbar-container {
-    margin: 0;
-    padding: 8px 10px;
-    display: flex;
-    flex-direction: row;
-    align-items: center;
-    flex: 1;
-    background-color: var(--background-primary) !important;
-    padding-right: 10px;
-    width: 100%;
-    gap: 6px;
-}
-
-/* =======================
-   TOOLBAR STYLING
-   ======================= */
 .toolbar-container {
     display: flex;
     flex-direction: row;
@@ -800,35 +341,7 @@ button.disabled-button:hover {
     background-color: transparent !important;
 }
 
-/* All toolbars positioning */
-.chat-toolbar-container,
-.transcript-toolbar-container,
-.summary-toolbar-container,
-.revised-toolbar-container {
-    position: fixed;
-    top: 127px !important;
-    left: 0;
-    right: 0;
-    z-index: 100;
-    background-color: var(--background-primary);
-    border-bottom: 1px solid var(--background-modifier-border);
-    box-shadow: 0 3px 8px rgba(0, 0, 0, 0.1);
-    width: 100%;
-    margin: 0;
-    padding: 0;
-    height: 50px;
-    min-height: 50px;
-    max-height: 50px;
-    display: flex;
-    visibility: visible;
-    opacity: 1;
-    align-items: center;
-    border-top: none;
-    border-left: none;
-    border-right: none;
-}
-
-/* Ensure all toolbar containers maintain consistent styles */
+/* Consolidate toolbar container styles */
 .chat-toolbar-container,
 .transcript-toolbar-container,
 .summary-toolbar-container,
@@ -856,20 +369,7 @@ button.disabled-button:hover {
     margin-right: 0 !important;
 }
 
-/* Fix for ALL toolbar containers to ensure they take full width */
-.transcript-toolbar-container,
-.summary-toolbar-container,
-.revised-toolbar-container,
-.chat-toolbar-container {
-    right: 0 !important;
-    width: 100% !important;
-    max-width: 100% !important;
-    box-sizing: border-box !important;
-    padding-right: 0 !important;
-    margin-right: 0 !important;
-}
-
-/* Ensure consistent padding and background for all toolbar containers */
+/* Standardize toolbar container children styles */
 .chat-toolbar-container .toolbar-container,
 .transcript-toolbar-container .toolbar-container,
 .summary-toolbar-container .toolbar-container,
@@ -886,28 +386,23 @@ button.disabled-button:hover {
     gap: 6px;
 }
 
-/* Chat toolbar specific overrides */
-.chat-toolbar-container {
-    position: fixed !important;
-    top: 127px !important;
-    left: 0 !important;
-    right: 0 !important;
-    z-index: 100 !important;
-    width: 100% !important;
-    height: 50px !important;
-    min-height: 50px !important;
-    max-height: 50px !important;
-    background-color: var(--background-primary) !important;
-    border-bottom: 1px solid var(--background-modifier-border) !important;
-    display: flex !important;
-    visibility: visible !important;
-    opacity: 1 !important;
-    margin: 0 !important;
-    padding: 0 !important;
-    box-shadow: 0 3px 8px rgba(0, 0, 0, 0.1) !important;
-    align-items: center !important;
+/* Mobile toolbar adjustments */
+html.is-mobile .chat-toolbar-container,
+html.is-mobile .transcript-toolbar-container,
+html.is-mobile .summary-toolbar-container,
+html.is-mobile .revised-toolbar-container,
+html.is-phone .chat-toolbar-container,
+html.is-phone .transcript-toolbar-container,
+html.is-phone .summary-toolbar-container,
+html.is-phone .revised-toolbar-container,
+body.is-mobile .chat-toolbar-container,
+body.is-mobile .transcript-toolbar-container,
+body.is-mobile .summary-toolbar-container,
+body.is-mobile .revised-toolbar-container {
+    top: 88px !important;
 }
 
+/* Keep the model indicator style */
 .model-indicator {
     margin-left: auto;
     margin-right: 10px;
@@ -943,6 +438,50 @@ button.disabled-button:hover {
 
 .dark .model-indicator::before {
     box-shadow: 0 0 4px var(--interactive-accent);
+}
+
+/* Animation keyframes */
+@keyframes pulse {
+    0% { opacity: 0.6; }
+    50% { opacity: 1; }
+    100% { opacity: 0.6; }
+}
+
+@keyframes fadeIn {
+    from { opacity: 0; transform: translateY(10px); }
+    to { opacity: 1; transform: translateY(0); }
+}
+
+@keyframes spin {
+    0% { transform: rotate(0deg); }
+    100% { transform: rotate(360deg); }
+}
+
+/* Keep loading animation */
+.loading-spinner {
+    width: 16px;
+    height: 16px;
+    border: 2px solid var(--text-muted);
+    border-bottom-color: transparent;
+    border-radius: 50%;
+    display: inline-block;
+    animation: spin 1s linear infinite;
+    margin-right: 10px;
+}
+
+/* Remove duplicated disabled button styles */
+.disabled-button {
+    opacity: 0.5 !important;
+    cursor: not-allowed !important;
+    pointer-events: none !important;
+    background-color: var(--background-secondary-alt) !important;
+}
+
+.toolbar-container button.disabled-button:hover,
+button.disabled-button:hover {
+    transform: none !important;
+    box-shadow: none !important;
+    background-color: var(--background-secondary-alt) !important;
 }
 
 /* =======================
@@ -1187,17 +726,6 @@ button.disabled-button:hover {
     border-bottom-left-radius: 4px;
 }
 
-.loading-spinner {
-    width: 16px;
-    height: 16px;
-    border: 2px solid var(--text-muted);
-    border-bottom-color: transparent;
-    border-radius: 50%;
-    display: inline-block;
-    animation: spin 1s linear infinite;
-    margin-right: 10px;
-}
-
 .loading-message {
     color: var(--text-muted);
 }
@@ -1205,22 +733,6 @@ button.disabled-button:hover {
 /* =======================
    ANIMATIONS & EFFECTS
    ======================= */
-@keyframes pulse {
-    0% { opacity: 0.6; }
-    50% { opacity: 1; }
-    100% { opacity: 0.6; }
-}
-
-@keyframes fadeIn {
-    from { opacity: 0; transform: translateY(10px); }
-    to { opacity: 1; transform: translateY(0); }
-}
-
-@keyframes rotate {
-    from { transform: rotate(0deg); }
-    to { transform: rotate(360deg); }
-}
-
 .thinking-dots {
     display: inline-flex;
     width: 20px;
@@ -1317,7 +829,6 @@ button.disabled-button:hover {
 .responsive-hidden {
     display: none;
 }
-
 
 .fade-in {
     animation: fadeIn 0.3s ease forwards;
@@ -1673,11 +1184,6 @@ button.disabled-button:hover {
     font-weight: 500;
     height: 40px;
     min-width: 80px;
-}
-
-@keyframes spin {
-    0% { transform: rotate(0deg); }
-    100% { transform: rotate(360deg); }
 }
 
 @keyframes bounce-in {

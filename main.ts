@@ -1,4 +1,4 @@
-import { Plugin, Notice, MarkdownView, WorkspaceLeaf, Menu, Editor, setIcon } from 'obsidian';
+import { Plugin, Notice, MarkdownView, WorkspaceLeaf, setIcon } from 'obsidian';
 import { SkribeSettings, DEFAULT_SETTINGS } from './src/types/index';
 import { YouTubeService } from './src/services/YouTubeService';
 import { OpenAIService } from './src/services/OpenAIService';
