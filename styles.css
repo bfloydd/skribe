@@ -381,22 +381,22 @@ body.is-mobile .revised-toolbar-container {
     position: fixed;
     bottom: calc(60px + var(--status-bar-height, 22px) + 10px); /* Position above input + status bar */
     right: 20px;
-    width: 46px;
-    height: 46px;
-    background: linear-gradient(145deg, var(--interactive-accent), var(--text-accent));
-    color: var(--text-on-accent);
+    width: 36px;
+    height: 36px;
+    background: var(--background-secondary-alt);
+    color: var(--text-normal);
     border-radius: 50%;
     display: flex;
     justify-content: center;
     align-items: center;
-    box-shadow: 0 3px 12px rgba(0, 0, 0, 0.3);
-    border: 1px solid rgba(255, 255, 255, 0.2);
+    box-shadow: 0 1px 3px rgba(0, 0, 0, 0.2);
+    border: 1px solid var(--background-modifier-border);
     cursor: pointer;
     z-index: 1100 !important;
     transition: transform 0.15s cubic-bezier(0.175, 0.885, 0.32, 1.275), 
-                opacity 0.15s ease-out, 
-                box-shadow 0.15s ease-out;
+                opacity 0.15s ease-out;
     pointer-events: auto !important;
+    opacity: 0.8;
 }
 
 .scroll-to-bottom-button.hidden {
@@ -421,7 +421,7 @@ body.is-mobile .revised-toolbar-container {
     pointer-events: none;
     transition: opacity 0.2s ease;
     white-space: nowrap;
-    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+    box-shadow: 0 1px 2px rgba(0, 0, 0, 0.1);
 }
 
 .scroll-to-bottom-button:hover::after {
@@ -429,67 +429,23 @@ body.is-mobile .revised-toolbar-container {
 }
 
 .scroll-to-bottom-button:hover {
-    transform: translateY(-3px) scale(1.05) translateZ(0);
-    box-shadow: 0 5px 15px rgba(0, 0, 0, 0.3), 
-                0 0 20px rgba(var(--interactive-accent-rgb), 0.4),
-                inset 0 1px 1px rgba(255, 255, 255, 0.3);
-    background: linear-gradient(145deg, var(--text-accent), var(--interactive-accent));
+    transform: translateY(-2px);
+    opacity: 1;
+    box-shadow: 0 2px 5px rgba(0, 0, 0, 0.2);
 }
 
 .scroll-to-bottom-button:active {
-    transform: translateY(0) scale(0.95) translateZ(0);
-    box-shadow: 0 2px 5px rgba(0, 0, 0, 0.2),
-                0 0 10px rgba(var(--interactive-accent-rgb), 0.2),
-                inset 0 1px 1px rgba(0, 0, 0, 0.1);
+    transform: translateY(0) scale(0.95);
+    box-shadow: 0 1px 2px rgba(0, 0, 0, 0.1);
     transition: all 0.1s ease;
 }
 
 .scroll-to-bottom-button svg {
-    width: 24px;
-    height: 24px;
-    fill: var(--text-on-accent);
-    stroke: var(--text-on-accent);
-    filter: drop-shadow(0 1px 1px rgba(0, 0, 0, 0.3));
-    animation: bounce-arrow 2s ease-in-out infinite;
-}
-
-@keyframes bounce-arrow {
-    0%, 100% { transform: translateY(0); }
-    50% { transform: translateY(-5px); }
-}
-
-@keyframes spin {
-    0% { transform: rotate(0deg); }
-    100% { transform: rotate(360deg); }
-}
-
-@keyframes bounce-in {
-    0% { transform: scale(0); opacity: 0; }
-    40% { transform: scale(1.2); opacity: 0.7; }
-    70% { transform: scale(0.9); opacity: 0.9; }
-    100% { transform: scale(1); opacity: 1; }
-}
-
-.loading-indicator {
-    display: inline-block;
-    width: 20px;
-    height: 20px;
-    border: 2px solid var(--background-modifier-border);
-    border-radius: 50%;
-    border-top-color: var(--interactive-accent);
-    animation: rotate 1s linear infinite;
-}
-
-.theme-dark .scroll-to-bottom-button {
-    box-shadow: 0 3px 10px rgba(0, 0, 0, 0.3), 
-                0 0 15px rgba(var(--interactive-accent-rgb), 0.4),
-                inset 0 1px 1px rgba(255, 255, 255, 0.15);
-}
-
-.theme-dark .scroll-to-bottom-button:hover {
-    box-shadow: 0 5px 15px rgba(0, 0, 0, 0.4), 
-                0 0 20px rgba(var(--interactive-accent-rgb), 0.5),
-                inset 0 1px 1px rgba(255, 255, 255, 0.2);
+    width: 18px;
+    height: 18px;
+    fill: var(--text-muted);
+    stroke: var(--text-muted);
+    animation: none;
 }
 
 /* Mobile adjustments for the scroll button */
@@ -499,15 +455,16 @@ html.is-phone .scroll-to-bottom-button,
 body.is-mobile .scroll-to-bottom-button {
     bottom: 70px !important;
     right: 15px !important;
-    width: 42px !important;
-    height: 42px !important;
-    font-size: 24px !important;
+    width: 32px !important;
+    height: 32px !important;
+    font-size: 18px !important;
     line-height: 1 !important;
-    font-weight: bold !important;
+    font-weight: normal !important;
     z-index: 1200 !important;
     display: flex !important;
     align-items: center !important;
     justify-content: center !important;
+    opacity: 0.7 !important;
 }
 
 .chat-input {
@@ -1414,22 +1371,22 @@ button.disabled-button:hover {
     position: fixed;
     bottom: calc(60px + var(--status-bar-height, 22px) + 10px); /* Position above input + status bar */
     right: 20px;
-    width: 46px;
-    height: 46px;
-    background: linear-gradient(145deg, var(--interactive-accent), var(--text-accent));
-    color: var(--text-on-accent);
+    width: 36px;
+    height: 36px;
+    background: var(--background-secondary-alt);
+    color: var(--text-normal);
     border-radius: 50%;
     display: flex;
     justify-content: center;
     align-items: center;
-    box-shadow: 0 3px 12px rgba(0, 0, 0, 0.3);
-    border: 1px solid rgba(255, 255, 255, 0.2);
+    box-shadow: 0 1px 3px rgba(0, 0, 0, 0.2);
+    border: 1px solid var(--background-modifier-border);
     cursor: pointer;
     z-index: 1100 !important;
     transition: transform 0.15s cubic-bezier(0.175, 0.885, 0.32, 1.275), 
-                opacity 0.15s ease-out, 
-                box-shadow 0.15s ease-out;
+                opacity 0.15s ease-out;
     pointer-events: auto !important;
+    opacity: 0.8;
 }
 
 .scroll-to-bottom-button.hidden {
@@ -1454,7 +1411,7 @@ button.disabled-button:hover {
     pointer-events: none;
     transition: opacity 0.2s ease;
     white-space: nowrap;
-    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+    box-shadow: 0 1px 2px rgba(0, 0, 0, 0.1);
 }
 
 .scroll-to-bottom-button:hover::after {
@@ -1462,28 +1419,23 @@ button.disabled-button:hover {
 }
 
 .scroll-to-bottom-button:hover {
-    transform: translateY(-3px) scale(1.05) translateZ(0);
-    box-shadow: 0 5px 15px rgba(0, 0, 0, 0.3), 
-                0 0 20px rgba(var(--interactive-accent-rgb), 0.4),
-                inset 0 1px 1px rgba(255, 255, 255, 0.3);
-    background: linear-gradient(145deg, var(--text-accent), var(--interactive-accent));
+    transform: translateY(-2px);
+    opacity: 1;
+    box-shadow: 0 2px 5px rgba(0, 0, 0, 0.2);
 }
 
 .scroll-to-bottom-button:active {
-    transform: translateY(0) scale(0.95) translateZ(0);
-    box-shadow: 0 2px 5px rgba(0, 0, 0, 0.2),
-                0 0 10px rgba(var(--interactive-accent-rgb), 0.2),
-                inset 0 1px 1px rgba(0, 0, 0, 0.1);
+    transform: translateY(0) scale(0.95);
+    box-shadow: 0 1px 2px rgba(0, 0, 0, 0.1);
     transition: all 0.1s ease;
 }
 
 .scroll-to-bottom-button svg {
-    width: 24px;
-    height: 24px;
-    fill: var(--text-on-accent);
-    stroke: var(--text-on-accent);
-    filter: drop-shadow(0 1px 1px rgba(0, 0, 0, 0.3));
-    animation: bounce-arrow 2s ease-in-out infinite;
+    width: 18px;
+    height: 18px;
+    fill: var(--text-muted);
+    stroke: var(--text-muted);
+    animation: none;
 }
 
 .theme-dark .scroll-to-bottom-button {
@@ -1721,4 +1673,26 @@ button.disabled-button:hover {
     font-weight: 500;
     height: 40px;
     min-width: 80px;
+}
+
+@keyframes spin {
+    0% { transform: rotate(0deg); }
+    100% { transform: rotate(360deg); }
+}
+
+@keyframes bounce-in {
+    0% { transform: scale(0); opacity: 0; }
+    40% { transform: scale(1.2); opacity: 0.7; }
+    70% { transform: scale(0.9); opacity: 0.9; }
+    100% { transform: scale(1); opacity: 1; }
+}
+
+.loading-indicator {
+    display: inline-block;
+    width: 20px;
+    height: 20px;
+    border: 2px solid var(--background-modifier-border);
+    border-radius: 50%;
+    border-top-color: var(--interactive-accent);
+    animation: spin 1s linear infinite;
 }
