@@ -73,11 +73,28 @@ div.view-content.skribe-plugin {
     top: 50px; /* Below toolbar */
     left: 0;
     right: 0;
-    bottom: 0px !important; /* Above input - match input height */
+    bottom: 60px !important; /* Default for desktop */
     overflow-y: auto;
     overflow-x: hidden;
     padding: 15px;
     background-color: transparent;
+}
+
+/* Mobile-specific overrides using Obsidian's detection system */
+html.is-mobile .transcript-content,
+html.is-mobile .revised-content,
+html.is-mobile .summary-content,
+html.is-mobile .chat-content,
+html.is-phone .transcript-content,
+html.is-phone .revised-content,
+html.is-phone .summary-content,
+html.is-phone .chat-content,
+body.is-mobile .transcript-content,
+body.is-mobile .revised-content,
+body.is-mobile .summary-content,
+body.is-mobile .chat-content {
+    bottom: 0px !important; /* Mobile positioning */
+    padding-bottom: 60px !important; /* Add extra padding at bottom for mobile to avoid content being hidden under the input */
 }
 
 /* Chat content specific overrides */
@@ -106,23 +123,6 @@ div.view-content.skribe-plugin {
     overflow: hidden !important; /* Prevent any scrolling on container */
     padding-bottom: 0 !important;
     position: relative;
-}
-
-/* Chat content specific overrides */
-.chat-content {
-    position: absolute;
-    top: 50px; /* Position below toolbar */
-    left: 0;
-    right: 0;
-    bottom: 60px; /* Position above input */
-    overflow-y: auto !important;
-    overflow-x: hidden !important;
-    padding: 15px;
-    margin: 0;
-    background-color: transparent !important;
-    border-radius: 0;
-    display: flex;
-    flex-direction: column;
 }
 
 /* Obsidian integration fixes */
@@ -944,16 +944,6 @@ button.disabled-button:hover {
     padding: 0 !important;
     box-shadow: 0 3px 8px rgba(0, 0, 0, 0.1) !important;
     align-items: center !important;
-}
-
-/* High-specificity override for chat toolbar */
-.chat-container .chat-toolbar-container,
-body .chat-toolbar-container,
-html body .chat-toolbar-container,
-.workspace-leaf-content .chat-toolbar-container {
-    top: 127px !important;
-    transform: none !important;
-    position: fixed !important;
 }
 
 .model-indicator {
