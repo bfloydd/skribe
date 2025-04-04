@@ -73,7 +73,7 @@ div.view-content.skribe-plugin {
     top: 50px; /* Below toolbar */
     left: 0;
     right: 0;
-    bottom: 60px; /* Above input - match input height */
+    bottom: 0px !important; /* Above input - match input height */
     overflow-y: auto;
     overflow-x: hidden;
     padding: 15px;
@@ -251,6 +251,13 @@ div[class*="markdown-preview-view"] {
     font-weight: bold;
 }
 
+/* Mobile adjustments for tabs and toolbars - using Obsidian's class-based detection */
+html.is-mobile .tabs-container,
+html.is-phone .tabs-container,
+body.is-mobile .tabs-container {
+    top: 50px !important;
+}
+
 /* =======================
    TOP TOOLBAR STYLES
    ======================= */
@@ -315,6 +322,22 @@ div[class*="markdown-preview-view"] {
 .toolbar-container button[data-command-id="start-over"]:hover {
     background-color: var(--text-accent);
     color: var(--text-on-accent);
+}
+
+/* Mobile adjustments for tabs and toolbars - using Obsidian's class-based detection */
+html.is-mobile .chat-toolbar-container,
+html.is-mobile .transcript-toolbar-container,
+html.is-mobile .summary-toolbar-container,
+html.is-mobile .revised-toolbar-container,
+html.is-phone .chat-toolbar-container,
+html.is-phone .transcript-toolbar-container,
+html.is-phone .summary-toolbar-container,
+html.is-phone .revised-toolbar-container,
+body.is-mobile .chat-toolbar-container,
+body.is-mobile .transcript-toolbar-container,
+body.is-mobile .summary-toolbar-container,
+body.is-mobile .revised-toolbar-container {
+    top: 88px !important;
 }
 
 /* UNIFIED TOOLBAR STYLES - applies to ALL tab toolbars regardless of parent container */
@@ -1343,64 +1366,6 @@ html body .chat-toolbar-container,
     display: none;
 }
 
-@media (max-width: 768px) {
-    .mobile-hidden {
-        display: none !important;
-    }
-    
-    .mobile-only {
-        display: block !important;
-    }
-    
-    .responsive-hidden {
-        display: block;
-    }
-    
-    .global-chat-input-container {
-        padding: 8px;
-    }
-    
-    .chat-input {
-        height: 38px;
-        padding: 8px 10px;
-    }
-    
-    .split-button-container {
-        gap: 4px;
-    }
-    
-    .toolbar-container {
-        padding: 6px 8px;
-    }
-    
-    .button-container-with-label {
-        margin: 0 2px;
-    }
-    
-    .toolbar-button {
-        width: 34px;
-        height: 34px;
-    }
-    
-    .chat-message {
-        padding: 10px;
-    }
-    
-    /* Mobile text button styling */
-    .split-button-main, 
-    .split-button-dropdown {
-        font-size: 18px;
-        line-height: 1;
-        font-weight: bold;
-    }
-    
-    /* Style the welcome screen button on mobile */
-    .empty-state-get-button {
-        font-size: 18px;
-        line-height: 1;
-        font-weight: bold;
-    }
-}
 
 .fade-in {
     animation: fadeIn 0.3s ease forwards;
@@ -1682,17 +1647,6 @@ html body .chat-toolbar-container,
     color: var(--text-normal);
     font-size: 0.95em;
     line-height: 1.4;
-}
-
-@media (max-width: 768px) {
-    .quips-cards-container {
-        flex-direction: column;
-    }
-    
-    .quip-card {
-        width: 100%;
-        max-width: none;
-    }
 }
 
 /* =======================
