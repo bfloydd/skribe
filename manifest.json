@@ -1,16 +1,11 @@
 {
 	"id": "skribe",
 	"name": "Skribe",
-	"version": "1.0.0",
+	"version": "0.4.1",
 	"minAppVersion": "0.15.0",
-	"description": "Video Research (YouTube): Transcribe, Summarize, and Chat",
+	"description": "Research: Transcribe, Summarize, Chat",
 	"author": "Ben Floyd",
 	"authorUrl": "https://b.floy.dev",
 	"fundingUrl": "https://paypal.me/bfloydd",
-	"isDesktopOnly": false,
-	"files": [
-		"main.js",
-		"manifest-beta.json",
-		"styles.css"
-	]
+	"isDesktopOnly": false
 }
