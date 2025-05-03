@@ -1,5 +1,5 @@
 # Skribe
-Video Transkriber & Summarizer
+Video Transcriber & Summarizer
 
-A plugin for Obsidian that transcribes and summarizes videos.
-Currently in beta. YouTube links are supported.
+# Description
+An Obsidian plugin. Transcribe and summarize content
