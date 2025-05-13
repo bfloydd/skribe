@@ -4,8 +4,8 @@
 	"version": "0.4.1",
 	"minAppVersion": "0.15.0",
 	"description": "Research: Transcribe, Summarize, Chat",
-	"author": "Ben Floyd",
-	"authorUrl": "https://b.floy.dev",
-	"fundingUrl": "https://paypal.me/bfloydd",
+	"author": "Floyd",
+	"authorUrl": "http://floyd.pro",
+	"fundingUrl": "http://ty.floyd.pro",
 	"isDesktopOnly": false
 }
