@@ -44,33 +44,167 @@ div.view-content.skribe-plugin {
     box-sizing: border-box;
     padding: 0;
     margin: 0;
-    margin-top: 32px;
+    margin-top: 0; /* Removed the 32px margin-top */
     background-color: var(--background-primary);
     flex: 1;
 }
 
-/* Toolbar container positioning for all tabs */
+/* Video title and URL container - with increased height */
+.video-url-container {
+    position: absolute;
+    text-align: center;
+    padding: 10px 15px;
+    background-color: var(--background-primary);
+    border-bottom: 1px solid var(--background-modifier-border);
+    width: 100%;
+    box-sizing: border-box;
+    z-index: 5;
+    top: 0; /* Position at the very top */
+    height: 60px; /* Increased height for proper spacing and content */
+}
+
+.video-title {
+    font-weight: bold;
+    font-size: 1em;
+    color: var(--text-accent);
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    max-width: 90%;
+    margin: 2px auto 8px;
+}
+
+.video-url-link {
+    color: var(--text-accent);
+    text-decoration: none;
+    font-size: 0.85em;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    display: block;
+    max-width: 90%;
+    margin: 0 auto;
+    opacity: 0.8;
+}
+
+/* Move tabs below the title/URL with additional spacing - updated to include start over button */
+.workspace-leaf-content[data-type="skribe-view"] .tabs-container {
+    position: absolute;
+    top: 60px; /* Exactly below the title/URL container */
+    left: 0;
+    right: 0;
+    z-index: 2;
+    background-color: var(--background-primary);
+    width: 100%;
+    border-bottom: 1px solid var(--background-modifier-border);
+    margin: 0;
+    padding: 0;
+    display: flex;
+    justify-content: space-between; /* This pushes the start over button to the right */
+}
+
+/* Tabs wrapper to keep tabs together on the left */
+.tabs-wrapper {
+    display: flex;
+}
+
+/* Start Over button styling */
+.start-over-button {
+    background-color: var(--background-modifier-error);
+    color: var(--text-on-accent);
+    font-weight: bold;
+    border: none;
+    padding: 6px 12px;
+    border-radius: 4px;
+    cursor: pointer;
+    margin-right: 10px;
+    margin-top: 4px;
+    margin-bottom: 4px;
+    align-self: center;
+    display: inline-flex;
+    align-items: center;
+    height: 30px;
+    box-shadow: 0 1px 2px rgba(0, 0, 0, 0.2);
+    transition: all 0.2s ease;
+}
+
+.start-over-button:hover {
+    background-color: var(--text-accent);
+    transform: translateY(-1px);
+    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.2);
+}
+
+/* Add a little more space between the icon and text */
+.start-over-button svg {
+    width: 16px;
+    height: 16px;
+    margin-right: 6px;
+}
+
+/* Position toolbar below tabs */
 .transcript-toolbar-container,
 .revised-toolbar-container,
 .summary-toolbar-container,
 .chat-toolbar-container {
     position: absolute;
-    top: 0;
+    top: 98px; /* Below title (60px) + tabs (38px) */
     left: 0;
     right: 0;
-    height: 50px;
+    height: 40px;
     z-index: 10;
     background-color: var(--background-primary);
     border-bottom: 1px solid var(--background-modifier-border);
 }
 
-/* Content positioning for all tabs - absolute positioned to fill available space */
+/* Adjust fixed toolbar positions too */
+.chat-toolbar-container,
+.transcript-toolbar-container,
+.summary-toolbar-container,
+.revised-toolbar-container {
+    position: fixed;
+    top: 98px !important; /* Below title + tabs */
+    left: 0 !important;
+    right: 0 !important;
+    z-index: 100 !important;
+    width: 100% !important;
+    max-width: 100% !important;
+    height: 40px !important;
+    min-height: 40px !important;
+    max-height: 40px !important;
+    background-color: var(--background-primary) !important;
+    border-bottom: 1px solid var(--background-modifier-border) !important;
+    box-shadow: 0 3px 8px rgba(0, 0, 0, 0.1);
+    display: flex !important;
+    visibility: visible !important;
+    opacity: 1 !important;
+    align-items: center !important;
+    padding: 0 !important;
+    margin: 0 !important;
+    padding-right: 0 !important;
+    margin-right: 0 !important;
+}
+
+/* Update mobile adjustments for tabs */
+html.is-mobile .workspace-leaf-content[data-type="skribe-view"] .tabs-container,
+html.is-phone .workspace-leaf-content[data-type="skribe-view"] .tabs-container,
+body.is-mobile .workspace-leaf-content[data-type="skribe-view"] .tabs-container {
+    top: 60px !important; /* Below title on mobile too */
+}
+
+/* Mobile title container adjustments */
+html.is-mobile .video-url-container,
+html.is-phone .video-url-container,
+body.is-mobile .video-url-container {
+    top: 0 !important; /* At the top on mobile */
+}
+
+/* Content positioning - adjusted for new spacing */
 .transcript-content,
 .revised-content,
 .summary-content,
 .chat-content {
     position: absolute;
-    top: 50px; /* Below toolbar */
+    top: 140px; /* Title (60px) + tabs (38px) + toolbar (40px) + small margin (2px) */
     left: 0;
     right: 0;
     bottom: 60px !important; /* Default for desktop */
@@ -222,25 +356,15 @@ body.is-mobile .chat-content {
     -webkit-text-fill-color: transparent;
 }
 
-.workspace-leaf-content[data-type="skribe-view"] .tabs-container {
-    position: absolute;
-    top: 90px;
-    left: 0;
-    right: 0;
-    z-index: 2;
-    background-color: var(--background-primary);
-    width: 100%;
-    border-bottom: 1px solid var(--background-modifier-border);
-    margin: 0;
-    padding: 0;
-    display: flex;
-}
-
 .tab-item {
     padding: 8px 16px;
     cursor: pointer;
     border-bottom: 2px solid transparent;
     transition: all 0.2s ease;
+    height: 38px; /* Fixed height for tabs */
+    display: flex;
+    align-items: center;
+    box-sizing: border-box;
 }
 
 .tab-item.active, .tab-item:hover {
@@ -251,20 +375,13 @@ body.is-mobile .chat-content {
     font-weight: bold;
 }
 
-/* Mobile adjustments for tabs and toolbars - using Obsidian's class-based detection */
-html.is-mobile .workspace-leaf-content[data-type="skribe-view"] .tabs-container,
-html.is-phone .workspace-leaf-content[data-type="skribe-view"] .tabs-container,
-body.is-mobile .workspace-leaf-content[data-type="skribe-view"] .tabs-container {
-    top: 50px !important;
-}
-
 /* =======================
    TOP TOOLBAR STYLES
    ======================= */
 .workspace-leaf-content[data-type="skribe-view"] .toolbar-container {
     display: flex;
     flex-direction: row;
-    justify-content: flex-start;
+    justify-content: space-between;
     align-items: center;
     gap: 8px;
     padding: 8px 10px;
@@ -277,9 +394,12 @@ body.is-mobile .workspace-leaf-content[data-type="skribe-view"] .tabs-container 
 .workspace-leaf-content[data-type="skribe-view"] .toolbar-container[data-toolbar-id="top"] {
     position: absolute;
     left: 10px;
+    right: 10px;
     top: 5px;
     z-index: 100;
-    justify-content: flex-start;
+    justify-content: flex-end;
+    width: calc(100% - 20px);
+    display: none;
 }
 
 .workspace-leaf-content[data-type="skribe-view"] .toolbar-container button,
@@ -312,18 +432,6 @@ body.is-mobile .workspace-leaf-content[data-type="skribe-view"] .tabs-container 
     color: var(--text-accent);
 }
 
-.workspace-leaf-content[data-type="skribe-view"] .toolbar-container button[data-command-id="start-over"] {
-    background-color: var(--background-modifier-error);
-    color: var(--text-on-accent);
-    font-weight: bold;
-    margin-right: 10px;
-}
-
-.workspace-leaf-content[data-type="skribe-view"] .toolbar-container button[data-command-id="start-over"]:hover {
-    background-color: var(--text-accent);
-    color: var(--text-on-accent);
-}
-
 .workspace-leaf-content[data-type="skribe-view"] .toolbar-container button svg {
     width: 16px;
     height: 16px;
@@ -339,34 +447,6 @@ body.is-mobile .workspace-leaf-content[data-type="skribe-view"] .tabs-container 
 .workspace-leaf-content[data-type="skribe-view"] .toolbar-container[data-toolbar-id="chat"],
 .workspace-leaf-content[data-type="skribe-view"] .toolbar-container[data-toolbar-id="summary"] {
     background-color: transparent !important;
-}
-
-/* Consolidate toolbar container styles */
-.chat-toolbar-container,
-.transcript-toolbar-container,
-.summary-toolbar-container,
-.revised-toolbar-container {
-    position: fixed;
-    top: 127px !important;
-    left: 0 !important;
-    right: 0 !important;
-    z-index: 100 !important;
-    width: 100% !important;
-    max-width: 100% !important;
-    height: 50px !important;
-    min-height: 50px !important;
-    max-height: 50px !important;
-    background-color: var(--background-primary) !important;
-    border-bottom: 1px solid var(--background-modifier-border) !important;
-    box-shadow: 0 3px 8px rgba(0, 0, 0, 0.1);
-    display: flex !important;
-    visibility: visible !important;
-    opacity: 1 !important;
-    align-items: center !important;
-    padding: 0 !important;
-    margin: 0 !important;
-    padding-right: 0 !important;
-    margin-right: 0 !important;
 }
 
 /* Standardize toolbar container children styles */
@@ -399,12 +479,11 @@ body.is-mobile .chat-toolbar-container,
 body.is-mobile .transcript-toolbar-container,
 body.is-mobile .summary-toolbar-container,
 body.is-mobile .revised-toolbar-container {
-    top: 88px !important;
+    top: 98px !important; /* Matches desktop position */
 }
 
 /* Keep the model indicator style */
 .model-indicator {
-    margin-left: auto;
     margin-right: 10px;
     padding: 4px 8px;
     font-size: 0.8em;
@@ -510,38 +589,7 @@ body.is-mobile .revised-toolbar-container {
     margin-top: 0;
 }
 
-.video-url-container {
-    text-align: center;
-    padding: 2px;
-    margin-bottom: 5px;
-    border-bottom: 1px solid var(--background-modifier-border);
-    width: 100%;
-}
-
-.video-title {
-    font-weight: bold;
-    font-size: 1.1em;
-    margin-bottom: 4px;
-    color: var(--text-accent);
-    white-space: nowrap;
-    overflow: hidden;
-    text-overflow: ellipsis;
-    max-width: 90%;
-    margin: 0 auto 4px;
-}
-
-.video-url-link {
-    color: var(--text-accent);
-    text-decoration: none;
-    font-size: 0.9em;
-    /* Make URL stay on one line with ellipsis */
-    white-space: nowrap;
-    overflow: hidden;
-    text-overflow: ellipsis;
-    display: block;
-    max-width: 90%;
-    margin: 0 auto;
-}
+/* Removed duplicate definition */
 
 .video-url-link:hover {
     text-decoration: underline;

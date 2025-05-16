@@ -341,19 +341,55 @@ export class SkribeView extends ItemView {
             cls: 'tabs-container'
         });
 
+        // Create wrapper for tabs on the left
+        const tabsWrapper = tabsContainer.createDiv({
+            cls: 'tabs-wrapper'
+        });
+
         // Transcript tab
-        const transcriptTab = this.createTabItem(tabsContainer, 'Transcript', this.activeTab === 'transcript');
+        const transcriptTab = this.createTabItem(tabsWrapper, 'Transcript', this.activeTab === 'transcript');
         
         // Revised tab
-        const revisedTab = this.createTabItem(tabsContainer, 'Revised', this.activeTab === 'revised');
+        const revisedTab = this.createTabItem(tabsWrapper, 'Revised', this.activeTab === 'revised');
         
         // Summary tab
-        const summaryTab = this.createTabItem(tabsContainer, 'Summary', this.activeTab === 'summary');
+        const summaryTab = this.createTabItem(tabsWrapper, 'Summary', this.activeTab === 'summary');
         
         // Chat tab
-        const chatTab = this.createTabItem(tabsContainer, 'Chat', this.activeTab === 'chat');
+        const chatTab = this.createTabItem(tabsWrapper, 'Chat', this.activeTab === 'chat');
         
-        // Add click handlers
+        // Create Start Over button on the right
+        const startOverButton = tabsContainer.createEl('button', {
+            cls: 'start-over-button',
+            attr: {
+                'aria-label': 'Start over',
+                'data-command-id': 'start-over'
+            }
+        });
+        
+        // Add icon to button
+        const startOverIcon = startOverButton.createSpan();
+        setIcon(startOverIcon, 'rotate-ccw');
+        
+        // Add text to button
+        startOverButton.createSpan({ text: 'Start Over' });
+        
+        // Add click handler to button
+        startOverButton.addEventListener('click', async () => {
+            try {
+                if (typeof this.resetView === 'function') {
+                    await this.resetView();
+                    console.log('View reset successfully');
+                } else {
+                    throw new Error('resetView method not found on view');
+                }
+            } catch (error) {
+                console.error('Error resetting view:', error);
+                new Notice(`Error: ${error instanceof Error ? error.message : 'Unknown error'}`);
+            }
+        });
+        
+        // Add click handlers to tabs
         transcriptTab.addEventListener('click', () => {
             this.switchToTab('transcript');
         });
@@ -1906,7 +1942,11 @@ export class SkribeView extends ItemView {
         const tabsContainer = this.containerEl.querySelector('.tabs-container');
         if (!tabsContainer) return;
         
-        const tabItems = tabsContainer.querySelectorAll('.tab-item');
+        // Get the tabs wrapper which contains the tab items
+        const tabsWrapper = tabsContainer.querySelector('.tabs-wrapper');
+        if (!tabsWrapper) return;
+        
+        const tabItems = tabsWrapper.querySelectorAll('.tab-item');
         tabItems.forEach(tab => {
             const tabEl = tab as HTMLElement;
             const tabText = tabEl.textContent || '';

@@ -4,38 +4,43 @@ import { createCommonCommandReference } from './CommonCommands';
 import type SkribePlugin from '../../main';
 
 /**
+ * Create a command for the start over button that will appear on the tabs container
+ */
+const createStartOverCommand = (): ToolbarCommand => ({
+    id: 'start-over',
+    icon: 'rotate-ccw',
+    tooltip: 'Start over',
+    isEnabled: (context: CommandContext) => {
+        return true; // Always enabled
+    },
+    execute: async (context: CommandContext) => {
+        if (!context.view) {
+            console.error('Cannot reset view: view object not found in context');
+            new Notice('Error: Could not reset view');
+            return;
+        }
+
+        try {
+            // Ensure we're working with the SkribeView instance
+            const view = context.view;
+            if (typeof view.resetView === 'function') {
+                await view.resetView();
+                console.log('View reset successfully');
+            } else {
+                throw new Error('resetView method not found on view');
+            }
+        } catch (error) {
+            console.error('Error resetting view:', error);
+            new Notice(`Error: ${error instanceof Error ? error.message : 'Unknown error'}`);
+        }
+    }
+});
+
+/**
  * Top toolbar commands
  */
 const topToolbarCommands: ToolbarCommand[] = [
-    {
-        id: 'start-over',
-        icon: 'rotate-ccw',
-        tooltip: 'Start over',
-        isEnabled: (context: CommandContext) => {
-            return true; // Always enabled
-        },
-        execute: async (context: CommandContext) => {
-            if (!context.view) {
-                console.error('Cannot reset view: view object not found in context');
-                new Notice('Error: Could not reset view');
-                return;
-            }
-
-            try {
-                // Ensure we're working with the SkribeView instance
-                const view = context.view;
-                if (typeof view.resetView === 'function') {
-                    await view.resetView();
-                    console.log('View reset successfully');
-                } else {
-                    throw new Error('resetView method not found on view');
-                }
-            } catch (error) {
-                console.error('Error resetting view:', error);
-                new Notice(`Error: ${error instanceof Error ? error.message : 'Unknown error'}`);
-            }
-        }
-    }
+    createStartOverCommand()
 ];
 
 /**
