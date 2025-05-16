@@ -198,13 +198,13 @@ body.is-mobile .video-url-container {
     top: 0 !important; /* At the top on mobile */
 }
 
-/* Content positioning - adjusted for new spacing */
+/* Content positioning - adjusted to remove gap below toolbar */
 .transcript-content,
 .revised-content,
 .summary-content,
 .chat-content {
     position: absolute;
-    top: 140px; /* Title (60px) + tabs (38px) + toolbar (40px) + small margin (2px) */
+    top: 100px; /* Adjusted to be directly below the toolbar (60px title + 38px tabs + 2px margin) */
     left: 0;
     right: 0;
     bottom: 60px !important; /* Default for desktop */
