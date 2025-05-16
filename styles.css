@@ -207,7 +207,7 @@ body.is-mobile .video-url-container {
     top: 100px; /* Adjusted to be directly below the toolbar (60px title + 38px tabs + 2px margin) */
     left: 0;
     right: 0;
-    bottom: 60px !important; /* Default for desktop */
+    bottom: 80px !important; /* Adjusted to move content up slightly */
     overflow-y: auto;
     overflow-x: hidden;
     padding: 15px;
