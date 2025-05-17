@@ -20,13 +20,13 @@
     border-bottom: 1px solid var(--background-modifier-border) !important;
     padding: 0 15px !important;
     box-sizing: border-box !important;
-    overflow-x: auto !important;
-    scrollbar-width: thin !important;
+    overflow-x: visible !important;
+    flex-wrap: nowrap !important;
 }
 
 .transcript-tab-item {
-    padding: 6px 12px !important;
-    margin-right: 8px !important;
+    padding: 4px 10px !important;
+    margin-right: 4px !important;
     margin-top: 5px !important;
     border-radius: 4px !important;
     cursor: pointer !important;
@@ -35,11 +35,17 @@
     font-size: 0.9em !important;
     border: 1px solid var(--background-modifier-border) !important;
     transition: all 0.2s ease !important;
-    flex-shrink: 0 !important;
+    flex-shrink: 1 !important;
+    flex-grow: 0 !important;
+    flex-basis: 120px !important;
     box-shadow: 0 1px 2px rgba(0, 0, 0, 0.1) !important;
     height: 28px !important;
     display: flex !important;
     align-items: center !important;
+    min-width: 80px !important;
+    max-width: 200px !important;
+    overflow: hidden !important;
+    text-overflow: ellipsis !important;
 }
 
 .transcript-tab-item.active {
@@ -338,8 +344,8 @@ body.is-mobile .chat-content {
 
 /* Transcript tabs styling - make them more distinctive */
 .transcript-tab-item {
-    padding: 6px 12px !important;
-    margin-right: 8px !important;
+    padding: 4px 10px !important;
+    margin-right: 4px !important;
     border-radius: 4px !important;
     cursor: pointer !important;
     white-space: nowrap !important;
@@ -347,12 +353,11 @@ body.is-mobile .chat-content {
     font-size: 0.9em !important;
     border: 1px solid var(--background-modifier-border) !important;
     transition: all 0.2s ease !important;
-    flex-shrink: 0 !important;
+    flex-shrink: 1 !important;
     box-shadow: 0 1px 2px rgba(0, 0, 0, 0.1) !important;
-    height: 28px !important;
-    display: flex !important;
-    align-items: center !important;
-    margin-top: 5px !important; /* Center vertically in the container */
+    min-width: 80px !important;
+    overflow: hidden !important;
+    text-overflow: ellipsis !important;
 }
 
 /* Main tabs styling - make them less prominent than transcript tabs */
@@ -1344,24 +1349,13 @@ body.is-mobile .chat-content {
     font-size: 0.9em;
 }
 
-.transcript-tab-item {
-    padding: 6px 12px;
-    margin-right: 8px;
-    border-radius: 4px;
-    cursor: pointer;
-    white-space: nowrap;
-    background-color: var(--background-secondary-alt);
-    font-size: 0.9em;
-    border: 1px solid var(--background-modifier-border);
-    transition: all 0.2s ease;
-    flex-shrink: 0;
-    box-shadow: 0 1px 2px rgba(0, 0, 0, 0.1);
-}
+/* Removed duplicate transcript-tab-item definition here */
 
+/* Add back hover effects and active styles */
 .transcript-tab-item:hover {
-    background-color: var(--background-modifier-hover);
-    transform: translateY(-1px);
-    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.15);
+    background-color: var(--background-modifier-hover) !important;
+    transform: translateY(-1px) !important;
+    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.15) !important;
 }
 
 .transcript-tab-item.active {
@@ -1440,29 +1434,42 @@ body.is-mobile .chat-content {
 
 /* Transcript tabs row */
 .transcript-tabs-row {
-    display: flex;
-    flex-wrap: nowrap;
-    overflow-x: auto;
-    padding: 8px 10px;
-    gap: 8px;
-    scrollbar-width: thin;
-    width: 100%;
-    justify-content: flex-start;
+    display: flex !important;
+    flex-wrap: nowrap !important;
+    overflow-x: visible !important;
+    padding: 8px 10px !important;
+    gap: 4px !important;
+    scrollbar-width: thin !important;
+    width: 100% !important;
+    justify-content: flex-start !important;
 }
 
-/* Enhanced styles for transcript tab items */
-.transcript-tab-item {
-    padding: 6px 12px;
-    margin-right: 0; /* Use gap in the parent instead */
-    border-radius: 4px;
-    cursor: pointer;
-    white-space: nowrap;
-    background-color: var(--background-secondary-alt);
-    font-size: 0.9em;
-    border: 1px solid var(--background-modifier-border);
-    transition: all 0.2s ease;
-    flex-shrink: 0;
-    box-shadow: 0 1px 2px rgba(0, 0, 0, 0.1);
+/* Tab text and close button */
+.transcript-tab-text {
+    margin-right: 4px !important;
+    overflow: hidden !important;
+    text-overflow: ellipsis !important;
+    flex: 1 !important;
+    min-width: 20px !important;
+}
+
+.transcript-tab-close {
+    opacity: 0;
+    margin-left: 2px !important;
+    width: 16px !important;
+    height: 16px !important;
+    min-width: 16px !important;
+    display: flex !important;
+    align-items: center !important;
+    justify-content: center !important;
+    border-radius: 50% !important;
+    background-color: var(--background-modifier-border) !important;
+    color: var(--text-muted) !important;
+    font-size: 14px !important;
+    line-height: 1 !important;
+    cursor: pointer !important;
+    transition: all 0.15s ease !important;
+    flex-shrink: 0 !important;
 }
 
 /* Mobile styles - ensure everything stays in the correct position */

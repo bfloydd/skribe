@@ -2459,9 +2459,7 @@ export class SkribeView extends ItemView {
         // Ensure we have a fallback title if text is empty
         const tabTitle = text ? text : `Video ${index + 1}`;
         
-        // Truncate long titles more aggressively to fit in tabs
-        const shortText = tabTitle.length > 18 ? tabTitle.substring(0, 16) + '...' : tabTitle;
-        
+        // Create the tab with proper styling
         const tab = container.createDiv({
             cls: `transcript-tab-item ${isActive ? 'active' : ''}`,
             attr: {
@@ -2476,7 +2474,26 @@ export class SkribeView extends ItemView {
         });
         
         // For better visibility, include the index for multiple tabs
-        const displayText = this.transcripts.length > 1 ? `#${index + 1}: ${shortText}` : shortText;
+        // Use longer titles now that we have more space
+        let displayText = '';
+        if (this.transcripts.length > 1) {
+            // With many tabs, still be somewhat concise
+            if (this.transcripts.length > 5) {
+                displayText = `#${index + 1}`;
+                if (tabTitle.length > 15) {
+                    displayText += `: ${tabTitle.substring(0, 15)}...`;
+                } else {
+                    displayText += `: ${tabTitle}`;
+                }
+            } else {
+                // With fewer tabs, show more text
+                displayText = `#${index + 1}: ${tabTitle.length > 20 ? tabTitle.substring(0, 18) + '...' : tabTitle}`;
+            }
+        } else {
+            // Single tab - can use more space
+            displayText = tabTitle.length > 30 ? tabTitle.substring(0, 28) + '...' : tabTitle;
+        }
+        
         tabTextWrapper.setText(displayText);
         
         // Add close button (x) that shows on hover
