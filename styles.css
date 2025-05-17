@@ -203,70 +203,6 @@ div.view-content.skribe-plugin {
     display: none !important;
 }
 
-/* FIXED LAYOUT POSITIONING - CONSISTENT ACROSS ALL STATES */
-/* Tabs always at fixed position */
-.workspace-leaf-content[data-type="skribe-view"] .tabs-container {
-    /* This positioning is now handled by our unified layout system */
-}
-
-/* Transcript tabs always below main tabs */
-.transcript-tabs-container,
-.transcript-tabs-row {
-    /* This is now handled by our unified layout */
-}
-
-/* Toolbar ALWAYS positioned below transcript tabs */
-.transcript-toolbar-container,
-.revised-toolbar-container,
-.summary-toolbar-container,
-.chat-toolbar-container,
-div .transcript-toolbar-container,
-div .revised-toolbar-container,
-div .summary-toolbar-container,
-div .chat-toolbar-container,
-.skribe-view .transcript-toolbar-container,
-.skribe-view .revised-toolbar-container,
-.skribe-view .summary-toolbar-container,
-.skribe-view .chat-toolbar-container,
-.skribe-header .transcript-toolbar-container,
-.skribe-header .revised-toolbar-container,
-.skribe-header .summary-toolbar-container,
-.skribe-header .chat-toolbar-container,
-div.transcript-container .transcript-toolbar-container,
-div.revised-container .revised-toolbar-container,
-div.summary-container .summary-toolbar-container,
-div.chat-container .chat-toolbar-container,
-.workspace-leaf-content[data-type="skribe-view"] div.transcript-toolbar-container,
-.workspace-leaf-content[data-type="skribe-view"] div.revised-toolbar-container,
-.workspace-leaf-content[data-type="skribe-view"] div.summary-toolbar-container,
-.workspace-leaf-content[data-type="skribe-view"] div.chat-toolbar-container {
-    /* This is now handled by our unified layout */
-}
-
-/* Removing duplicate toolbar styles - using universal position instead */
-
-/* Mobile adjustments for tabs - now below toolbar */
-html.is-mobile .workspace-leaf-content[data-type="skribe-view"] .tabs-container,
-html.is-phone .workspace-leaf-content[data-type="skribe-view"] .tabs-container,
-body.is-mobile .workspace-leaf-content[data-type="skribe-view"] .tabs-container {
-    /* This is now handled by our unified layout rules */
-}
-
-/* CONTENT - UNIVERSAL POSITION - HIGHEST SPECIFICITY */
-.transcript-content,
-.revised-content,
-.summary-content,
-.chat-content,
-.transcript-container .transcript-content,
-.revised-container .revised-content,
-.summary-container .summary-content,
-.chat-container .chat-content,
-.workspace-leaf-content[data-type="skribe-view"] .transcript-content,
-.workspace-leaf-content[data-type="skribe-view"] .revised-content,
-.workspace-leaf-content[data-type="skribe-view"] .summary-content,
-.workspace-leaf-content[data-type="skribe-view"] .chat-content {
-    /* This is now handled by our unified layout */
-}
 
 /* Mobile-specific overrides using Obsidian's detection system */
 html.is-mobile .transcript-content,
@@ -1380,18 +1316,6 @@ body.is-mobile .chat-content {
     box-shadow: none;
 }
 
-/* Super specific selector for skribe-header toolbar positioning */
-.skribe-header + .transcript-container .transcript-toolbar-container,
-.skribe-header + .revised-container .revised-toolbar-container,
-.skribe-header + .summary-container .summary-toolbar-container,
-.skribe-header + .chat-container .chat-toolbar-container,
-.skribe-header ~ .transcript-container .transcript-toolbar-container,
-.skribe-header ~ .revised-container .revised-toolbar-container,
-.skribe-header ~ .summary-container .summary-toolbar-container,
-.skribe-header ~ .chat-container .chat-toolbar-container {
-    /* This is now handled by our unified layout */
-}
-
 /* Container styles for all tab types */
 .transcript-container, 
 .revised-container,
@@ -1451,23 +1375,6 @@ body.is-mobile .chat-content {
 /* Transcript content with tabs, now simpler positioning */
 .transcript-content.with-transcript-tabs {
     padding-top: 10px;
-}
-
-/* Super specific selector for skribe-header content positioning */
-.skribe-header + .transcript-container .transcript-content,
-.skribe-header + .revised-container .revised-content,
-.skribe-header + .summary-container .summary-content,
-.skribe-header + .chat-container .chat-content,
-.skribe-header ~ .transcript-container .transcript-content,
-.skribe-header ~ .revised-container .revised-content,
-.skribe-header ~ .summary-container .summary-content,
-.skribe-header ~ .chat-container .chat-content {
-    /* This is now handled by our unified layout */
-}
-
-/* Adjust main tabs position when skribe-header exists */
-.skribe-header + .tabs-container {
-    /* This is now handled by our unified layout */
 }
 
 /* Mobile-specific overrides for skribe-header */
