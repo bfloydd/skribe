@@ -292,7 +292,8 @@ export default class SkribePlugin extends Plugin {
 
         new Notice('Fetching transcript...');
         try {
-            const { transcript, title } = await this.youtubeService.getTranscript(videoId);
+            // Use the new TranscriptManager method to fetch transcript
+            const { transcript, title } = await this.transcriptManager.getFetchedTranscript(selection);
             const filePath = await this.saveTranscriptToFile(transcript, title);
             
             // Replace the selection with a wikilink to the new file

@@ -244,9 +244,13 @@ export class SkribeView extends ItemView {
                 const tab = this.createTranscriptTabItem(transcriptTabsDiv, tabTitle, isActive, index);
                 
                 // Add click handler
-                tab.addEventListener('click', () => {
-                    console.log(`Clicked on transcript tab ${index}`);
-                    this.switchToTranscriptTab(index);
+                tab.addEventListener('click', (e) => {
+                    // Only switch tabs if the click was not on the close button
+                    if (!(e.target as HTMLElement).closest('.transcript-tab-close')) {
+                        console.log(`Clicked on transcript tab ${index}`);
+                        // Use TranscriptManager to switch tabs
+                        this.plugin.transcriptManager.switchToTranscriptTab(index);
+                    }
                 });
             });
             
@@ -2305,8 +2309,8 @@ export class SkribeView extends ItemView {
             title
         });
         
-        // Update the combined content for backward compatibility
-        this.updateCombinedContent();
+        // Update the combined content for backward compatibility using TranscriptManager
+        this.plugin.transcriptManager.updateCombinedContent(this);
         
         // If this is the first transcript, set it as active
         if (isFirstTranscript) {
@@ -2422,9 +2426,13 @@ export class SkribeView extends ItemView {
             const tabTitle = transcript.title || `Video ${index + 1}`;
             const transcriptTab = this.createTranscriptTabItem(this.transcriptTabsContainer!, tabTitle, isActive, index);
             
-            // Add click handler
-            transcriptTab.addEventListener('click', () => {
-                this.switchToTranscriptTab(index);
+            // Add click handler to the tab itself
+            transcriptTab.addEventListener('click', (e) => {
+                // Only switch tabs if the click was on the tab and not on the close button
+                if (!(e.target as HTMLElement).closest('.transcript-tab-close')) {
+                    // Use TranscriptManager to switch tabs
+                    this.plugin.transcriptManager.switchToTranscriptTab(index);
+                }
             });
         });
         
@@ -2462,9 +2470,31 @@ export class SkribeView extends ItemView {
             }
         });
         
+        // Create a wrapper for the text to allow for close button
+        const tabTextWrapper = tab.createDiv({
+            cls: 'transcript-tab-text'
+        });
+        
         // For better visibility, include the index for multiple tabs
         const displayText = this.transcripts.length > 1 ? `#${index + 1}: ${shortText}` : shortText;
-        tab.setText(displayText);
+        tabTextWrapper.setText(displayText);
+        
+        // Add close button (x) that shows on hover
+        const closeButton = tab.createDiv({
+            cls: 'transcript-tab-close',
+            attr: {
+                'title': 'Remove this transcript',
+                'aria-label': 'Remove transcript'
+            }
+        });
+        closeButton.setText('×');
+        
+        // Handle close button click
+        closeButton.addEventListener('click', (e) => {
+            e.stopPropagation(); // Prevent triggering tab selection
+            // Use TranscriptManager to remove transcript
+            this.plugin.transcriptManager.removeTranscriptTab(index);
+        });
         
         if (isActive) {
             tab.classList.add('active');
@@ -2559,5 +2589,89 @@ export class SkribeView extends ItemView {
         });
         
         console.log('Finished rendering transcript content');
+    }
+
+    /**
+     * Removes a transcript tab and its associated data
+     * @param index The index of the transcript to remove
+     */
+    public removeTranscriptTab(index: number): void {
+        // Confirm before removing
+        const confirmRemove = confirm(`Are you sure you want to remove this transcript?`);
+        if (!confirmRemove) return;
+        
+        console.log(`Removing transcript at index ${index}`);
+        
+        // Remove the transcript from the array
+        if (index >= 0 && index < this.transcripts.length) {
+            // Remove from transcript array
+            this.transcripts.splice(index, 1);
+            
+            // Remove associated data
+            const revisedContent = { ...this.revisedContents };
+            delete revisedContent[index];
+            
+            const summaryContent = { ...this.summaryContents };
+            delete summaryContent[index];
+            
+            const chatStates = { ...this.chatStates };
+            delete chatStates[index];
+            
+            // Rebuild the contents objects with corrected indices
+            this.revisedContents = {};
+            this.summaryContents = {};
+            this.chatStates = {};
+            
+            // Shift all data to fill in the gap
+            Object.keys(revisedContent).forEach(key => {
+                const keyNum = parseInt(key);
+                if (keyNum > index) {
+                    this.revisedContents[keyNum - 1] = revisedContent[keyNum];
+                } else if (keyNum < index) {
+                    this.revisedContents[keyNum] = revisedContent[keyNum];
+                }
+            });
+            
+            Object.keys(summaryContent).forEach(key => {
+                const keyNum = parseInt(key);
+                if (keyNum > index) {
+                    this.summaryContents[keyNum - 1] = summaryContent[keyNum];
+                } else if (keyNum < index) {
+                    this.summaryContents[keyNum] = summaryContent[keyNum];
+                }
+            });
+            
+            Object.keys(chatStates).forEach(key => {
+                const keyNum = parseInt(key);
+                if (keyNum > index) {
+                    this.chatStates[keyNum - 1] = chatStates[keyNum];
+                } else if (keyNum < index) {
+                    this.chatStates[keyNum] = chatStates[keyNum];
+                }
+            });
+            
+            // Update the combined content for backward compatibility using TranscriptManager
+            this.plugin.transcriptManager.updateCombinedContent(this);
+            
+            // Update active transcript index
+            if (this.transcripts.length === 0) {
+                // No transcripts left, reset the view
+                this.resetView();
+                return;
+            } else if (this.activeTranscriptIndex >= this.transcripts.length) {
+                // If the active transcript was the last one, select the new last one
+                this.activeTranscriptIndex = this.transcripts.length - 1;
+            }
+            
+            // Save the modified state
+            this.saveState();
+            
+            // Refresh the view to reflect changes
+            this.refresh();
+            
+            new Notice('Transcript removed');
+        } else {
+            console.error(`Invalid transcript index: ${index}`);
+        }
     }
 } 

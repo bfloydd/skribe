@@ -72,12 +72,18 @@ export class TranscriptManager {
                             url: videoUrl
                         });
                         
-                        view.addTranscript(transcripts[i].transcript, videoUrl, transcripts[i].title);
+                        // Use our TranscriptManager method to add the transcript
+                        await this.addTranscript(
+                            transcripts[i].transcript, 
+                            videoUrl, 
+                            transcripts[i].title,
+                            view
+                        );
                     }
                     
-                    // Switch to the first transcript
+                    // Switch to the first transcript using our TranscriptManager method
                     if (transcripts.length > 0) {
-                        view.switchToTranscriptTab(0);
+                        await this.switchToTranscriptTab(0);
                         console.log('Switched to first transcript tab');
                     }
                     
@@ -120,13 +126,19 @@ export class TranscriptManager {
                             url: videoUrl
                         });
                         
-                        view.addTranscript(transcripts[i].transcript, videoUrl, transcripts[i].title);
+                        // Use our TranscriptManager method to add the transcript
+                        await this.addTranscript(
+                            transcripts[i].transcript, 
+                            videoUrl, 
+                            transcripts[i].title,
+                            view
+                        );
                     }
                     
-                    // Switch to the newly added transcript
+                    // Switch to the newly added transcript using our TranscriptManager method
                     const newIndex = view.transcripts.length - 1;
                     if (newIndex >= 0) {
-                        view.switchToTranscriptTab(newIndex);
+                        await this.switchToTranscriptTab(newIndex);
                         console.log('Switched to newly added transcript tab');
                     }
                     
@@ -150,5 +162,198 @@ export class TranscriptManager {
     public isValidYoutubeUrl(url: string): boolean {
         return this.youtubeService.isYouTubeUrl(url) && 
                !!this.youtubeService.extractVideoId(url);
+    }
+
+    /**
+     * Fetches a transcript without adding it to the view
+     * This is useful for operations like saving to a file without showing in the UI
+     * @param url URL of the video to fetch transcript for
+     * @returns The first transcript found for the URL
+     */
+    public async getFetchedTranscript(url: string): Promise<{ transcript: string, title: string }> {
+        const transcripts = await this.fetchTranscripts(url);
+        
+        if (!transcripts || transcripts.length === 0) {
+            throw new Error('No transcript found for this video');
+        }
+        
+        // Return the first transcript
+        return transcripts[0];
+    }
+
+    /**
+     * Adds a transcript to the view
+     * @param content The transcript content
+     * @param url The source URL
+     * @param title The title of the transcript
+     * @param view Optional view instance (if not provided, will be retrieved from plugin)
+     */
+    public async addTranscript(content: string, url: string, title: string, view?: any): Promise<void> {
+        // Get the view if not provided
+        if (!view) {
+            view = await this.plugin.activateView();
+            if (!view) {
+                new Notice('Failed to open Skribe view');
+                return;
+            }
+        }
+        
+        console.log(`TranscriptManager: Adding transcript: "${title}" (${content.length} characters)`);
+        
+        // Call the view's addTranscript method
+        view.addTranscript(content, url, title);
+    }
+
+    /**
+     * Removes a transcript tab and its associated data
+     * @param index The index of the transcript to remove
+     * @param skipConfirmation Set to true to skip the confirmation dialog
+     */
+    public async removeTranscriptTab(index: number, skipConfirmation = false): Promise<void> {
+        const view = await this.plugin.activateView();
+        if (!view) {
+            new Notice('Failed to open Skribe view');
+            return;
+        }
+        
+        // Call the view's removeTranscriptTab method
+        // The view handles all the UI updates and state management
+        if (skipConfirmation) {
+            // Create a backup of the original method
+            const originalRemoveTranscriptTab = view.removeTranscriptTab.bind(view);
+            
+            // Override the method temporarily to skip confirmation
+            view.removeTranscriptTab = function(idx: number) {
+                console.log(`TranscriptManager: Removing transcript at index ${idx} (skipping confirmation)`);
+                
+                // Get the transcripts array
+                if (idx >= 0 && idx < this.transcripts.length) {
+                    // Remove from transcript array
+                    this.transcripts.splice(idx, 1);
+                    
+                    // Remove associated data
+                    const revisedContent = { ...this.revisedContents };
+                    delete revisedContent[idx];
+                    
+                    const summaryContent = { ...this.summaryContents };
+                    delete summaryContent[idx];
+                    
+                    const chatStates = { ...this.chatStates };
+                    delete chatStates[idx];
+                    
+                    // Rebuild the contents objects with corrected indices
+                    this.revisedContents = {};
+                    this.summaryContents = {};
+                    this.chatStates = {};
+                    
+                    // Shift all data to fill in the gap
+                    Object.keys(revisedContent).forEach(key => {
+                        const keyNum = parseInt(key);
+                        if (keyNum > idx) {
+                            this.revisedContents[keyNum - 1] = revisedContent[keyNum];
+                        } else if (keyNum < idx) {
+                            this.revisedContents[keyNum] = revisedContent[keyNum];
+                        }
+                    });
+                    
+                    Object.keys(summaryContent).forEach(key => {
+                        const keyNum = parseInt(key);
+                        if (keyNum > idx) {
+                            this.summaryContents[keyNum - 1] = summaryContent[keyNum];
+                        } else if (keyNum < idx) {
+                            this.summaryContents[keyNum] = summaryContent[keyNum];
+                        }
+                    });
+                    
+                    Object.keys(chatStates).forEach(key => {
+                        const keyNum = parseInt(key);
+                        if (keyNum > idx) {
+                            this.chatStates[keyNum - 1] = chatStates[keyNum];
+                        } else if (keyNum < idx) {
+                            this.chatStates[keyNum] = chatStates[keyNum];
+                        }
+                    });
+                    
+                    // Update the combined content for backward compatibility
+                    this.updateCombinedContent();
+                    
+                    // Update active transcript index
+                    if (this.transcripts.length === 0) {
+                        // No transcripts left, reset the view
+                        this.resetView();
+                        return;
+                    } else if (this.activeTranscriptIndex >= this.transcripts.length) {
+                        // If the active transcript was the last one, select the new last one
+                        this.activeTranscriptIndex = this.transcripts.length - 1;
+                    }
+                    
+                    // Save the modified state
+                    this.saveState();
+                    
+                    // Refresh the view to reflect changes
+                    this.refresh();
+                    
+                    new Notice('Transcript removed');
+                } else {
+                    console.error(`Invalid transcript index: ${idx}`);
+                }
+            }.bind(view);
+            
+            // Call the modified method
+            view.removeTranscriptTab(index);
+            
+            // Restore the original method
+            view.removeTranscriptTab = originalRemoveTranscriptTab;
+        } else {
+            console.log(`TranscriptManager: Removing transcript at index ${index} (with confirmation)`);
+            view.removeTranscriptTab(index);
+        }
+    }
+
+    /**
+     * Switches to a specific transcript tab
+     * @param index The index of the transcript to switch to
+     */
+    public async switchToTranscriptTab(index: number): Promise<void> {
+        const view = await this.plugin.activateView();
+        if (!view) {
+            new Notice('Failed to open Skribe view');
+            return;
+        }
+        
+        console.log(`TranscriptManager: Switching to transcript tab ${index}`);
+        
+        // Call the view's switchToTranscriptTab method
+        view.switchToTranscriptTab(index);
+    }
+
+    /**
+     * Updates the combined content for backward compatibility
+     * @param view Optional view instance
+     */
+    public async updateCombinedContent(view?: any): Promise<void> {
+        // Get the view if not provided
+        if (!view) {
+            view = await this.plugin.activateView();
+            if (!view) {
+                console.error('Failed to open Skribe view for updateCombinedContent');
+                return;
+            }
+        }
+        
+        console.log('TranscriptManager: Updating combined content');
+        
+        // Get the transcripts array from the view
+        const transcripts = view.transcripts;
+        if (!transcripts || !Array.isArray(transcripts)) {
+            console.error('Invalid transcripts array in view');
+            return;
+        }
+        
+        // Update the combined content
+        view.content = transcripts.map((t: any, index: number) => {
+            const header = index === 0 ? '' : `\n\n${'='.repeat(40)}\n${t.title || 'Video ' + (index + 1)}\n${'='.repeat(40)}\n\n`;
+            return header + t.content;
+        }).join('');
     }
 } 
