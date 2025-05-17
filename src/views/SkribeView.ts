@@ -4,6 +4,7 @@ import { OpenAIService } from '../services/OpenAIService';
 import { AudioPlayer } from '../services/AudioPlayer';
 import { ChatMessage, ChatState, CommandContext, SkribeState } from '../types/index';
 import { getLogoPath } from '../utils/imageLoader';
+import { URLInputModal } from '../ui/URLInputModal';
 
 export const VIEW_TYPE_SKRIBE = "skribe-view";
 
@@ -209,7 +210,7 @@ export class SkribeView extends ItemView {
             // Create toolbar for summary tab even if not active
             await this.renderSummaryToolbar();
             const hasSummaryContent = this.activeTranscriptIndex !== undefined && 
-                                    this.summaryContents[this.activeTranscriptIndex];
+                                       this.summaryContents[this.activeTranscriptIndex];
             if (hasSummaryContent) {
                 await this.renderSummaryContent();
             }
@@ -249,11 +250,69 @@ export class SkribeView extends ItemView {
                 });
             });
             
+            // Add a "+" button to add a new transcript
+            const addButton = transcriptTabsDiv.createDiv({
+                cls: 'transcript-tab-add-button',
+                attr: {
+                    'aria-label': 'Add new transcript',
+                    'title': 'Add new transcript'
+                }
+            });
+            addButton.setText('+');
+            
+            // Add click handler for the add button
+            addButton.addEventListener('click', () => {
+                this.handleAddNewTranscript();
+            });
+            
             // Store the container reference so we can update it later
+            this.transcriptTabsContainer = transcriptTabsDiv;
+        } else {
+            // If no transcripts yet, still create a container but just with the add button
+            const transcriptTabsDiv = headerContainer.createDiv({
+                cls: 'transcript-tabs-row'
+            });
+            
+            // Add a "+" button to add a new transcript
+            const addButton = transcriptTabsDiv.createDiv({
+                cls: 'transcript-tab-add-button',
+                attr: {
+                    'aria-label': 'Add new transcript',
+                    'title': 'Add new transcript'
+                }
+            });
+            addButton.setText('+');
+            
+            // Add click handler for the add button
+            addButton.addEventListener('click', () => {
+                this.handleAddNewTranscript();
+            });
+            
+            // Store the container reference
             this.transcriptTabsContainer = transcriptTabsDiv;
         }
         
         return headerContainer;
+    }
+
+    /**
+     * Handler for when the add new transcript button is clicked
+     */
+    private handleAddNewTranscript() {
+        // Use the URLInputModal to get a URL, then call the TranscriptManager directly
+        new URLInputModal(this.app, (url: string) => {
+            if (this.plugin.youtubeService.isYouTubeUrl(url)) {
+                const videoId = this.plugin.youtubeService.extractVideoId(url);
+                if (videoId) {
+                    // Use the TranscriptManager to add without resetting
+                    this.plugin.transcriptManager.fetchAndAddToExisting(url);
+                } else {
+                    new Notice('Could not extract video ID from the URL');
+                }
+            } else {
+                new Notice('Invalid YouTube URL');
+            }
+        }).open();
     }
 
     private createVideoUrlDisplay(container: HTMLElement) {
@@ -2367,6 +2426,21 @@ export class SkribeView extends ItemView {
             transcriptTab.addEventListener('click', () => {
                 this.switchToTranscriptTab(index);
             });
+        });
+        
+        // Add a "+" button to add a new transcript
+        const addButton = this.transcriptTabsContainer.createDiv({
+            cls: 'transcript-tab-add-button',
+            attr: {
+                'aria-label': 'Add new transcript',
+                'title': 'Add new transcript'
+            }
+        });
+        addButton.setText('+');
+        
+        // Add click handler for the add button
+        addButton.addEventListener('click', () => {
+            this.handleAddNewTranscript();
         });
         
         return this.transcriptTabsContainer;
