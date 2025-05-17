@@ -78,25 +78,107 @@ export class YouTubeService {
         // Rebuild the URL with proper encoding
         const encodedUrl = urlObj.origin + urlObj.pathname + '?' + params.toString();
         
-        try {
-            const transcriptResponse = await requestUrl({
-                url: encodedUrl,
-                method: 'GET',
-                headers: {
-                    'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/91.0.4472.124 Safari/537.36'
+        // Maximum retries
+        const maxRetries = 6; // Increased to 6 attempts total
+        let retryCount = 0;
+        
+        while (retryCount < maxRetries) {
+            try {
+                console.log(`Fetching transcript (attempt ${retryCount + 1}/${maxRetries}): ${encodedUrl}`);
+                
+                // Add a random delay between requests to avoid rate limiting
+                const randomDelay = 2000 + Math.floor(Math.random() * 3000); // 2-5 seconds
+                if (retryCount > 0) {
+                    console.log(`Adding random delay of ${randomDelay}ms before request`);
+                    await new Promise(resolve => setTimeout(resolve, randomDelay));
                 }
-            });
-
-            const transcript = JSON.parse(transcriptResponse.text);
-            return this.parseTranscript(transcript);
-        } catch (error) {
-            console.error('Error fetching transcript:', error);
-            console.log('Failed URL:', encodedUrl);
-            if (error.message.includes('MalformedURI') || error.message.includes('no protocol')) {
-                throw new Error('Malformed URL error. This can happen on mobile devices. Please try a different video or check your network connection.');
+                
+                const transcriptResponse = await requestUrl({
+                    url: encodedUrl,
+                    method: 'GET',
+                    headers: {
+                        'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/110.0.0.0 Safari/537.36',
+                        'Accept': 'application/json',
+                        'Accept-Language': 'en-US,en;q=0.9',
+                        'Referer': 'https://www.youtube.com/watch',
+                        'Cache-Control': 'no-cache',
+                        'Pragma': 'no-cache'
+                    }
+                });
+                
+                // Check if we got a valid response
+                if (!transcriptResponse.text || transcriptResponse.text.trim().length === 0) {
+                    console.error(`Empty response received for URL: ${encodedUrl}`);
+                    throw new Error('Empty response received');
+                }
+                
+                // Try to parse the JSON response
+                try {
+                    const transcript = JSON.parse(transcriptResponse.text);
+                    
+                    // Validate that we have the expected structure
+                    if (!transcript || !transcript.events || !Array.isArray(transcript.events)) {
+                        console.error('Invalid transcript structure:', transcript);
+                        throw new Error('Invalid transcript structure');
+                    }
+                    
+                    // Check if the transcript actually contains content
+                    if (transcript.events.length === 0) {
+                        throw new Error('Transcript contains no content');
+                    }
+                    
+                    // Basic validation check on events - ensure they have segments
+                    const hasValidContent = transcript.events.some((event: any) => 
+                        event.segs && Array.isArray(event.segs) && event.segs.length > 0
+                    );
+                    
+                    if (!hasValidContent) {
+                        throw new Error('Transcript does not contain valid segments');
+                    }
+                    
+                    const parsedText = this.parseTranscript(transcript);
+                    if (parsedText.trim().length < 100) {
+                        throw new Error('Parsed transcript is too short, likely incomplete');
+                    }
+                    
+                    return parsedText;
+                } catch (jsonError) {
+                    console.error('JSON parsing error:', jsonError);
+                    console.error('Response text:', transcriptResponse.text.substring(0, 200) + '...');
+                    retryCount++;
+                    if (retryCount >= maxRetries) {
+                        throw new Error('Failed to parse transcript JSON. The response might be incomplete.');
+                    }
+                    // Wait before retrying (exponential backoff)
+                    const backoffTime = Math.pow(2, retryCount) * 2000; // Doubled from 1000
+                    console.log(`Waiting ${backoffTime/1000} seconds before retry...`);
+                    await new Promise(resolve => setTimeout(resolve, backoffTime));
+                }
+            } catch (error) {
+                console.error(`Error fetching transcript (attempt ${retryCount + 1}/${maxRetries}):`, error);
+                console.log('Failed URL:', encodedUrl);
+                retryCount++;
+                
+                if (retryCount >= maxRetries) {
+                    if (error.message.includes('MalformedURI') || error.message.includes('no protocol')) {
+                        throw new Error('Malformed URL error. This can happen on mobile devices. Please try a different video or check your network connection.');
+                    }
+                    
+                    if (error.message.includes('Empty response')) {
+                        throw new Error('YouTube API returned an empty response. This could be due to rate limiting or the video not having captions.');
+                    }
+                    
+                    throw error;
+                }
+                
+                // Wait before retrying (exponential backoff)
+                const backoffTime = Math.pow(2, retryCount) * 3000; // Tripled from 1000
+                console.log(`Waiting ${backoffTime/1000} seconds before retry...`);
+                await new Promise(resolve => setTimeout(resolve, backoffTime));
             }
-            throw error;
         }
+        
+        throw new Error('Failed to fetch transcript after multiple attempts');
     }
 
     private parseTranscript(transcript: any): string {

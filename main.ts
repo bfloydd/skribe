@@ -8,6 +8,8 @@ import { SettingsTab } from './src/settings/SettingsTab';
 import { ToolbarService } from './src/services/ToolbarService';
 import { CommonCommands } from './src/services/CommonCommands';
 import { ToolbarConfigs } from './src/services/ToolbarConfigs';
+import { VideoInputStrategy, SingleYouTubeVideoStrategy } from './src/services/VideoInputStrategy';
+import { BetterYouTubeStrategy } from './src/services/BetterYouTubeStrategy';
 
 export default class SkribePlugin extends Plugin {
     settings: SkribeSettings;
@@ -251,24 +253,50 @@ export default class SkribePlugin extends Plugin {
         return null;
     }
 
-    private async handleTranscriptRequest(url: string) {
-        if (!this.youtubeService.isYouTubeUrl(url)) {
-            new Notice('Invalid YouTube URL');
-            return;
-        }
+    private async handleTranscriptRequest(input: string) {
+        let strategy: VideoInputStrategy;
 
-        const videoId = this.youtubeService.extractVideoId(url);
-        if (!videoId) {
-            new Notice('Could not extract video ID from the URL');
-            return;
-        }
+        // For improved error handling and rate limiting, use the BetterYouTubeStrategy
+        console.log('Using BetterYouTubeStrategy for input:', input);
+        strategy = new BetterYouTubeStrategy();
 
-        new Notice('Fetching transcript...');
         try {
-            const { transcript, title } = await this.youtubeService.getTranscript(videoId);
+            const transcripts = await strategy.getTranscripts(input);
+            console.log('Fetched transcripts:', transcripts.length);
+            
             const view = await this.activateView();
             if (view) {
-                view.setContent(transcript, url, title);
+                // First, reset the view to start fresh
+                if (transcripts.length > 0) {
+                    console.log('Resetting view and adding transcripts');
+                    view.resetView();
+                    
+                    // Get an array of individual URLs from the input (for multiple comma-separated URLs)
+                    const urls = input.split(',').map(url => url.trim());
+                    
+                    // Now add each transcript with its corresponding URL
+                    for (let i = 0; i < transcripts.length; i++) {
+                        // Use the corresponding URL if available, otherwise use the first URL
+                        const videoUrl = i < urls.length ? urls[i] : urls[0];
+                        
+                        console.log(`Adding transcript ${i+1}:`, {
+                            title: transcripts[i].title,
+                            contentLength: transcripts[i].transcript.length,
+                            url: videoUrl
+                        });
+                        
+                        view.addTranscript(transcripts[i].transcript, videoUrl, transcripts[i].title);
+                    }
+                    
+                    // Switch to the first transcript
+                    if (transcripts.length > 0) {
+                        view.switchToTranscriptTab(0);
+                        console.log('Switched to first transcript tab');
+                    }
+                    
+                    // Show success notice
+                    new Notice(`Loaded ${transcripts.length} transcript${transcripts.length > 1 ? 's' : ''}`);
+                }
             } else {
                 new Notice('Failed to open Skribe view');
             }

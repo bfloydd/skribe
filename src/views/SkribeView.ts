@@ -9,28 +9,39 @@ export const VIEW_TYPE_SKRIBE = "skribe-view";
 
 export class SkribeView extends ItemView {
     content: string;
+    videoUrl: string = '';
+    videoTitle: string = '';
     plugin: SkribePlugin;
     contentEl: HTMLElement;
-    private audioPlayer: AudioPlayer | null = null;
-    private videoUrl: string = '';
-    private videoTitle: string = '';
-    private chatState: ChatState = { messages: [] };
-    private activeTab: 'transcript' | 'revised' | 'summary' | 'chat' = 'transcript';
-    private transcriptContainer: HTMLElement;
-    private revisedContainer: HTMLElement;
-    private chatContainer: HTMLElement;
-    private summaryContainer: HTMLElement;
-    private summaryContent: string = '';
-    private revisedContent: string = '';
-    private chatInput: HTMLInputElement | null = null;
-    private welcomeMessages: string[] = [
+    activeTab: 'transcript' | 'revised' | 'summary' | 'chat' = 'transcript';
+    revisedContent: string = '';
+    revisedContents: { [index: number]: string } = {};
+    summaryContent: string = '';
+    summaryContents: { [index: number]: string } = {};
+    chatState: ChatState = { messages: [] }; // Legacy for backward compatibility
+    chatStates: { [index: number]: ChatState } = {};
+    transcripts: { content: string, title: string, url: string }[] = [];
+    activeTranscriptIndex: number = 0;
+    transcriptContainer: HTMLElement;
+    revisedContainer: HTMLElement;
+    summaryContainer: HTMLElement;
+    chatContainer: HTMLElement;
+    chatContent: HTMLElement | null = null;
+    chatMessages: ChatMessage[] = [];
+    chatInput: HTMLInputElement | null = null;
+    transcriptTabsContainer: HTMLElement | null = null;
+    scrollToBottomButton: HTMLElement | null = null;
+    scrollThreshold: number = 100; // Pixels from bottom to trigger auto-scroll
+    isScrolledToBottom: boolean = true;
+    audioPlayer: AudioPlayer | null = null;
+    toolbarStates: { [key: string]: any } = {};
+    welcomeMessages: string[] = [
         'Hello, Skribe!',
         'Hire a Skribe',
         'Skribe a Video'
     ];
-    private showQuips: boolean = true;
-    private isAtBottom: boolean = true;
-    private scrollToBottomButton: HTMLElement | null = null;
+    showQuips: boolean = true;
+    isAtBottom: boolean = true;
 
     private getRandomWelcomeMessage(): string {
         const randomIndex = Math.floor(Math.random() * this.welcomeMessages.length);
@@ -94,170 +105,89 @@ export class SkribeView extends ItemView {
 
     async refresh() {
         const container = this.containerEl.children[1] as HTMLElement;
+        
+        // Initialize class properties 
+        // This is important for any properties that may be used before they're fully initialized
+        if (!this.transcriptContainer) this.transcriptContainer = document.createElement('div');
+        if (!this.revisedContainer) this.revisedContainer = document.createElement('div');
+        if (!this.summaryContainer) this.summaryContainer = document.createElement('div');
+        if (!this.chatContainer) this.chatContainer = document.createElement('div');
+        
+        // Clear old content
         container.empty();
         
         container.addClass('skribe-plugin');
-
-        // Create header
-        const header = this.createHeader(container);
         
-        // If no video is selected, show a prompt message and return
-        if (!this.content) {
-            // Create a centered container for the empty state
-            const centerContainer = container.createDiv({
-                cls: 'empty-state-center-container'
+        // Create header with transcript tabs (if available)
+        const headerEl = this.createHeader(container);
+        
+        // Create video URL display if available
+        if (this.videoUrl) {
+            const urlContainer = container.createDiv({
+                cls: 'video-url-container'
             });
             
-            const promptContainer = centerContainer.createDiv({
-                cls: 'empty-state-container'
-            });
-            
-            // Increase the max-width while keeping it responsive
-            promptContainer.style.maxWidth = '440px';  // Reduced to match CSS
-            promptContainer.style.width = '85%';  // Updated to match the new CSS value
-            
-            // Add logo image
-            const logoContainer = promptContainer.createDiv({
-                cls: 'empty-state-logo-container'
-            });
-            const logo = logoContainer.createEl('img', {
-                cls: 'empty-state-logo',
-                attr: {
-                    src: getLogoPath(),
-                    alt: 'Skribe Logo'
-                }
-            });
-            logo.style.width = '128px';
-            logo.style.height = 'auto';
-            logo.style.marginBottom = '20px';
-            
-            // Get a new random message each time
-            const message = this.getRandomWelcomeMessage();
-            const promptMessage = promptContainer.createEl('div', {
-                text: message,
-                cls: 'empty-state-message'
-            });
-            
-            // Create URL input container
-            const inputContainer = promptContainer.createDiv({
-                cls: 'empty-state-input-container'
-            });
-            inputContainer.style.display = 'flex';
-            inputContainer.style.width = '100%';
-            inputContainer.style.gap = '10px';
-            inputContainer.style.maxWidth = '380px'; // Adjusted to match the reduced container size
-            
-            // Create URL input
-            const urlInput = inputContainer.createEl('input', {
-                cls: 'empty-state-url-input',
-                attr: {
-                    type: 'text',
-                    placeholder: 'Enter YouTube URL...'
-                }
-            });
-            urlInput.style.flexGrow = '1';
-            urlInput.style.padding = '8px 12px';
-            urlInput.style.borderRadius = '4px';
-            urlInput.style.border = '1px solid var(--background-modifier-border)';
-            
-            // Create get transcript button
-            const getButton = inputContainer.createEl('button', {
-                cls: 'empty-state-get-button'
-            });
-            
-            // Check if we're on mobile
-            const isMobile = document.body.classList.contains('is-mobile') || 
-                     document.documentElement.classList.contains('is-mobile') || 
-                     document.documentElement.classList.contains('is-phone');
-            
-            if (isMobile) {
-                // For mobile, use text instead of SVG icon
-                getButton.textContent = '→';
-            } else {
-                // Add send icon for desktop
-                setIcon(getButton, 'arrow-right');
+            // Add video title if available
+            if (this.videoTitle) {
+                urlContainer.createSpan({
+                    cls: 'video-title',
+                    text: this.videoTitle
+                });
             }
             
-            getButton.style.padding = '8px 16px';
-            getButton.style.borderRadius = '4px';
-            getButton.style.backgroundColor = 'var(--interactive-accent)';
-            getButton.style.color = 'var(--text-on-accent)';
-            getButton.style.cursor = 'pointer';
-            getButton.style.border = 'none';
-            getButton.style.fontWeight = 'bold';
-            getButton.style.display = 'flex';
-            getButton.style.justifyContent = 'center';
-            getButton.style.alignItems = 'center';
-            
-            // Handle get transcript button click
-            const handleGetTranscript = () => {
-                const url = urlInput.value.trim();
-                if (!url) return;
-                
-                this.plugin.handlePromptCommand(url);
-            };
-            
-            getButton.addEventListener('click', handleGetTranscript);
-            urlInput.addEventListener('keydown', (e) => {
-                if (e.key === 'Enter') {
-                    handleGetTranscript();
-                }
+            // Add formatted URL as clickable link
+            const urlLink = urlContainer.createEl('a', {
+                cls: 'video-url-link',
+                href: this.videoUrl,
+                text: this.videoUrl
             });
-            
-            // Auto-focus on the URL input field
-            setTimeout(() => {
-                urlInput.focus();
-            }, 50);
-            
-            return;
+            urlLink.target = '_blank';
         }
         
-        // Create video URL display
-        if (this.videoUrl) {
-            this.createVideoUrlDisplay(container);
-        }
-
-        // Create tabs
+        // Create tab buttons
         this.createTabs(container);
-
-        // Create transcript container directly in the main container
+        
+        // Create main content containers
         this.transcriptContainer = container.createDiv({
             cls: 'transcript-container'
         });
         
-        // Create revised container
         this.revisedContainer = container.createDiv({
             cls: 'revised-container'
         });
         
-        // Create summary container
         this.summaryContainer = container.createDiv({
             cls: 'summary-container'
         });
-
-        // Create chat container
+        
         this.chatContainer = container.createDiv({
             cls: 'chat-container'
         });
         
-        // Set initial visibility based on active tab
+        // Set container visibility based on active tab
         this.transcriptContainer.style.display = this.activeTab === 'transcript' ? 'block' : 'none';
         this.revisedContainer.style.display = this.activeTab === 'revised' ? 'block' : 'none';
         this.summaryContainer.style.display = this.activeTab === 'summary' ? 'block' : 'none';
         this.chatContainer.style.display = this.activeTab === 'chat' ? 'block' : 'none';
-
+        
         // Always render transcript content if it exists
         await this.renderTranscriptToolbar();
         
         // Render active tab content if different from transcript
         if (this.activeTab === 'revised') {
             await this.renderRevisedToolbar();
-            if (this.revisedContent) {
+            // Get revised content for active transcript
+            const hasRevisedContent = this.activeTranscriptIndex !== undefined && 
+                                    this.revisedContents[this.activeTranscriptIndex];
+            if (hasRevisedContent) {
                 await this.renderRevisedContent();
             }
         } else if (this.activeTab === 'summary') {
             await this.renderSummaryToolbar();
-            if (this.summaryContent) {
+            // Get summary content for active transcript
+            const hasSummaryContent = this.activeTranscriptIndex !== undefined && 
+                                    this.summaryContents[this.activeTranscriptIndex];
+            if (hasSummaryContent) {
                 await this.renderSummaryContent();
             }
         } else if (this.activeTab === 'chat') {
@@ -265,16 +195,24 @@ export class SkribeView extends ItemView {
         }
         
         // Ensure content is initialized for non-active tabs except transcript (already rendered)
-        if (this.activeTab !== 'revised' && this.revisedContent) {
+        if (this.activeTab !== 'revised') {
             // Create toolbar for revised tab even if not active
             await this.renderRevisedToolbar();
-            await this.renderRevisedContent();
+            const hasRevisedContent = this.activeTranscriptIndex !== undefined && 
+                                    this.revisedContents[this.activeTranscriptIndex];
+            if (hasRevisedContent) {
+                await this.renderRevisedContent();
+            }
         }
         
-        if (this.activeTab !== 'summary' && this.summaryContent) {
+        if (this.activeTab !== 'summary') {
             // Create toolbar for summary tab even if not active
             await this.renderSummaryToolbar();
-            await this.renderSummaryContent();
+            const hasSummaryContent = this.activeTranscriptIndex !== undefined && 
+                                    this.summaryContents[this.activeTranscriptIndex];
+            if (hasSummaryContent) {
+                await this.renderSummaryContent();
+            }
         }
         
         // Always add global chat input regardless of active tab
@@ -282,34 +220,40 @@ export class SkribeView extends ItemView {
     }
 
     private createHeader(container: HTMLElement): HTMLElement {
-        const header = container.createDiv({
-            cls: 'nav-header'
+        // Create a container for the header with proper styling
+        const headerContainer = container.createDiv({
+            cls: 'skribe-header'
         });
-
-        const titleContainer = header.createDiv({
-            cls: 'view-header-title-container'
-        });
-
-        const titleEl = titleContainer.createEl('span', {
-            cls: 'view-header-title'
-        });
-
-        // Only show top toolbar if we have content
-        if (this.content) {
-            // Create the top toolbar using the ToolbarService
-            const toolbarContext = {
-                plugin: this.plugin,
-                view: this,
-                content: this.content,
-                videoUrl: this.videoUrl,
-                activeTab: this.activeTab
-            };
-
-            // Use the ToolbarService to create a consistent top toolbar
-            this.plugin.toolbarService.createToolbar(header, 'top', toolbarContext);
+        
+        // If we have transcripts, create the tabs in the header area
+        if (this.transcripts.length > 0) {
+            console.log('Creating transcript tabs in header for', this.transcripts.length, 'transcripts');
+            
+            // Create a div for the transcript tabs (without the "Video Transcripts:" label)
+            const transcriptTabsDiv = headerContainer.createDiv({
+                cls: 'transcript-tabs-row'
+            });
+            
+            // Add each transcript as a tab
+            this.transcripts.forEach((transcript, index) => {
+                const isActive = index === this.activeTranscriptIndex;
+                const tabTitle = transcript.title || `Video ${index + 1}`;
+                console.log(`Creating tab for transcript ${index}: ${tabTitle}`);
+                
+                const tab = this.createTranscriptTabItem(transcriptTabsDiv, tabTitle, isActive, index);
+                
+                // Add click handler
+                tab.addEventListener('click', () => {
+                    console.log(`Clicked on transcript tab ${index}`);
+                    this.switchToTranscriptTab(index);
+                });
+            });
+            
+            // Store the container reference so we can update it later
+            this.transcriptTabsContainer = transcriptTabsDiv;
         }
-
-        return header;
+        
+        return headerContainer;
     }
 
     private createVideoUrlDisplay(container: HTMLElement) {
@@ -377,11 +321,18 @@ export class SkribeView extends ItemView {
         // Add click handler to button
         startOverButton.addEventListener('click', async () => {
             try {
-                if (typeof this.resetView === 'function') {
-                    await this.resetView();
-                    console.log('View reset successfully');
+                // Confirm before resetting
+                const confirmReset = confirm("Are you sure you want to start over? This will clear all transcripts and data.");
+                
+                if (confirmReset) {
+                    if (typeof this.resetView === 'function') {
+                        await this.resetView();
+                        console.log('View reset successfully');
+                    } else {
+                        throw new Error('resetView method not found on view');
+                    }
                 } else {
-                    throw new Error('resetView method not found on view');
+                    console.log('Reset cancelled by user');
                 }
             } catch (error) {
                 console.error('Error resetting view:', error);
@@ -429,7 +380,7 @@ export class SkribeView extends ItemView {
     }
 
     private async renderTranscriptToolbar() {
-        this.transcriptContainer.empty();
+        this.transcriptContainer.innerHTML = '';
         
         // Create transcript toolbar container
         const transcriptToolbarContainer = this.transcriptContainer.createDiv({
@@ -453,11 +404,20 @@ export class SkribeView extends ItemView {
             cls: 'transcript-content'
         });
         
+        // Add class to adjust content positioning if we have transcript tabs
+        if (this.transcripts.length > 0) {
+            transcriptContentEl.addClass('with-transcript-tabs');
+        }
+        
         // Set bottom padding to ensure content doesn't scroll under the chat input
         transcriptContentEl.style.paddingBottom = this.activeTab !== 'chat' ? '80px' : '0';
         
-        // Add an empty content message if there's no content
-        if (!this.content) {
+        // If we have transcripts in the new format, render them
+        if (this.transcripts.length > 0) {
+            this.renderTranscriptContent();
+        } 
+        // Otherwise, render the legacy content
+        else if (!this.content) {
             const emptyMessage = transcriptContentEl.createDiv({
                 cls: 'empty-content-message',
                 text: 'No transcript content yet. Enter a YouTube URL to get started.'
@@ -700,8 +660,11 @@ export class SkribeView extends ItemView {
         // Clear the container first
         container.empty();
         
+        // Get the chat state for the active transcript
+        const currentChatState = this.chatStates[this.activeTranscriptIndex] || { messages: [] };
+        
         // Check if chat has any messages
-        if (!this.chatState.messages || this.chatState.messages.length === 0) {
+        if (!currentChatState.messages || currentChatState.messages.length === 0) {
             // Show welcome message with quips if there are no messages
             if (this.showQuips && this.plugin.settings.quips && this.plugin.settings.quips.length > 0) {
                 // Create quips cards
@@ -717,7 +680,7 @@ export class SkribeView extends ItemView {
         }
 
         // Display messages in sequential order
-        this.chatState.messages.forEach(async (message, index) => {
+        currentChatState.messages.forEach(async (message, index) => {
             // Create message element with appropriate class
             const messageEl = container.createDiv({
                 cls: `chat-message ${message.role}-message`
@@ -780,6 +743,9 @@ export class SkribeView extends ItemView {
     // Helper method to process AI response
     private async processAIResponse(container: HTMLElement) {
         try {
+            // Get the current chat state for this transcript
+            const currentChatState = this.chatStates[this.activeTranscriptIndex] || { messages: [] };
+            
             // Find the messages wrapper or create one if needed
             let messagesWrapper = container.querySelector('.chat-messages-wrapper');
             if (!messagesWrapper) {
@@ -819,7 +785,7 @@ export class SkribeView extends ItemView {
             
             // Get AI response
             const response = await this.plugin.openaiService.chatWithTranscript(
-                this.chatState.messages,
+                currentChatState.messages,
                 this.content,
                 this.videoTitle
             );
@@ -828,10 +794,16 @@ export class SkribeView extends ItemView {
             loadingContainer.remove();
             
             // Add assistant message to chat
-            this.chatState.messages.push({
+            currentChatState.messages.push({
                 role: 'assistant',
                 content: response
             });
+            
+            // Update chat state in our transcript-specific storage
+            this.chatStates[this.activeTranscriptIndex] = currentChatState;
+            
+            // Also update legacy chatState for backward compatibility
+            this.chatState = currentChatState;
             
             // Re-render chat messages from scratch to ensure correct order
             container.empty();
@@ -1035,9 +1007,21 @@ export class SkribeView extends ItemView {
         // Set bottom padding to ensure content doesn't scroll under the chat input
         summaryContentContainer.style.paddingBottom = this.activeTab !== 'chat' ? '80px' : '0';
         
+        // Get summary content for the active transcript
+        const summaryContent = this.summaryContents[this.activeTranscriptIndex] || '';
+        
+        if (!summaryContent) {
+            // Show empty state message if no summary content for this transcript
+            const emptyMessage = summaryContentContainer.createDiv({
+                cls: 'empty-content-message'
+            });
+            emptyMessage.textContent = `No summary content for this transcript yet. Click "Generate Summary" in the toolbar to create one.`;
+            return;
+        }
+        
         // Render markdown content
         await MarkdownRenderer.renderMarkdown(
-            this.summaryContent,
+            summaryContent,
             summaryContentContainer,
             this.app.workspace.getActiveFile()?.path || '',
             this
@@ -1047,7 +1031,8 @@ export class SkribeView extends ItemView {
     public setSummaryContent(content: string) {
         console.log('SkribeView: setSummaryContent called', {
             contentLength: content?.length,
-            activeTabBefore: this.activeTab
+            activeTabBefore: this.activeTab,
+            activeTranscriptIndex: this.activeTranscriptIndex
         });
         
         if (!content) {
@@ -1056,6 +1041,10 @@ export class SkribeView extends ItemView {
             return;
         }
         
+        // Store the summary content for the active transcript
+        this.summaryContents[this.activeTranscriptIndex] = content;
+        
+        // Also update the legacy property for backward compatibility
         this.summaryContent = content;
         
         // Save state when summary content changes
@@ -1095,7 +1084,7 @@ export class SkribeView extends ItemView {
             
             // Render markdown content immediately
             MarkdownRenderer.renderMarkdown(
-                this.summaryContent,
+                content, // Use the content directly since we just received it
                 summaryContentContainer,
                 this.app.workspace.getActiveFile()?.path || '',
                 this
@@ -1124,8 +1113,12 @@ export class SkribeView extends ItemView {
         if (this.revisedContainer) {
             this.revisedContainer.style.display = tab === 'revised' ? 'block' : 'none';
             
+            // Check for revised content in the active transcript
+            const hasRevisedContent = this.activeTranscriptIndex !== undefined && 
+                                       this.revisedContents[this.activeTranscriptIndex];
+            
             // Only render revised toolbar if it's not already rendered
-            if (tab === 'revised' && !this.revisedContent && 
+            if (tab === 'revised' && !hasRevisedContent && 
                 !this.revisedContainer.querySelector('.revised-toolbar-container')) {
                 this.renderRevisedToolbar();
             }
@@ -1134,8 +1127,12 @@ export class SkribeView extends ItemView {
         if (this.summaryContainer) {
             this.summaryContainer.style.display = tab === 'summary' ? 'block' : 'none';
             
+            // Check for summary content in the active transcript
+            const hasSummaryContent = this.activeTranscriptIndex !== undefined && 
+                                       this.summaryContents[this.activeTranscriptIndex];
+            
             // Only render summary toolbar if it's not already rendered
-            if (tab === 'summary' && !this.summaryContent && 
+            if (tab === 'summary' && !hasSummaryContent && 
                 !this.summaryContainer.querySelector('.summary-toolbar-container')) {
                 this.renderSummaryToolbar();
             }
@@ -1191,6 +1188,9 @@ export class SkribeView extends ItemView {
                 }
             }
         }, 50);
+        
+        // Save the state after switching tabs
+        this.saveState();
     }
     
     /**
@@ -1205,6 +1205,9 @@ export class SkribeView extends ItemView {
      * This ensures that toolbar commands always have the latest state
      */
     public getCommandContext(): CommandContext {
+        // Get the current chat state for the active transcript
+        const currentChatState = this.chatStates[this.activeTranscriptIndex] || { messages: [] };
+        
         // Create a fresh context object for toolbar commands
         const context: CommandContext = {
             plugin: this.plugin,
@@ -1213,10 +1216,15 @@ export class SkribeView extends ItemView {
             videoUrl: this.videoUrl,
             videoTitle: this.videoTitle,
             activeTab: this.activeTab,
-            chatMessages: this.chatState?.messages || [],
-            chatState: this.chatState,
-            summaryContent: this.summaryContent,
-            revisedContent: this.revisedContent,
+            chatMessages: currentChatState.messages || [],
+            chatState: currentChatState,
+            chatStates: this.chatStates,
+            summaryContent: this.summaryContents[this.activeTranscriptIndex] || '',
+            revisedContent: this.revisedContents[this.activeTranscriptIndex] || '',
+            revisedContents: this.revisedContents,
+            summaryContents: this.summaryContents,
+            activeTranscriptIndex: this.activeTranscriptIndex,
+            transcripts: this.transcripts,
             showQuips: this.showQuips
         };
         
@@ -1255,9 +1263,21 @@ export class SkribeView extends ItemView {
         // Set bottom padding to ensure content doesn't scroll under the chat input
         revisedContentEl.style.paddingBottom = this.activeTab !== 'chat' ? '80px' : '0';
         
+        // Get the revised content for the active transcript
+        const revisedContent = this.revisedContents[this.activeTranscriptIndex] || '';
+        
+        if (!revisedContent) {
+            // Show empty state message if no revised content for this transcript
+            const emptyMessage = revisedContentEl.createDiv({
+                cls: 'empty-content-message'
+            });
+            emptyMessage.textContent = `No revised content for this transcript yet. Click "Revise" in the toolbar to create one.`;
+            return;
+        }
+        
         // Render markdown content
         await MarkdownRenderer.renderMarkdown(
-            this.revisedContent,
+            revisedContent,
             revisedContentEl,
             this.app.workspace.getActiveFile()?.path || '',
             this
@@ -1270,7 +1290,8 @@ export class SkribeView extends ItemView {
     public setRevisedContent(content: string) {
         console.log('SkribeView: setRevisedContent called', {
             contentLength: content?.length,
-            activeTabBefore: this.activeTab
+            activeTabBefore: this.activeTab,
+            activeTranscriptIndex: this.activeTranscriptIndex
         });
         
         if (!content) {
@@ -1279,6 +1300,10 @@ export class SkribeView extends ItemView {
             return;
         }
         
+        // Store the revised content for the active transcript
+        this.revisedContents[this.activeTranscriptIndex] = content;
+        
+        // Also update the legacy property for backward compatibility
         this.revisedContent = content;
         
         // Save state when revised content changes
@@ -1318,7 +1343,7 @@ export class SkribeView extends ItemView {
             
             // Render markdown content immediately
             MarkdownRenderer.renderMarkdown(
-                this.revisedContent,
+                content, // Use the content directly since we just received it
                 revisedContentEl,
                 this.app.workspace.getActiveFile()?.path || '',
                 this
@@ -1340,7 +1365,7 @@ export class SkribeView extends ItemView {
         // Add clear console message with distinctive styling
         console.log('%c SkribeView.createRevisedContent called!', 'background: #000077; color: white; font-size: 20px; padding: 5px;');
         
-        if (!this.content) {
+        if (!this.content || this.transcripts.length === 0) {
             console.error('SkribeView: No content to revise');
             new Notice('No content to revise');
             return;
@@ -1356,10 +1381,16 @@ export class SkribeView extends ItemView {
         const loadingNotice = new Notice('Creating revised version...', 0);
         
         try {
-            console.log('SkribeView: Creating revised content for transcript with length:', this.content.length);
+            // Get the active transcript's content
+            const activeTranscript = this.transcripts[this.activeTranscriptIndex];
+            if (!activeTranscript) {
+                throw new Error('No active transcript found');
+            }
+            
+            console.log('SkribeView: Creating revised content for transcript with length:', activeTranscript.content.length);
             
             // Use the specialized method for creating revised transcripts
-            const revisedContent = await this.plugin.openaiService.createRevisedTranscript(this.content);
+            const revisedContent = await this.plugin.openaiService.createRevisedTranscript(activeTranscript.content);
             
             console.log('SkribeView: Received revised content, length:', revisedContent?.length);
             
@@ -1384,14 +1415,22 @@ export class SkribeView extends ItemView {
      * Can be called directly from toolbar buttons
      */
     public resetView(): void {
+        console.log('Resetting view completely');
+        
         // Reset all content
         this.content = '';
         this.videoUrl = '';
         this.videoTitle = '';
         this.summaryContent = '';
-        this.revisedContent = '';
+        this.revisedContent = '';  // Keep for backward compatibility
+        this.revisedContents = {} as { [index: number]: string }; // Clear with properly typed empty object
         this.chatState = { messages: [] };
         this.showQuips = true; // Reset the showQuips flag
+        
+        // Clear transcripts array
+        this.transcripts = [];
+        this.activeTranscriptIndex = 0;
+        this.transcriptTabsContainer = null;
         
         // Switch back to transcript tab 
         this.activeTab = 'transcript';
@@ -1402,7 +1441,22 @@ export class SkribeView extends ItemView {
             this.plugin.saveSettings();
         }
         
+        // Force clear any DOM elements that might be persisting
+        if (this.transcriptContainer) {
+            this.transcriptContainer.empty();
+        }
+        if (this.revisedContainer) {
+            this.revisedContainer.empty();
+        }
+        if (this.summaryContainer) {
+            this.summaryContainer.empty();
+        }
+        if (this.chatContainer) {
+            this.chatContainer.empty();
+        }
+        
         // Refresh the view
+        console.log('Calling refresh after reset');
         this.refresh();
     }
 
@@ -1468,7 +1522,14 @@ export class SkribeView extends ItemView {
 
     // Update existing clearChat method or add if not exists
     public clearChat() {
-        this.chatState.messages = [];
+        // Clear chat messages for the active transcript
+        if (this.activeTranscriptIndex !== undefined) {
+            this.chatStates[this.activeTranscriptIndex] = { messages: [] };
+        }
+        
+        // Also clear the legacy chatState property
+        this.chatState = { messages: [] };
+        
         this.showQuips = true; // Show quips again when chat is cleared
         
         // Save state after clearing messages
@@ -1497,20 +1558,34 @@ export class SkribeView extends ItemView {
 
     // Add a method to clear revised content
     public clearRevised() {
-        this.revisedContent = '';
-        // Save state after clearing content
-        this.saveState();
-        // Only re-render the revised container
-        if (this.revisedContainer) {
-            this.renderRevisedToolbar();
+        // Clear revised content for the active transcript
+        if (this.activeTranscriptIndex !== undefined) {
+            delete this.revisedContents[this.activeTranscriptIndex];
         }
+        
+        // Also clear the legacy property
+        this.revisedContent = '';
+        
+        // Re-render the revised content (which will show the empty state)
+        this.renderRevisedContent();
+        
+        // Save the updated state
+        this.saveState();
     }
 
     // Add a method to clear summary content
     public clearSummary() {
+        // Clear summary content for the active transcript
+        if (this.activeTranscriptIndex !== undefined) {
+            delete this.summaryContents[this.activeTranscriptIndex];
+        }
+        
+        // Also clear the legacy property
         this.summaryContent = '';
+        
         // Save state after clearing content
         this.saveState();
+        
         // Only re-render the summary container
         if (this.summaryContainer) {
             this.renderSummaryToolbar();
@@ -1546,16 +1621,19 @@ export class SkribeView extends ItemView {
         // Set bottom padding to ensure content doesn't scroll under the chat input
         revisedContentContainer.style.paddingBottom = this.activeTab !== 'chat' ? '80px' : '0';
         
+        // Get the revised content for the active transcript
+        const revisedContent = this.revisedContents[this.activeTranscriptIndex] || '';
+        
         // Add an empty content message if there's no content
-        if (!this.revisedContent) {
+        if (!revisedContent) {
             const emptyMessage = revisedContentContainer.createDiv({
                 cls: 'empty-content-message',
-                text: 'No revised content yet. Use the "Create Revised Version" button to improve the transcript formatting and grammar.'
+                text: 'No revised content yet for the selected transcript. Use the "Create Revised Version" button to improve the transcript formatting and grammar.'
             });
         } else {
             // Render markdown content
             await MarkdownRenderer.renderMarkdown(
-                this.revisedContent, 
+                revisedContent, 
                 revisedContentContainer, 
                 this.app.workspace.getActiveFile()?.path || '',
                 this
@@ -1592,8 +1670,11 @@ export class SkribeView extends ItemView {
         // Set bottom padding to ensure content doesn't scroll under the chat input
         summaryContentContainer.style.paddingBottom = this.activeTab !== 'chat' ? '80px' : '0';
         
+        // Get the summary content for the active transcript
+        const summaryContent = this.summaryContents[this.activeTranscriptIndex] || '';
+        
         // Add an empty content message if there's no content
-        if (!this.summaryContent) {
+        if (!summaryContent) {
             const emptyMessage = summaryContentContainer.createDiv({
                 cls: 'empty-content-message',
                 text: 'No summary content yet. Use the "Generate Summary" button to create a summary from the transcript.'
@@ -1601,7 +1682,7 @@ export class SkribeView extends ItemView {
         } else {
             // Render markdown content
             await MarkdownRenderer.renderMarkdown(
-                this.summaryContent, 
+                summaryContent, 
                 summaryContentContainer, 
                 this.app.workspace.getActiveFile()?.path || '',
                 this
@@ -1663,10 +1744,14 @@ export class SkribeView extends ItemView {
             content: this.content,
             videoUrl: this.videoUrl,
             videoTitle: this.videoTitle,
-            revisedContent: this.revisedContent,
-            summaryContent: this.summaryContent,
-            chatState: this.chatState,
+            revisedContents: this.revisedContents,
+            summaryContents: this.summaryContents,
+            chatStates: this.chatStates,
+            summaryContent: this.summaryContent, // Keep for backward compatibility
+            chatState: this.chatState, // Keep for backward compatibility
             activeTab: this.activeTab,
+            transcripts: this.transcripts,
+            activeTranscriptIndex: this.activeTranscriptIndex,
             lastUpdated: Date.now()
         };
 
@@ -1682,40 +1767,54 @@ export class SkribeView extends ItemView {
     public loadSavedState(): boolean {
         const savedState = this.plugin.settings.savedState;
         
-        // Check if we have a saved state
         if (!savedState) {
-            console.log('No saved state found in settings');
+            console.log('No saved state found, starting fresh');
             return false;
         }
         
-        // Validate if savedState has content (required field)
+        console.log('Found saved state, restoring');
+        console.log('Last updated:', new Date(savedState.lastUpdated || 0).toLocaleString());
+        
+        // Validate if we have content to restore
         if (!savedState.content) {
-            console.log('Saved state exists but has no content, ignoring');
+            console.log('Saved state has no content, skipping restore');
             return false;
         }
-        
-        console.log('%c[Skribe] Loading saved state from data.json', 'background: #4CAF50; color: white; padding: 5px; font-weight: bold;', {
-            hasContent: !!savedState.content,
-            contentLength: savedState.content.length,
-            contentPreview: savedState.content.substring(0, 50) + '...',
-            videoUrl: savedState.videoUrl,
-            videoTitle: savedState.videoTitle?.substring(0, 30) + '...',
-            activeTab: savedState.activeTab,
-            hasRevisedContent: !!savedState.revisedContent,
-            hasSummaryContent: !!savedState.summaryContent,
-            chatMessagesCount: savedState.chatState?.messages?.length || 0,
-            lastUpdated: new Date(savedState.lastUpdated).toLocaleString()
-        });
         
         try {
             // Restore state
             this.content = savedState.content;
             this.videoUrl = savedState.videoUrl || '';
             this.videoTitle = savedState.videoTitle || '';
-            this.revisedContent = savedState.revisedContent || '';
+            this.revisedContents = savedState.revisedContents || {} as { [index: number]: string };
+            this.summaryContents = savedState.summaryContents || {} as { [index: number]: string };
+            this.chatStates = savedState.chatStates || {} as { [index: number]: ChatState };
             this.summaryContent = savedState.summaryContent || '';
             this.chatState = savedState.chatState || { messages: [] };
             this.activeTab = savedState.activeTab || 'transcript';
+            this.transcripts = savedState.transcripts || [];
+            this.activeTranscriptIndex = savedState.activeTranscriptIndex || 0;
+            
+            // For backwards compatibility, if there was a legacy revisedContent, add it to the active transcript
+            if ('revisedContent' in savedState && typeof savedState.revisedContent === 'string') {
+                if (this.activeTranscriptIndex !== undefined) {
+                    this.revisedContents[this.activeTranscriptIndex] = savedState.revisedContent as string;
+                }
+                // Also keep the legacy field in case it's needed
+                this.revisedContent = savedState.revisedContent as string;
+            }
+            
+            // For backwards compatibility, if there was a legacy summaryContent, add it to the active transcript
+            if ('summaryContent' in savedState && typeof savedState.summaryContent === 'string' && savedState.summaryContent) {
+                if (this.activeTranscriptIndex !== undefined && !this.summaryContents[this.activeTranscriptIndex]) {
+                    this.summaryContents[this.activeTranscriptIndex] = savedState.summaryContent as string;
+                }
+            }
+            
+            // For backwards compatibility, if there was a legacy chatState, add it to the active transcript
+            if ('chatState' in savedState && savedState.chatState && !this.chatStates[this.activeTranscriptIndex]) {
+                this.chatStates[this.activeTranscriptIndex] = savedState.chatState;
+            }
             
             // Log what content was set
             console.log('%c[Skribe] State restored to memory', 'background: #2196F3; color: white; padding: 5px; font-weight: bold;', {
@@ -1733,10 +1832,9 @@ export class SkribeView extends ItemView {
                 console.log('%c[Skribe] Toolbar states updated after restore', 'background: #FF9800; color: white; padding: 5px; font-weight: bold;');
             }, 100);
             
-            console.log('%c[Skribe] View refreshed with restored state', 'background: #9C27B0; color: white; padding: 5px; font-weight: bold;');
             return true;
         } catch (error) {
-            console.error('Error restoring saved state:', error);
+            console.error('Error restoring state:', error);
             return false;
         }
     }
@@ -1967,11 +2065,21 @@ export class SkribeView extends ItemView {
      * Used when submitting messages from the global chat input
      */
     private async ensureChatInterfaceAndProcessMessage(message: string) {
+        // Get the current chat state for this transcript
+        let currentChatState = this.chatStates[this.activeTranscriptIndex];
+        if (!currentChatState) {
+            currentChatState = { messages: [] };
+            this.chatStates[this.activeTranscriptIndex] = currentChatState;
+        }
+        
         // Add user message to chat state
-        this.chatState.messages.push({
+        currentChatState.messages.push({
             role: 'user',
             content: message
         });
+        
+        // Update legacy chatState for backward compatibility
+        this.chatState = currentChatState;
         
         // Switch to chat tab first
         this.switchToTab('chat');
@@ -2115,5 +2223,267 @@ export class SkribeView extends ItemView {
                 handleGlobalSend();
             }
         });
+    }
+
+    public addSeparator() {
+        const separator = this.contentEl.createDiv({
+            cls: 'transcript-separator'
+        });
+        this.transcriptContainer.appendChild(separator);
+    }
+
+    // Add the addTranscript method after the addSeparator method
+    public addTranscript(content: string, url: string, title: string) {
+        console.log(`Adding transcript: "${title}" (${content.length} characters)`);
+        
+        // Track if this is the first transcript being added
+        const isFirstTranscript = this.transcripts.length === 0;
+        
+        // Add the transcript to the collection
+        this.transcripts.push({
+            content,
+            url,
+            title
+        });
+        
+        // Update the combined content for backward compatibility
+        this.updateCombinedContent();
+        
+        // If this is the first transcript, set it as active
+        if (isFirstTranscript) {
+            this.activeTranscriptIndex = 0;
+        }
+        
+        // Save state when transcripts change
+        this.saveState();
+        
+        // Refresh the view if this is our first transcript 
+        // OR if we need to update the tabs in the header
+        if (isFirstTranscript || this.transcripts.length > 1) {
+            this.refresh();
+        }
+        
+        console.log(`Total transcripts: ${this.transcripts.length}`);
+    }
+
+    // Add the updateCombinedContent method
+    private updateCombinedContent() {
+        this.content = this.transcripts.map((t, index) => {
+            const header = index === 0 ? '' : `\n\n${'='.repeat(40)}\n${t.title || 'Video ' + (index + 1)}\n${'='.repeat(40)}\n\n`;
+            return header + t.content;
+        }).join('');
+    }
+
+    /**
+     * Switch to a specific transcript tab
+     */
+    public switchToTranscriptTab(index: number) {
+        if (index < 0 || index >= this.transcripts.length) {
+            console.error(`Invalid transcript index: ${index}, max is ${this.transcripts.length - 1}`);
+            return;
+        }
+
+        console.log(`Switching to transcript tab ${index} of ${this.transcripts.length - 1}`);
+        
+        // Update the active index
+        this.activeTranscriptIndex = index;
+        
+        // Update UI to reflect the active tab
+        this.updateTranscriptTabsUI();
+        
+        // Update the main content with the selected transcript
+        this.content = this.transcripts[index].content;
+        
+        // Update URL and title for the active transcript
+        this.videoUrl = this.transcripts[index].url;
+        this.videoTitle = this.transcripts[index].title;
+        
+        // Update the video URL display
+        const urlContainer = this.containerEl.querySelector('.video-url-container');
+        if (urlContainer) {
+            const titleEl = urlContainer.querySelector('.video-title');
+            const linkEl = urlContainer.querySelector('.video-url-link');
+            
+            if (titleEl) {
+                titleEl.textContent = this.videoTitle;
+            }
+            
+            if (linkEl) {
+                (linkEl as HTMLAnchorElement).href = this.videoUrl;
+                linkEl.textContent = this.videoUrl;
+            }
+        }
+        
+        // Also update the legacy revisedContent property for backward compatibility
+        this.revisedContent = this.revisedContents[index] || '';
+        
+        // Also update the legacy summaryContent property for backward compatibility
+        this.summaryContent = this.summaryContents[index] || '';
+        
+        // Also update the legacy chatState property for backward compatibility
+        this.chatState = this.chatStates[index] || { messages: [] };
+        
+        // Re-render the current tab's content
+        this.renderTranscriptContent();
+        
+        // If we're on the revised tab, re-render that too
+        if (this.activeTab === 'revised') {
+            this.renderRevisedContent();
+        }
+        
+        // If we're on the summary tab, re-render that too
+        if (this.activeTab === 'summary') {
+            this.renderSummaryContent();
+        }
+        
+        // If we're on the chat tab, re-render that too
+        if (this.activeTab === 'chat') {
+            this.renderChatInterface();
+        }
+        
+        // Save the state after switching
+        this.saveState();
+    }
+
+    // Add the createTranscriptTabs method
+    private createTranscriptTabs(container: HTMLElement) {
+        // Create tabs container if it doesn't exist
+        if (this.transcriptTabsContainer) {
+            this.transcriptTabsContainer.remove();
+        }
+        
+        // Create transcript tabs container as a child of the provided container
+        this.transcriptTabsContainer = container.createDiv({
+            cls: 'transcript-tabs-row'
+        });
+        
+        // Add transcript tabs
+        this.transcripts.forEach((transcript, index) => {
+            const isActive = index === this.activeTranscriptIndex;
+            const tabTitle = transcript.title || `Video ${index + 1}`;
+            const transcriptTab = this.createTranscriptTabItem(this.transcriptTabsContainer!, tabTitle, isActive, index);
+            
+            // Add click handler
+            transcriptTab.addEventListener('click', () => {
+                this.switchToTranscriptTab(index);
+            });
+        });
+        
+        return this.transcriptTabsContainer;
+    }
+
+    // Add the createTranscriptTabItem method
+    private createTranscriptTabItem(container: HTMLElement, text: string, isActive: boolean, index: number): HTMLElement {
+        // Ensure we have a fallback title if text is empty
+        const tabTitle = text ? text : `Video ${index + 1}`;
+        
+        // Truncate long titles more aggressively to fit in tabs
+        const shortText = tabTitle.length > 18 ? tabTitle.substring(0, 16) + '...' : tabTitle;
+        
+        const tab = container.createDiv({
+            cls: `transcript-tab-item ${isActive ? 'active' : ''}`,
+            attr: {
+                'data-index': index.toString(),
+                'title': tabTitle // Full title as tooltip
+            }
+        });
+        
+        // For better visibility, include the index for multiple tabs
+        const displayText = this.transcripts.length > 1 ? `#${index + 1}: ${shortText}` : shortText;
+        tab.setText(displayText);
+        
+        if (isActive) {
+            tab.classList.add('active');
+        }
+        
+        return tab;
+    }
+
+    // Add the updateTranscriptTabsUI method
+    private updateTranscriptTabsUI() {
+        console.log('Updating transcript tabs UI, active index:', this.activeTranscriptIndex);
+        
+        if (!this.transcriptTabsContainer) {
+            console.log('No transcript tabs container found');
+            return;
+        }
+        
+        // Get all tab items directly from the container
+        const tabItems = this.transcriptTabsContainer.querySelectorAll('.transcript-tab-item');
+        console.log('Found', tabItems.length, 'transcript tabs');
+        
+        tabItems.forEach((tab, index) => {
+            const tabEl = tab as HTMLElement;
+            const dataIndex = tabEl.getAttribute('data-index');
+            const tabIndex = dataIndex ? parseInt(dataIndex, 10) : index;
+            
+            console.log(`Tab ${index} has data-index ${dataIndex}, comparing with active index ${this.activeTranscriptIndex}`);
+            
+            if (tabIndex === this.activeTranscriptIndex) {
+                tabEl.classList.add('active');
+                console.log(`Activated tab ${index} (data-index: ${dataIndex})`);
+            } else {
+                tabEl.classList.remove('active');
+            }
+        });
+    }
+
+    // Add the renderTranscriptContent method
+    private renderTranscriptContent() {
+        console.log('Rendering transcript content with', this.transcripts.length, 'transcripts and active index', this.activeTranscriptIndex);
+        
+        // First find the transcript content element
+        const transcriptContentEl = this.transcriptContainer.querySelector('.transcript-content');
+        // Early return if element not found
+        if (!transcriptContentEl || !(transcriptContentEl instanceof HTMLElement)) {
+            console.error('Transcript content element not found');
+            return;
+        }
+        
+        // Now using transcriptContentEl as HTMLElement
+        transcriptContentEl.empty();
+        
+        // If no transcripts, show empty message
+        if (this.transcripts.length === 0) {
+            console.log('No transcripts available, showing empty message');
+            const emptyMessage = transcriptContentEl.createDiv({
+                cls: 'empty-content-message',
+                text: 'No transcript content yet. Enter a YouTube URL to get started.'
+            });
+            return;
+        }
+        
+        // Get the active transcript
+        const activeTranscript = this.transcripts[this.activeTranscriptIndex];
+        if (!activeTranscript) {
+            console.error('Active transcript not found at index', this.activeTranscriptIndex);
+            return;
+        }
+        
+        console.log('Rendering active transcript:', {
+            title: activeTranscript.title,
+            contentLength: activeTranscript.content.length,
+            contentPreview: activeTranscript.content.substring(0, 50) + '...'
+        });
+        
+        // Create a title element for the transcript
+        const titleEl = transcriptContentEl.createEl('h2', {
+            cls: 'transcript-title',
+            text: activeTranscript.title
+        });
+        
+        // Create paragraphs from the content
+        const paragraphs = activeTranscript.content.split('. ').filter(p => p.trim());
+        console.log('Split content into', paragraphs.length, 'paragraphs');
+        
+        // Render paragraphs
+        paragraphs.forEach(paragraph => {
+            const p = transcriptContentEl.createEl('p', {
+                cls: 'transcript-paragraph'
+            });
+            p.textContent = paragraph.trim() + '.';
+        });
+        
+        console.log('Finished rendering transcript content');
     }
 } 

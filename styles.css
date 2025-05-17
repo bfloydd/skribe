@@ -1,6 +1,172 @@
 @import url('https://fonts.googleapis.com/css2?family=Roboto:wght@400;700&display=swap');
 
 /* =======================
+   CRITICAL FIXES - LAYOUT
+   ======================= */
+/* This section COMPLETELY overrides all other positioning rules */
+
+/* 1. VIDEO SELECTOR TABS FIRST - at the very top, highlighted background when active */
+.transcript-tabs-container,
+.transcript-tabs-row {
+    position: absolute !important;
+    top: 0 !important;
+    left: 0 !important;
+    right: 0 !important;
+    z-index: 20 !important;
+    height: 38px !important;
+    display: flex !important;
+    width: 100% !important;
+    background-color: var(--background-primary) !important;
+    border-bottom: 1px solid var(--background-modifier-border) !important;
+    padding: 0 15px !important;
+    box-sizing: border-box !important;
+    overflow-x: auto !important;
+    scrollbar-width: thin !important;
+}
+
+.transcript-tab-item {
+    padding: 6px 12px !important;
+    margin-right: 8px !important;
+    margin-top: 5px !important;
+    border-radius: 4px !important;
+    cursor: pointer !important;
+    white-space: nowrap !important;
+    background-color: var(--background-secondary-alt) !important;
+    font-size: 0.9em !important;
+    border: 1px solid var(--background-modifier-border) !important;
+    transition: all 0.2s ease !important;
+    flex-shrink: 0 !important;
+    box-shadow: 0 1px 2px rgba(0, 0, 0, 0.1) !important;
+    height: 28px !important;
+    display: flex !important;
+    align-items: center !important;
+}
+
+.transcript-tab-item.active {
+    background-color: var(--interactive-accent) !important;
+    color: var(--text-on-accent) !important;
+    font-weight: bold !important;
+    border-color: var(--interactive-accent) !important;
+    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.2) !important;
+}
+
+/* 2. MAIN TABS SECOND - below video selector tabs, underline style when active */
+.workspace-leaf-content[data-type="skribe-view"] .tabs-container {
+    position: absolute !important;
+    top: 38px !important; /* Positioned precisely below transcript tabs */
+    left: 0 !important;
+    right: 0 !important;
+    z-index: 19 !important;
+    background-color: var(--background-primary) !important;
+    width: 100% !important;
+    border-bottom: 1px solid var(--background-modifier-border) !important;
+    margin: 0 !important;
+    padding: 0 !important;
+    display: flex !important;
+    justify-content: space-between !important;
+    min-height: 38px !important;
+    height: 38px !important;
+}
+
+.tabs-wrapper {
+    display: flex !important;
+    height: 38px !important;
+    min-height: 38px !important;
+}
+
+.tab-item {
+    padding: 8px 16px !important;
+    cursor: pointer !important;
+    border-bottom: 2px solid transparent !important;
+    transition: all 0.2s ease !important;
+    height: 38px !important;
+    display: flex !important;
+    align-items: center !important;
+    box-sizing: border-box !important;
+    position: relative !important;
+    color: var(--text-normal) !important;
+}
+
+.tab-item.active {
+    border-bottom: 2px solid var(--text-accent) !important;
+    color: var(--text-accent) !important;
+    font-weight: bold !important;
+}
+
+/* 3. TOOLBAR - always below main tabs with consistent positioning */
+.transcript-toolbar-container,
+.revised-toolbar-container,
+.summary-toolbar-container,
+.chat-toolbar-container {
+    position: absolute !important;
+    top: 116px !important; /* Increased from 76px to 116px to move it down */
+    left: 0 !important;
+    right: 0 !important;
+    height: 40px !important;
+    min-height: 40px !important;
+    max-height: 40px !important;
+    z-index: 18 !important;
+    background-color: var(--background-secondary-alt) !important;
+    border-bottom: 1px solid var(--background-modifier-border) !important;
+    display: flex !important;
+    width: 100% !important;
+    box-sizing: border-box !important;
+    box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1) !important;
+}
+
+/* 4. CONTENT - always below toolbar with consistent positioning */
+.transcript-content,
+.revised-content,
+.summary-content,
+.chat-content {
+    position: absolute !important;
+    top: 156px !important; /* Increased from 116px to 156px to match toolbar change */
+    left: 0 !important;
+    right: 0 !important;
+    bottom: 80px !important;
+    overflow-y: auto !important;
+    overflow-x: hidden !important;
+    padding: 15px !important;
+    background-color: transparent !important;
+}
+
+/* 5. Force all toolbars to use the exact same positioning */
+.toolbar-container {
+    display: flex !important;
+    align-items: center !important;
+    padding: 8px 10px !important;
+    gap: 6px !important;
+    height: 40px !important;
+    width: 100% !important;
+    box-sizing: border-box !important;
+}
+
+/* 6. Consistent styling for the start over button */
+.start-over-button {
+    background-color: var(--background-modifier-error) !important;
+    color: var(--text-on-accent) !important;
+    font-weight: bold !important;
+    border: none !important;
+    padding: 6px 12px !important;
+    border-radius: 4px !important;
+    cursor: pointer !important;
+    margin-right: 10px !important;
+    align-self: center !important;
+    display: inline-flex !important;
+    align-items: center !important;
+    height: 30px !important;
+    min-height: 30px !important;
+    max-height: 30px !important;
+    box-shadow: 0 1px 2px rgba(0, 0, 0, 0.2) !important;
+}
+
+.start-over-button svg {
+    width: 16px !important;
+    height: 16px !important;
+    margin-right: 6px !important;
+}
+
+/* =======================
    LAYOUT STRUCTURE
    ======================= */
 .skribe-plugin {
@@ -32,186 +198,74 @@ div.view-content.skribe-plugin {
     padding: 0 !important;
 }
 
-/* Container styles for all tab types */
-.transcript-container, 
-.revised-container,
-.summary-container,
-.chat-container {
-    position: relative;
-    width: 100%;
-    height: 100%;
-    overflow: hidden !important; /* Prevent container scrolling */
-    box-sizing: border-box;
-    padding: 0;
-    margin: 0;
-    margin-top: 0; /* Removed the 32px margin-top */
-    background-color: var(--background-primary);
-    flex: 1;
+/* Adjusted - Remove top space where the nav-header was */
+.workspace-leaf-content[data-type="skribe-view"] .nav-header {
+    display: none !important;
 }
 
-/* Video title and URL container - with increased height */
-.video-url-container {
-    position: absolute;
-    text-align: center;
-    padding: 10px 15px;
-    background-color: var(--background-primary);
-    border-bottom: 1px solid var(--background-modifier-border);
-    width: 100%;
-    box-sizing: border-box;
-    z-index: 5;
-    top: 0; /* Position at the very top */
-    height: 60px; /* Increased height for proper spacing and content */
-}
-
-.video-title {
-    font-weight: bold;
-    font-size: 1em;
-    color: var(--text-accent);
-    white-space: nowrap;
-    overflow: hidden;
-    text-overflow: ellipsis;
-    max-width: 90%;
-    margin: 2px auto 8px;
-}
-
-.video-url-link {
-    color: var(--text-accent);
-    text-decoration: none;
-    font-size: 0.85em;
-    white-space: nowrap;
-    overflow: hidden;
-    text-overflow: ellipsis;
-    display: block;
-    max-width: 90%;
-    margin: 0 auto;
-    opacity: 0.8;
-}
-
-/* Move tabs below the title/URL with additional spacing - updated to include start over button */
+/* FIXED LAYOUT POSITIONING - CONSISTENT ACROSS ALL STATES */
+/* Tabs always at fixed position */
 .workspace-leaf-content[data-type="skribe-view"] .tabs-container {
-    position: absolute;
-    top: 60px; /* Exactly below the title/URL container */
-    left: 0;
-    right: 0;
-    z-index: 2;
-    background-color: var(--background-primary);
-    width: 100%;
-    border-bottom: 1px solid var(--background-modifier-border);
-    margin: 0;
-    padding: 0;
-    display: flex;
-    justify-content: space-between; /* This pushes the start over button to the right */
+    /* This positioning is now handled by our unified layout system */
 }
 
-/* Tabs wrapper to keep tabs together on the left */
-.tabs-wrapper {
-    display: flex;
+/* Transcript tabs always below main tabs */
+.transcript-tabs-container,
+.transcript-tabs-row {
+    /* This is now handled by our unified layout */
 }
 
-/* Start Over button styling */
-.start-over-button {
-    background-color: var(--background-modifier-error);
-    color: var(--text-on-accent);
-    font-weight: bold;
-    border: none;
-    padding: 6px 12px;
-    border-radius: 4px;
-    cursor: pointer;
-    margin-right: 10px;
-    margin-top: 4px;
-    margin-bottom: 4px;
-    align-self: center;
-    display: inline-flex;
-    align-items: center;
-    height: 30px;
-    box-shadow: 0 1px 2px rgba(0, 0, 0, 0.2);
-    transition: all 0.2s ease;
-}
-
-.start-over-button:hover {
-    background-color: var(--text-accent);
-    transform: translateY(-1px);
-    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.2);
-}
-
-/* Add a little more space between the icon and text */
-.start-over-button svg {
-    width: 16px;
-    height: 16px;
-    margin-right: 6px;
-}
-
-/* Position toolbar below tabs */
+/* Toolbar ALWAYS positioned below transcript tabs */
 .transcript-toolbar-container,
 .revised-toolbar-container,
 .summary-toolbar-container,
-.chat-toolbar-container {
-    position: absolute;
-    top: 98px; /* Below title (60px) + tabs (38px) */
-    left: 0;
-    right: 0;
-    height: 40px;
-    z-index: 10;
-    background-color: var(--background-primary);
-    border-bottom: 1px solid var(--background-modifier-border);
-}
-
-/* Adjust fixed toolbar positions too */
 .chat-toolbar-container,
-.transcript-toolbar-container,
-.summary-toolbar-container,
-.revised-toolbar-container {
-    position: fixed;
-    top: 98px !important; /* Below title + tabs */
-    left: 0 !important;
-    right: 0 !important;
-    z-index: 100 !important;
-    width: 100% !important;
-    max-width: 100% !important;
-    height: 40px !important;
-    min-height: 40px !important;
-    max-height: 40px !important;
-    background-color: var(--background-primary) !important;
-    border-bottom: 1px solid var(--background-modifier-border) !important;
-    box-shadow: 0 3px 8px rgba(0, 0, 0, 0.1);
-    display: flex !important;
-    visibility: visible !important;
-    opacity: 1 !important;
-    align-items: center !important;
-    padding: 0 !important;
-    margin: 0 !important;
-    padding-right: 0 !important;
-    margin-right: 0 !important;
+div .transcript-toolbar-container,
+div .revised-toolbar-container,
+div .summary-toolbar-container,
+div .chat-toolbar-container,
+.skribe-view .transcript-toolbar-container,
+.skribe-view .revised-toolbar-container,
+.skribe-view .summary-toolbar-container,
+.skribe-view .chat-toolbar-container,
+.skribe-header .transcript-toolbar-container,
+.skribe-header .revised-toolbar-container,
+.skribe-header .summary-toolbar-container,
+.skribe-header .chat-toolbar-container,
+div.transcript-container .transcript-toolbar-container,
+div.revised-container .revised-toolbar-container,
+div.summary-container .summary-toolbar-container,
+div.chat-container .chat-toolbar-container,
+.workspace-leaf-content[data-type="skribe-view"] div.transcript-toolbar-container,
+.workspace-leaf-content[data-type="skribe-view"] div.revised-toolbar-container,
+.workspace-leaf-content[data-type="skribe-view"] div.summary-toolbar-container,
+.workspace-leaf-content[data-type="skribe-view"] div.chat-toolbar-container {
+    /* This is now handled by our unified layout */
 }
 
-/* Update mobile adjustments for tabs */
+/* Removing duplicate toolbar styles - using universal position instead */
+
+/* Mobile adjustments for tabs - now below toolbar */
 html.is-mobile .workspace-leaf-content[data-type="skribe-view"] .tabs-container,
 html.is-phone .workspace-leaf-content[data-type="skribe-view"] .tabs-container,
 body.is-mobile .workspace-leaf-content[data-type="skribe-view"] .tabs-container {
-    top: 60px !important; /* Below title on mobile too */
+    /* This is now handled by our unified layout rules */
 }
 
-/* Mobile title container adjustments */
-html.is-mobile .video-url-container,
-html.is-phone .video-url-container,
-body.is-mobile .video-url-container {
-    top: 0 !important; /* At the top on mobile */
-}
-
-/* Content positioning - adjusted to remove gap below toolbar */
+/* CONTENT - UNIVERSAL POSITION - HIGHEST SPECIFICITY */
 .transcript-content,
 .revised-content,
 .summary-content,
-.chat-content {
-    position: absolute;
-    top: 100px; /* Adjusted to be directly below the toolbar (60px title + 38px tabs + 2px margin) */
-    left: 0;
-    right: 0;
-    bottom: 80px !important; /* Adjusted to move content up slightly */
-    overflow-y: auto;
-    overflow-x: hidden;
-    padding: 15px;
-    background-color: transparent;
+.chat-content,
+.transcript-container .transcript-content,
+.revised-container .revised-content,
+.summary-container .summary-content,
+.chat-container .chat-content,
+.workspace-leaf-content[data-type="skribe-view"] .transcript-content,
+.workspace-leaf-content[data-type="skribe-view"] .revised-content,
+.workspace-leaf-content[data-type="skribe-view"] .summary-content,
+.workspace-leaf-content[data-type="skribe-view"] .chat-content {
+    /* This is now handled by our unified layout */
 }
 
 /* Mobile-specific overrides using Obsidian's detection system */
@@ -327,16 +381,6 @@ body.is-mobile .chat-content {
     z-index: 5;
 }
 
-.workspace-leaf-content[data-type="skribe-view"] .nav-header {
-    display: flex;
-    justify-content: center;
-    align-items: center;
-    position: relative;
-    padding-top: 0px;
-    padding-bottom: 0px;
-    min-height: 40px;
-}
-
 .workspace-leaf-content[data-type="skribe-view"] .nav-buttons-container {
     display: flex;
     justify-content: center;
@@ -356,19 +400,44 @@ body.is-mobile .chat-content {
     -webkit-text-fill-color: transparent;
 }
 
+/* Transcript tabs styling - make them more distinctive */
+.transcript-tab-item {
+    padding: 6px 12px !important;
+    margin-right: 8px !important;
+    border-radius: 4px !important;
+    cursor: pointer !important;
+    white-space: nowrap !important;
+    background-color: var(--background-secondary-alt) !important;
+    font-size: 0.9em !important;
+    border: 1px solid var(--background-modifier-border) !important;
+    transition: all 0.2s ease !important;
+    flex-shrink: 0 !important;
+    box-shadow: 0 1px 2px rgba(0, 0, 0, 0.1) !important;
+    height: 28px !important;
+    display: flex !important;
+    align-items: center !important;
+    margin-top: 5px !important; /* Center vertically in the container */
+}
+
+/* Main tabs styling - make them less prominent than transcript tabs */
 .tab-item {
-    padding: 8px 16px;
-    cursor: pointer;
-    border-bottom: 2px solid transparent;
-    transition: all 0.2s ease;
-    height: 38px; /* Fixed height for tabs */
-    display: flex;
-    align-items: center;
-    box-sizing: border-box;
+    padding: 8px 16px !important;
+    cursor: pointer !important;
+    border-bottom: 2px solid transparent !important;
+    transition: all 0.2s ease !important;
+    height: 38px !important; /* Fixed height for tabs - enforced */
+    display: flex !important;
+    align-items: center !important;
+    box-sizing: border-box !important;
+    z-index: 11 !important; /* Ensure tab items appear above container */
+    position: relative !important; /* Required for z-index to work */
+    color: var(--text-normal) !important;
+    font-size: 0.95em !important;
 }
 
 .tab-item.active, .tab-item:hover {
     border-bottom: 2px solid var(--text-accent);
+    color: var(--text-accent);
 }
 
 .tab-item.active {
@@ -379,16 +448,17 @@ body.is-mobile .chat-content {
    TOP TOOLBAR STYLES
    ======================= */
 .workspace-leaf-content[data-type="skribe-view"] .toolbar-container {
-    display: flex;
-    flex-direction: row;
-    justify-content: space-between;
-    align-items: center;
-    gap: 8px;
-    padding: 8px 10px;
-    margin: 0;
-    transition: all 0.3s ease;
-    background-color: transparent;
-    width: 100%;
+    display: flex !important;
+    flex-direction: row !important;
+    justify-content: space-between !important;
+    align-items: center !important;
+    gap: 8px !important;
+    padding: 8px 10px !important;
+    margin: 0 !important;
+    transition: all 0.3s ease !important;
+    background-color: var(--background-secondary-alt) !important; /* Slightly darker background */
+    width: 100% !important;
+    box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1) !important; /* Subtle shadow for depth */
 }
 
 .workspace-leaf-content[data-type="skribe-view"] .toolbar-container[data-toolbar-id="top"] {
@@ -454,33 +524,20 @@ body.is-mobile .chat-content {
 .transcript-toolbar-container .toolbar-container,
 .summary-toolbar-container .toolbar-container,
 .revised-toolbar-container .toolbar-container {
-    margin: 0;
-    padding: 8px 10px;
-    display: flex;
-    flex-direction: row;
-    align-items: center;
-    flex: 1;
-    background-color: var(--background-primary) !important;
-    padding-right: 10px;
-    width: 100%;
-    gap: 6px;
+    margin: 0 !important;
+    padding: 8px 10px !important;
+    display: flex !important;
+    flex-direction: row !important;
+    align-items: center !important;
+    flex: 1 !important;
+    background-color: var(--background-secondary-alt) !important;
+    padding-right: 10px !important;
+    width: 100% !important;
+    gap: 6px !important;
+    box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1) !important;
 }
 
-/* Mobile toolbar adjustments */
-html.is-mobile .chat-toolbar-container,
-html.is-mobile .transcript-toolbar-container,
-html.is-mobile .summary-toolbar-container,
-html.is-mobile .revised-toolbar-container,
-html.is-phone .chat-toolbar-container,
-html.is-phone .transcript-toolbar-container,
-html.is-phone .summary-toolbar-container,
-html.is-phone .revised-toolbar-container,
-body.is-mobile .chat-toolbar-container,
-body.is-mobile .transcript-toolbar-container,
-body.is-mobile .summary-toolbar-container,
-body.is-mobile .revised-toolbar-container {
-    top: 98px !important; /* Matches desktop position */
-}
+/* Mobile toolbar adjustments overridden by universal toolbar styles */
 
 /* Keep the model indicator style */
 .model-indicator {
@@ -591,9 +648,7 @@ body.is-mobile .revised-toolbar-container {
 
 /* Removed duplicate definition */
 
-.video-url-link:hover {
-    text-decoration: underline;
-}
+/* Removed video-url-link hover style */
 
 .audio-controls {
     border-top: 0;
@@ -1259,4 +1314,397 @@ body.is-mobile .revised-toolbar-container {
     border-radius: 50%;
     border-top-color: var(--interactive-accent);
     animation: skribe-spin 1s linear infinite;
+}
+
+/* Separator between transcripts */
+.transcript-separator {
+    margin: 30px 0;
+    border-top: 3px solid var(--interactive-accent);
+    position: relative;
+    padding-top: 10px;
+    padding-bottom: 10px;
+}
+
+/* Add a title label to the separator */
+.transcript-separator-title {
+    position: absolute;
+    top: -15px;
+    left: 50%;
+    transform: translateX(-50%);
+    background-color: var(--background-primary);
+    padding: 0 15px;
+    font-weight: bold;
+    color: var(--interactive-accent);
+    font-size: 1.1em;
+}
+
+/* Add styling for the new header container */
+.skribe-header {
+    position: absolute;
+    top: 0;
+    left: 0;
+    right: 0;
+    z-index: 9; /* Lower than tabs to avoid conflicts */
+    background-color: var(--background-primary);
+    border-bottom: 2px solid var(--interactive-accent);
+    height: auto;
+    min-height: 36px;
+    padding: 4px 0;
+    display: flex;
+    flex-direction: column;
+}
+
+/* Move transcript tabs to the top (to replace nav-header) */
+.transcript-tabs-container {
+    position: relative;
+    top: 0;
+    left: 0;
+    right: 0;
+    background-color: var(--background-primary);
+    border-bottom: 2px solid var(--interactive-accent);
+    border-top: none;
+    padding: 8px 15px;
+    z-index: 10;
+    display: flex;
+    flex-wrap: nowrap;
+    overflow-x: auto;
+    scrollbar-width: thin;
+    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+}
+
+/* Removed positioning for video container */
+
+/* Adjust tab container positioning when inside header */
+.skribe-header .transcript-tabs-container {
+    border-bottom: none;
+    box-shadow: none;
+}
+
+/* Super specific selector for skribe-header toolbar positioning */
+.skribe-header + .transcript-container .transcript-toolbar-container,
+.skribe-header + .revised-container .revised-toolbar-container,
+.skribe-header + .summary-container .summary-toolbar-container,
+.skribe-header + .chat-container .chat-toolbar-container,
+.skribe-header ~ .transcript-container .transcript-toolbar-container,
+.skribe-header ~ .revised-container .revised-toolbar-container,
+.skribe-header ~ .summary-container .summary-toolbar-container,
+.skribe-header ~ .chat-container .chat-toolbar-container {
+    /* This is now handled by our unified layout */
+}
+
+/* Container styles for all tab types */
+.transcript-container, 
+.revised-container,
+.summary-container,
+.chat-container {
+    position: relative;
+    width: 100%;
+    height: 100%;
+    overflow: hidden !important; /* Prevent container scrolling */
+    box-sizing: border-box;
+    padding: 0;
+    margin: 0;
+    margin-top: 0; /* Removed the 32px margin-top */
+    background-color: var(--background-primary);
+    flex: 1;
+}
+
+/* Transcript tabs header */
+.transcript-tabs-header {
+    font-weight: bold;
+    margin-right: 10px;
+    color: var(--text-normal);
+    display: flex;
+    align-items: center;
+    white-space: nowrap;
+    font-size: 0.9em;
+}
+
+.transcript-tab-item {
+    padding: 6px 12px;
+    margin-right: 8px;
+    border-radius: 4px;
+    cursor: pointer;
+    white-space: nowrap;
+    background-color: var(--background-secondary-alt);
+    font-size: 0.9em;
+    border: 1px solid var(--background-modifier-border);
+    transition: all 0.2s ease;
+    flex-shrink: 0;
+    box-shadow: 0 1px 2px rgba(0, 0, 0, 0.1);
+}
+
+.transcript-tab-item:hover {
+    background-color: var(--background-modifier-hover);
+    transform: translateY(-1px);
+    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.15);
+}
+
+.transcript-tab-item.active {
+    background-color: var(--interactive-accent) !important;
+    color: var(--text-on-accent) !important;
+    font-weight: bold !important;
+    border-color: var(--interactive-accent) !important;
+    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.2) !important;
+}
+
+/* Transcript content with tabs, now simpler positioning */
+.transcript-content.with-transcript-tabs {
+    padding-top: 10px;
+}
+
+/* Super specific selector for skribe-header content positioning */
+.skribe-header + .transcript-container .transcript-content,
+.skribe-header + .revised-container .revised-content,
+.skribe-header + .summary-container .summary-content,
+.skribe-header + .chat-container .chat-content,
+.skribe-header ~ .transcript-container .transcript-content,
+.skribe-header ~ .revised-container .revised-content,
+.skribe-header ~ .summary-container .summary-content,
+.skribe-header ~ .chat-container .chat-content {
+    /* This is now handled by our unified layout */
+}
+
+/* Adjust main tabs position when skribe-header exists */
+.skribe-header + .tabs-container {
+    /* This is now handled by our unified layout */
+}
+
+/* Mobile-specific overrides for skribe-header */
+html.is-mobile .skribe-header,
+html.is-phone .skribe-header,
+body.is-mobile .skribe-header {
+    top: 0 !important;
+    z-index: 20 !important;
+}
+
+/* MOBILE CONTENT - UNIVERSAL POSITION */
+html.is-mobile .transcript-content,
+html.is-mobile .revised-content,
+html.is-mobile .summary-content,
+html.is-mobile .chat-content,
+html.is-phone .transcript-content,
+html.is-phone .revised-content,
+html.is-phone .summary-content,
+html.is-phone .chat-content,
+body.is-mobile .transcript-content,
+body.is-mobile .revised-content,
+body.is-mobile .summary-content,
+body.is-mobile .chat-content {
+    padding-bottom: 80px !important; /* Extra space for mobile */
+}
+
+/* Styling for transcript title */
+.transcript-title {
+    margin-top: 0;
+    margin-bottom: 20px;
+    padding-bottom: 10px;
+    border-bottom: 1px solid var(--background-modifier-border);
+    color: var(--text-accent);
+    font-size: 1.4em;
+}
+
+/* Ensure transcript content is visible */
+.transcript-content {
+    width: 100%;
+    height: auto;
+    overflow-y: auto;
+    padding: 15px 20px;
+    display: block !important;
+    visibility: visible !important;
+    opacity: 1 !important;
+}
+
+/* Make sure transcript paragraphs are visible */
+.transcript-paragraph {
+    margin-bottom: 12px;
+    line-height: 1.5;
+    font-size: 1.1em;
+    padding: 0 0 0.2em 0;
+    display: block !important;
+    visibility: visible !important;
+    opacity: 1 !important;
+}
+
+/* Transcript header label */
+.transcript-header-label {
+    display: none;
+}
+
+/* Transcript tabs row */
+.transcript-tabs-row {
+    display: flex;
+    flex-wrap: nowrap;
+    overflow-x: auto;
+    padding: 8px 10px;
+    gap: 8px;
+    scrollbar-width: thin;
+    width: 100%;
+    justify-content: flex-start;
+}
+
+/* Enhanced styles for transcript tab items */
+.transcript-tab-item {
+    padding: 6px 12px;
+    margin-right: 0; /* Use gap in the parent instead */
+    border-radius: 4px;
+    cursor: pointer;
+    white-space: nowrap;
+    background-color: var(--background-secondary-alt);
+    font-size: 0.9em;
+    border: 1px solid var(--background-modifier-border);
+    transition: all 0.2s ease;
+    flex-shrink: 0;
+    box-shadow: 0 1px 2px rgba(0, 0, 0, 0.1);
+}
+
+/* Mobile styles - ensure everything stays in the correct position */
+html.is-mobile .transcript-tabs-container,
+html.is-phone .transcript-tabs-container,
+html.is-mobile .transcript-tabs-row,
+html.is-phone .transcript-tabs-row,
+body.is-mobile .transcript-tabs-container,
+body.is-mobile .transcript-tabs-row {
+    top: 0 !important;
+    height: 38px !important;
+    padding: 0 10px !important;
+}
+
+html.is-mobile .workspace-leaf-content[data-type="skribe-view"] .tabs-container,
+html.is-phone .workspace-leaf-content[data-type="skribe-view"] .tabs-container,
+body.is-mobile .workspace-leaf-content[data-type="skribe-view"] .tabs-container {
+    top: 38px !important;
+    height: 38px !important;
+}
+
+html.is-mobile .transcript-toolbar-container,
+html.is-mobile .revised-toolbar-container,
+html.is-mobile .summary-toolbar-container,
+html.is-mobile .chat-toolbar-container,
+html.is-phone .transcript-toolbar-container,
+html.is-phone .revised-toolbar-container,
+html.is-phone .summary-toolbar-container,
+html.is-phone .chat-toolbar-container,
+body.is-mobile .transcript-toolbar-container,
+body.is-mobile .revised-toolbar-container,
+body.is-mobile .summary-toolbar-container,
+body.is-mobile .chat-toolbar-container {
+    top: 76px !important;
+    height: 40px !important;
+}
+
+html.is-mobile .transcript-content,
+html.is-mobile .revised-content,
+html.is-mobile .summary-content,
+html.is-mobile .chat-content,
+html.is-phone .transcript-content,
+html.is-phone .revised-content,
+html.is-phone .summary-content,
+html.is-phone .chat-content,
+body.is-mobile .transcript-content,
+body.is-mobile .revised-content,
+body.is-mobile .summary-content,
+body.is-mobile .chat-content {
+    top: 116px !important;
+    bottom: 0px !important;
+    padding-bottom: 80px !important;
+}
+
+/* Override for skribe-header if it exists */
+.skribe-header + .transcript-tabs-container,
+.skribe-header ~ .transcript-tabs-container,
+.skribe-header + .transcript-tabs-row,
+.skribe-header ~ .transcript-tabs-row {
+    top: 0 !important;
+}
+
+.skribe-header + .tabs-container,
+.skribe-header ~ .tabs-container {
+    top: 38px !important;
+}
+
+.skribe-header + .transcript-toolbar-container,
+.skribe-header ~ .transcript-toolbar-container,
+.skribe-header + .revised-toolbar-container,
+.skribe-header ~ .revised-toolbar-container,
+.skribe-header + .summary-toolbar-container,
+.skribe-header ~ .summary-toolbar-container,
+.skribe-header + .chat-toolbar-container,
+.skribe-header ~ .chat-toolbar-container {
+    top: 76px !important;
+}
+
+.skribe-header + .transcript-content,
+.skribe-header ~ .transcript-content,
+.skribe-header + .revised-content,
+.skribe-header ~ .revised-content,
+.skribe-header + .summary-content,
+.skribe-header ~ .summary-content,
+.skribe-header + .chat-content,
+.skribe-header ~ .chat-content {
+    top: 116px !important;
+}
+
+/* Adjust styling for the video title text */
+.video-title {
+    font-weight: bold !important;
+    color: var(--text-normal) !important;
+    margin-right: 8px !important;
+    overflow: hidden !important;
+    text-overflow: ellipsis !important;
+    white-space: nowrap !important;
+    max-width: 75% !important;
+}
+
+/* Fix for the URL container - making it taller to fit title text */
+.video-url-container {
+    position: absolute !important;
+    top: 38px !important; /* Position exactly below transcript tabs */
+    left: 0 !important;
+    right: 0 !important;
+    z-index: 19 !important;
+    background-color: var(--background-secondary-alt) !important;
+    padding: 6px 15px !important;
+    font-size: 0.85em !important;
+    min-height: 26px !important; /* Taller to fit content */
+    height: auto !important; /* Allow for auto-height based on content */
+    max-height: 52px !important; /* Limit maximum height */
+    overflow: hidden !important;
+    white-space: nowrap !important;
+    text-overflow: ellipsis !important;
+    display: flex !important;
+    align-items: center !important;
+    border-bottom: 1px solid var(--background-modifier-border) !important;
+    flex-wrap: wrap !important;
+}
+
+/* Adjust main tabs when URL is present - increase offset */
+.video-url-container + .tabs-container,
+.workspace-leaf-content[data-type="skribe-view"] .video-url-container ~ .tabs-container {
+    top: 70px !important; /* Increased from 62px to 70px */
+}
+
+/* Adjust toolbar when URL is present */
+.workspace-leaf-content[data-type="skribe-view"] .video-url-container ~ .transcript-toolbar-container,
+.workspace-leaf-content[data-type="skribe-view"] .video-url-container ~ .revised-toolbar-container, 
+.workspace-leaf-content[data-type="skribe-view"] .video-url-container ~ .summary-toolbar-container,
+.workspace-leaf-content[data-type="skribe-view"] .video-url-container ~ .chat-toolbar-container {
+    top: 148px !important; /* Adjusted to 148px to match increase */
+}
+
+/* Adjust content when URL is present */
+.workspace-leaf-content[data-type="skribe-view"] .video-url-container ~ .transcript-content,
+.workspace-leaf-content[data-type="skribe-view"] .video-url-container ~ .revised-content,
+.workspace-leaf-content[data-type="skribe-view"] .video-url-container ~ .summary-content,
+.workspace-leaf-content[data-type="skribe-view"] .video-url-container ~ .chat-content {
+    top: 188px !important; /* Adjusted to 188px to match increase */
+}
+
+.video-url-link {
+    color: var(--text-accent) !important;
+    text-decoration: none !important;
+}
+
+.video-url-link:hover {
+    text-decoration: underline !important;
 }

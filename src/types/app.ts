@@ -15,11 +15,15 @@ export interface SkribeState {
     content: string;
     videoUrl: string;
     videoTitle: string;
-    revisedContent: string;
-    summaryContent: string;
-    chatState: ChatState;
+    revisedContents: { [index: number]: string }; // Map of transcript index to revised content
+    summaryContents: { [index: number]: string }; // Map of transcript index to summary content
+    chatStates: { [index: number]: ChatState }; // Map of transcript index to chat state
+    summaryContent?: string; // Legacy field for backward compatibility
+    chatState?: ChatState; // Legacy field for backward compatibility
     activeTab: 'transcript' | 'revised' | 'summary' | 'chat';
     lastUpdated: number;
+    transcripts?: { content: string, title: string, url: string }[];
+    activeTranscriptIndex?: number;
 }
 
 export const DEFAULT_SETTINGS: SkribeSettings = {
@@ -73,6 +77,16 @@ export interface CommandContext {
     videoUrl?: string;
     videoTitle?: string;
     activeTab?: string;
+    chatMessages?: ChatMessage[];
+    chatState?: ChatState;
+    chatStates?: { [index: number]: ChatState };
+    summaryContent?: string;
+    summaryContents?: { [index: number]: string };
+    revisedContent?: string;
+    revisedContents?: { [index: number]: string };
+    activeTranscriptIndex?: number;
+    transcripts?: { content: string, title: string, url: string }[];
+    showQuips?: boolean;
     [key: string]: any; // Allow for additional context properties
 }
 
