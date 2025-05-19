@@ -57,6 +57,9 @@ export class SkribeView extends ItemView {
      * This is displayed when there are no transcripts
      */
     private createWelcomeScreen(container: HTMLElement): void {
+        // Clear the container first
+        container.empty();
+        
         // Create center container for welcome screen
         const centerContainer = container.createDiv({
             cls: 'empty-state-center-container'
@@ -183,8 +186,9 @@ export class SkribeView extends ItemView {
         const hasState = this.loadSavedState();
         
         if (!hasState) {
-            // Only refresh directly if we don't have saved state
-            this.refresh();
+            // No saved state, make sure we show the welcome screen
+            console.log('No saved state found, showing welcome screen');
+            this.resetView(); // Use resetView which properly sets up the welcome screen
         }
         // If we loaded state, the refresh was already called in loadSavedState
     }
@@ -244,6 +248,17 @@ export class SkribeView extends ItemView {
         this.summaryContainer.style.display = this.activeTab === 'summary' ? 'block' : 'none';
         this.chatContainer.style.display = this.activeTab === 'chat' ? 'block' : 'none';
         this.globalChatContainer.style.display = this.activeTab === 'chat-all' ? 'block' : 'none';
+        
+        // Check if we need to show the welcome screen (no content and no transcripts)
+        if (this.transcripts.length === 0 && !this.content) {
+            // Create welcome screen directly under transcript-container
+            this.createWelcomeScreen(this.transcriptContainer);
+            
+            // Always add global chat input regardless of active tab
+            this.createGlobalChatInput(container);
+            
+            return; // Exit early since we've handled the empty state
+        }
         
         // Always render transcript content if it exists
         await this.renderTranscriptToolbar();
@@ -1627,13 +1642,13 @@ export class SkribeView extends ItemView {
         });
         this.globalChatContainer.style.display = 'none';
         
-        // Create a new content area within the transcript container
+        // Create a placeholder for transcript content (will be empty)
         const transcriptContentEl = this.transcriptContainer.createDiv({
             cls: 'transcript-content'
         });
         
-        // Create the welcome screen directly
-        this.createWelcomeScreen(transcriptContentEl);
+        // Create the welcome screen directly under transcript-container
+        this.createWelcomeScreen(this.transcriptContainer);
         
         console.log('View reset to welcome screen');
     }
@@ -1955,14 +1970,14 @@ export class SkribeView extends ItemView {
         console.log('Last updated:', new Date(savedState.lastUpdated || 0).toLocaleString());
         
         // Validate if we have content to restore
-        if (!savedState.content) {
-            console.log('Saved state has no content, skipping restore');
+        if (!savedState.content && (!savedState.transcripts || savedState.transcripts.length === 0)) {
+            console.log('Saved state has no content or transcripts, skipping restore');
             return false;
         }
         
         try {
             // Restore state
-            this.content = savedState.content;
+            this.content = savedState.content || '';
             this.videoUrl = savedState.videoUrl || '';
             this.videoTitle = savedState.videoTitle || '';
             this.revisedContents = savedState.revisedContents || {} as { [index: number]: string };
@@ -1975,25 +1990,32 @@ export class SkribeView extends ItemView {
             this.transcripts = savedState.transcripts || [];
             this.activeTranscriptIndex = savedState.activeTranscriptIndex || 0;
             
-            // For backwards compatibility, if there was a legacy revisedContent, add it to the active transcript
-            if ('revisedContent' in savedState && typeof savedState.revisedContent === 'string') {
+            // For backwards compatibility with older versions
+            const typedState = savedState as SkribeState & {
+                revisedContent?: string;
+                summaryContent?: string;
+                chatState?: ChatState;
+            };
+            
+            // Check for legacy revisedContent
+            if (typedState.revisedContent && typeof typedState.revisedContent === 'string') {
                 if (this.activeTranscriptIndex !== undefined) {
-                    this.revisedContents[this.activeTranscriptIndex] = savedState.revisedContent as string;
+                    this.revisedContents[this.activeTranscriptIndex] = typedState.revisedContent;
                 }
                 // Also keep the legacy field in case it's needed
-                this.revisedContent = savedState.revisedContent as string;
+                this.revisedContent = typedState.revisedContent;
             }
             
-            // For backwards compatibility, if there was a legacy summaryContent, add it to the active transcript
-            if ('summaryContent' in savedState && typeof savedState.summaryContent === 'string' && savedState.summaryContent) {
+            // Check for legacy summaryContent
+            if (typedState.summaryContent && typeof typedState.summaryContent === 'string') {
                 if (this.activeTranscriptIndex !== undefined && !this.summaryContents[this.activeTranscriptIndex]) {
-                    this.summaryContents[this.activeTranscriptIndex] = savedState.summaryContent as string;
+                    this.summaryContents[this.activeTranscriptIndex] = typedState.summaryContent;
                 }
             }
             
-            // For backwards compatibility, if there was a legacy chatState, add it to the active transcript
-            if ('chatState' in savedState && savedState.chatState && !this.chatStates[this.activeTranscriptIndex]) {
-                this.chatStates[this.activeTranscriptIndex] = savedState.chatState;
+            // Check for legacy chatState
+            if (typedState.chatState && !this.chatStates[this.activeTranscriptIndex]) {
+                this.chatStates[this.activeTranscriptIndex] = typedState.chatState;
             }
             
             // Log what content was set
@@ -2728,8 +2750,21 @@ export class SkribeView extends ItemView {
         // If no transcripts, show welcome screen instead of simple message
         if (this.transcripts.length === 0) {
             console.log('No transcripts available, showing welcome screen');
-            this.createWelcomeScreen(transcriptContentEl);
+            // Remove any existing welcome screen
+            const existingWelcomeScreen = this.transcriptContainer.querySelector('.empty-state-center-container');
+            if (existingWelcomeScreen) {
+                existingWelcomeScreen.remove();
+            }
+            
+            // Create welcome screen directly under transcript-container instead of in transcript-content
+            this.createWelcomeScreen(this.transcriptContainer);
             return;
+        }
+        
+        // If there are transcripts, make sure we remove any welcome screen that might exist
+        const welcomeScreen = this.transcriptContainer.querySelector('.empty-state-center-container');
+        if (welcomeScreen) {
+            welcomeScreen.remove();
         }
         
         // Get the active transcript
