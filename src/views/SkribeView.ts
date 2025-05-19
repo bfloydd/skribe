@@ -52,6 +52,88 @@ export class SkribeView extends ItemView {
         return this.welcomeMessages[randomIndex];
     }
 
+    /**
+     * Creates a welcome screen with logo, message, and input field
+     * This is displayed when there are no transcripts
+     */
+    private createWelcomeScreen(container: HTMLElement): void {
+        // Create center container for welcome screen
+        const centerContainer = container.createDiv({
+            cls: 'empty-state-center-container'
+        });
+
+        // Create container for welcome screen content
+        const emptyStateContainer = centerContainer.createDiv({
+            cls: 'empty-state-container'
+        });
+
+        // Add logo
+        const logoContainer = emptyStateContainer.createDiv({
+            cls: 'empty-state-logo-container'
+        });
+        
+        // Create and set logo image
+        const logoPath = getLogoPath();
+        const logoImg = logoContainer.createEl('img', {
+            cls: 'empty-state-logo',
+            attr: {
+                src: logoPath,
+                alt: 'Skribe Logo'
+            }
+        });
+
+        // Add welcome message
+        const messageEl = emptyStateContainer.createDiv({
+            cls: 'empty-state-message',
+            text: this.getRandomWelcomeMessage()
+        });
+
+        // Add input container
+        const inputContainer = emptyStateContainer.createDiv({
+            cls: 'empty-state-input-container'
+        });
+
+        // Add URL input
+        const urlInput = inputContainer.createEl('input', {
+            cls: 'empty-state-url-input',
+            attr: {
+                type: 'text',
+                placeholder: 'Enter YouTube URL...'
+            }
+        });
+
+        // Add submit button
+        const submitButton = inputContainer.createEl('button', {
+            cls: 'empty-state-get-button',
+            text: ''
+        });
+        
+        // Add icon to button
+        setIcon(submitButton, 'arrow-right');
+
+        // Add event listeners
+        urlInput.addEventListener('keydown', (e: KeyboardEvent) => {
+            if (e.key === 'Enter') {
+                this.handleUrlSubmit(urlInput.value);
+            }
+        });
+
+        submitButton.addEventListener('click', () => {
+            this.handleUrlSubmit(urlInput.value);
+        });
+    }
+
+    // Add handleUrlSubmit method to process URL input
+    private handleUrlSubmit(url: string): void {
+        if (!url.trim()) {
+            new Notice('Please enter a YouTube URL');
+            return;
+        }
+
+        // Use TranscriptManager to fetch transcript
+        this.plugin.transcriptManager.fetchAndResetView(url);
+    }
+
     constructor(leaf: WorkspaceLeaf, plugin: SkribePlugin) {
         super(leaf);
         this.plugin = plugin;
@@ -132,14 +214,22 @@ export class SkribeView extends ItemView {
         this.revisedContainer = container.createDiv({
             cls: 'revised-container'
         });
+        this.revisedContainer.style.display = 'none';
         
         this.summaryContainer = container.createDiv({
             cls: 'summary-container'
         });
+        this.summaryContainer.style.display = 'none';
         
         this.chatContainer = container.createDiv({
             cls: 'chat-container'
         });
+        this.chatContainer.style.display = 'none';
+        
+        this.globalChatContainer = container.createDiv({
+            cls: 'global-chat-container chat-container'
+        });
+        this.globalChatContainer.style.display = 'none';
         
         // Add global chat container if it doesn't exist
         if (!this.globalChatContainer) {
@@ -1502,23 +1592,50 @@ export class SkribeView extends ItemView {
             this.plugin.saveSettings();
         }
         
-        // Force clear any DOM elements that might be persisting
-        if (this.transcriptContainer) {
-            this.transcriptContainer.empty();
-        }
-        if (this.revisedContainer) {
-            this.revisedContainer.empty();
-        }
-        if (this.summaryContainer) {
-            this.summaryContainer.empty();
-        }
-        if (this.chatContainer) {
-            this.chatContainer.empty();
-        }
+        // Get the main container
+        const mainContainer = this.containerEl.children[1] as HTMLElement;
         
-        // Refresh the view
-        console.log('Calling refresh after reset');
-        this.refresh();
+        // Completely clear everything to ensure a fresh start
+        mainContainer.empty();
+        
+        // Create a completely new transcript container
+        this.transcriptContainer = mainContainer.createDiv({
+            cls: 'transcript-container'
+        });
+        
+        // Ensure the container is visible
+        this.transcriptContainer.style.display = 'block';
+        
+        // Create the other containers (but don't display them)
+        this.revisedContainer = mainContainer.createDiv({
+            cls: 'revised-container'
+        });
+        this.revisedContainer.style.display = 'none';
+        
+        this.summaryContainer = mainContainer.createDiv({
+            cls: 'summary-container'
+        });
+        this.summaryContainer.style.display = 'none';
+        
+        this.chatContainer = mainContainer.createDiv({
+            cls: 'chat-container'
+        });
+        this.chatContainer.style.display = 'none';
+        
+        this.globalChatContainer = mainContainer.createDiv({
+            cls: 'global-chat-container chat-container'
+        });
+        this.globalChatContainer.style.display = 'none';
+        
+        // Create a new content area within the transcript container
+        const transcriptContentEl = this.transcriptContainer.createDiv({
+            cls: 'transcript-content'
+        });
+        
+        // Create the welcome screen directly
+        this.createWelcomeScreen(transcriptContentEl);
+        
+        console.log('View reset to welcome screen');
     }
 
     /**
@@ -2608,13 +2725,10 @@ export class SkribeView extends ItemView {
         // Now using transcriptContentEl as HTMLElement
         transcriptContentEl.empty();
         
-        // If no transcripts, show empty message
+        // If no transcripts, show welcome screen instead of simple message
         if (this.transcripts.length === 0) {
-            console.log('No transcripts available, showing empty message');
-            const emptyMessage = transcriptContentEl.createDiv({
-                cls: 'empty-content-message',
-                text: 'No transcript content yet. Enter a YouTube URL to get started.'
-            });
+            console.log('No transcripts available, showing welcome screen');
+            this.createWelcomeScreen(transcriptContentEl);
             return;
         }
         

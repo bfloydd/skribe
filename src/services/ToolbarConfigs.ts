@@ -21,11 +21,28 @@ const createStartOverCommand = (): ToolbarCommand => ({
         }
 
         try {
+            // Confirm before resetting
+            const confirmReset = confirm("Are you sure you want to start over? This will clear all transcripts and data.");
+            
+            if (!confirmReset) {
+                console.log('Reset cancelled by user');
+                return;
+            }
+            
             // Ensure we're working with the SkribeView instance
             const view = context.view;
             if (typeof view.resetView === 'function') {
+                // This will now automatically show the welcome screen
                 await view.resetView();
-                console.log('View reset successfully');
+                
+                // Additionally clear the savedState in settings to ensure data.json is fully cleared
+                if (context.plugin?.settings) {
+                    context.plugin.settings.savedState = undefined;
+                    await context.plugin.saveSettings();
+                    console.log('Plugin settings savedState cleared from data.json');
+                }
+                
+                console.log('View reset successfully and welcome screen displayed');
             } else {
                 throw new Error('resetView method not found on view');
             }
