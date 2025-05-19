@@ -20,7 +20,8 @@ export interface SkribeState {
     chatStates: { [index: number]: ChatState }; // Map of transcript index to chat state
     summaryContent?: string; // Legacy field for backward compatibility
     chatState?: ChatState; // Legacy field for backward compatibility
-    activeTab: 'transcript' | 'revised' | 'summary' | 'chat';
+    globalChatState?: ChatState; // New field for chat across all transcripts
+    activeTab: 'transcript' | 'revised' | 'summary' | 'chat' | 'chat-all';
     lastUpdated: number;
     transcripts?: { content: string, title: string, url: string }[];
     activeTranscriptIndex?: number;

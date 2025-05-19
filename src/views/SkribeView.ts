@@ -1,4 +1,4 @@
-import { ItemView, WorkspaceLeaf, setIcon, Notice, MarkdownRenderer, Menu, MenuItem } from 'obsidian';
+import { ItemView, WorkspaceLeaf, setIcon, Notice, MarkdownRenderer, Menu, MenuItem, MarkdownRenderChild } from 'obsidian';
 import type SkribePlugin from '../../main';
 import { OpenAIService } from '../services/OpenAIService';
 import { AudioPlayer } from '../services/AudioPlayer';
@@ -14,7 +14,7 @@ export class SkribeView extends ItemView {
     videoTitle: string = '';
     plugin: SkribePlugin;
     contentEl: HTMLElement;
-    activeTab: 'transcript' | 'revised' | 'summary' | 'chat' = 'transcript';
+    activeTab: 'transcript' | 'revised' | 'summary' | 'chat' | 'chat-all' = 'transcript';
     revisedContent: string = '';
     revisedContents: { [index: number]: string } = {};
     summaryContent: string = '';
@@ -43,6 +43,9 @@ export class SkribeView extends ItemView {
     ];
     showQuips: boolean = true;
     isAtBottom: boolean = true;
+    globalChatState: ChatState | null = null;
+    globalChatContainer: HTMLElement | null = null;
+    loadingContainer: HTMLElement | null = null;
 
     private getRandomWelcomeMessage(): string {
         const randomIndex = Math.floor(Math.random() * this.welcomeMessages.length);
@@ -106,49 +109,22 @@ export class SkribeView extends ItemView {
 
     async refresh() {
         const container = this.containerEl.children[1] as HTMLElement;
-        
-        // Initialize class properties 
-        // This is important for any properties that may be used before they're fully initialized
-        if (!this.transcriptContainer) this.transcriptContainer = document.createElement('div');
-        if (!this.revisedContainer) this.revisedContainer = document.createElement('div');
-        if (!this.summaryContainer) this.summaryContainer = document.createElement('div');
-        if (!this.chatContainer) this.chatContainer = document.createElement('div');
-        
-        // Clear old content
         container.empty();
         
-        container.addClass('skribe-plugin');
+        console.log(`Refreshing SkribeView with tab: ${this.activeTab}, transcript: ${this.activeTranscriptIndex}`);
         
-        // Create header with transcript tabs (if available)
-        const headerEl = this.createHeader(container);
+        // Set up the view header
+        this.createHeader(container);
         
-        // Create video URL display if available
-        if (this.videoUrl) {
-            const urlContainer = container.createDiv({
-                cls: 'video-url-container'
-            });
-            
-            // Add video title if available
-            if (this.videoTitle) {
-                urlContainer.createSpan({
-                    cls: 'video-title',
-                    text: this.videoTitle
-                });
-            }
-            
-            // Add formatted URL as clickable link
-            const urlLink = urlContainer.createEl('a', {
-                cls: 'video-url-link',
-                href: this.videoUrl,
-                text: this.videoUrl
-            });
-            urlLink.target = '_blank';
+        // Display the current video URL/title if it exists
+        if (this.videoUrl || this.videoTitle) {
+            this.createVideoUrlDisplay(container);
         }
         
-        // Create tab buttons
+        // Create the tabs
         this.createTabs(container);
         
-        // Create main content containers
+        // Create containers for each tab content
         this.transcriptContainer = container.createDiv({
             cls: 'transcript-container'
         });
@@ -165,11 +141,19 @@ export class SkribeView extends ItemView {
             cls: 'chat-container'
         });
         
+        // Add global chat container if it doesn't exist
+        if (!this.globalChatContainer) {
+            this.globalChatContainer = container.createDiv({
+                cls: 'global-chat-container chat-container'
+            });
+        }
+        
         // Set container visibility based on active tab
         this.transcriptContainer.style.display = this.activeTab === 'transcript' ? 'block' : 'none';
         this.revisedContainer.style.display = this.activeTab === 'revised' ? 'block' : 'none';
         this.summaryContainer.style.display = this.activeTab === 'summary' ? 'block' : 'none';
         this.chatContainer.style.display = this.activeTab === 'chat' ? 'block' : 'none';
+        this.globalChatContainer.style.display = this.activeTab === 'chat-all' ? 'block' : 'none';
         
         // Always render transcript content if it exists
         await this.renderTranscriptToolbar();
@@ -193,6 +177,8 @@ export class SkribeView extends ItemView {
             }
         } else if (this.activeTab === 'chat') {
             this.renderChatInterface();
+        } else if (this.activeTab === 'chat-all') {
+            this.renderGlobalChatInterface();
         }
         
         // Ensure content is initialized for non-active tabs except transcript (already rendered)
@@ -252,6 +238,21 @@ export class SkribeView extends ItemView {
                         this.plugin.transcriptManager.switchToTranscriptTab(index);
                     }
                 });
+            });
+            
+            // Add Chat All button (left of the add button)
+            const chatAllButton = transcriptTabsDiv.createDiv({
+                cls: 'chat-all-button',
+                attr: {
+                    'aria-label': 'Chat across all transcripts',
+                    'title': 'Chat across all transcripts'
+                }
+            });
+            chatAllButton.innerHTML = '<svg viewBox="0 0 24 24" width="16" height="16"><path fill="currentColor" d="M20 2H4c-1.1 0-2 .9-2 2v18l4-4h14c1.1 0 2-.9 2-2V4c0-1.1-.9-2-2-2zm0 14H5.17L4 17.17V4h16v12z"></path><path d="M7 9h10M7 12h8" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"></path></svg> Chat All';
+            
+            // Add click handler for the Chat All button
+            chatAllButton.addEventListener('click', () => {
+                this.switchToGlobalChat();
             });
             
             // Add a "+" button to add a new transcript
@@ -422,22 +423,19 @@ export class SkribeView extends ItemView {
     }
     
     private createTabItem(container: HTMLElement, text: string, isActive: boolean): HTMLElement {
-        const tabId = text.toLowerCase();
         const tab = container.createDiv({
             cls: `tab-item ${isActive ? 'active' : ''}`,
-            text: text,
             attr: {
-                'data-tab': tabId
+                'data-tab-id': text.toLowerCase()
             }
         });
+        tab.setText(text);
         
-        if (isActive) {
-            tab.style.borderBottom = '2px solid var(--text-accent)';
-            tab.style.fontWeight = 'bold';
-        } else {
-            tab.style.borderBottom = '2px solid transparent';
-            tab.style.fontWeight = 'normal';
-        }
+        // Add click handler to switch tabs
+        tab.addEventListener('click', () => {
+            // @ts-ignore: We've checked in the switch statement that it's a valid tab
+            this.switchToTab(text.toLowerCase());
+        });
         
         return tab;
     }
@@ -1164,7 +1162,7 @@ export class SkribeView extends ItemView {
      * Helper method to switch tabs programmatically
      * This ensures consistent tab switching behavior across the plugin
      */
-    private switchToTab(tab: 'transcript' | 'revised' | 'summary' | 'chat') {
+    private switchToTab(tab: 'transcript' | 'revised' | 'summary' | 'chat' | 'chat-all') {
         // Update active tab state
         this.activeTab = tab;
         
@@ -1812,6 +1810,7 @@ export class SkribeView extends ItemView {
             chatStates: this.chatStates,
             summaryContent: this.summaryContent, // Keep for backward compatibility
             chatState: this.chatState, // Keep for backward compatibility
+            globalChatState: this.globalChatState || { messages: [] }, // Save global chat state
             activeTab: this.activeTab,
             transcripts: this.transcripts,
             activeTranscriptIndex: this.activeTranscriptIndex,
@@ -1854,6 +1853,7 @@ export class SkribeView extends ItemView {
             this.chatStates = savedState.chatStates || {} as { [index: number]: ChatState };
             this.summaryContent = savedState.summaryContent || '';
             this.chatState = savedState.chatState || { messages: [] };
+            this.globalChatState = savedState.globalChatState || { messages: [] }; // Restore global chat state
             this.activeTab = savedState.activeTab || 'transcript';
             this.transcripts = savedState.transcripts || [];
             this.activeTranscriptIndex = savedState.activeTranscriptIndex || 0;
@@ -2100,27 +2100,28 @@ export class SkribeView extends ItemView {
 
     // Update tabs UI when switching tabs
     private updateTabsUI() {
-        const tabsContainer = this.containerEl.querySelector('.tabs-container');
-        if (!tabsContainer) return;
+        // Find all tab items
+        const tabItems = this.containerEl.querySelectorAll('.tab-item');
         
-        // Get the tabs wrapper which contains the tab items
-        const tabsWrapper = tabsContainer.querySelector('.tabs-wrapper');
-        if (!tabsWrapper) return;
-        
-        const tabItems = tabsWrapper.querySelectorAll('.tab-item');
-        tabItems.forEach(tab => {
-            const tabEl = tab as HTMLElement;
-            const tabText = tabEl.textContent || '';
-            if (tabText === this.capitalizeFirstLetter(this.activeTab)) {
+        // Update tab active state
+        tabItems.forEach(item => {
+            const tabEl = item as HTMLElement;
+            const tabId = tabEl.getAttribute('data-tab-id');
+            
+            if (tabId === this.activeTab) {
                 tabEl.classList.add('active');
-                tabEl.style.borderBottom = '2px solid var(--text-accent)';
-                tabEl.style.fontWeight = 'bold';
             } else {
                 tabEl.classList.remove('active');
-                tabEl.style.borderBottom = '2px solid transparent';
-                tabEl.style.fontWeight = 'normal';
             }
         });
+        
+        // In case a tab doesn't exist in the UI (like chat-all), handle it properly
+        if (this.activeTab === 'chat-all') {
+            // Make sure none of the standard tabs are highlighted
+            tabItems.forEach(item => {
+                item.classList.remove('active');
+            });
+        }
     }
 
     /**
@@ -2128,6 +2129,38 @@ export class SkribeView extends ItemView {
      * Used when submitting messages from the global chat input
      */
     private async ensureChatInterfaceAndProcessMessage(message: string) {
+        // Check if we're in global chat mode
+        if (this.activeTab === 'chat-all') {
+            // Initialize global chat state if it doesn't exist
+            if (!this.globalChatState) {
+                this.globalChatState = { messages: [] };
+            }
+            
+            // Add user message to global chat state
+            this.globalChatState.messages.push({
+                role: 'user',
+                content: message
+            });
+            
+            // Save state
+            this.saveState();
+            
+            // Make sure the global chat interface is rendered
+            this.renderGlobalChatInterface();
+            
+            // Get the chat messages container
+            const chatContentEl = this.globalChatContainer?.querySelector('.chat-content') as HTMLElement;
+            if (chatContentEl) {
+                // Process AI response for global chat
+                await this.processGlobalAIResponse(chatContentEl);
+            } else {
+                console.error('Global chat messages container not found');
+            }
+            
+            return;
+        }
+        
+        // Regular transcript-specific chat handling
         // Get the current chat state for this transcript
         let currentChatState = this.chatStates[this.activeTranscriptIndex];
         if (!currentChatState) {
@@ -2168,65 +2201,61 @@ export class SkribeView extends ItemView {
         }, 100);
     }
 
+    // Add a method to clear the global chat
+    public clearGlobalChat() {
+        // Reset global chat messages
+        this.globalChatState = { messages: [] };
+        
+        // Save state
+        this.saveState();
+        
+        // Re-render the global chat interface
+        this.renderGlobalChatInterface();
+    }
+
     private createGlobalChatInput(container: HTMLElement) {
         // Create global chat input container at the bottom
-        const globalChatInputContainer = container.createDiv({
+        const chatInputContainer = container.createDiv({
             cls: 'global-chat-input-container'
         });
         
         // Create chat input
-        const globalChatInput = globalChatInputContainer.createEl('input', {
+        const globalChatInput = chatInputContainer.createEl('input', {
             cls: 'chat-input',
             attr: {
                 type: 'text',
-                placeholder: 'Ask a question...'
+                placeholder: this.activeTab === 'chat-all' ? 'Ask about all transcripts...' : 'Ask about this transcript...',
+                'aria-label': 'Chat input'
             }
         });
         
-        // Store a reference to the chat input
+        // Store reference to chat input
         this.chatInput = globalChatInput;
         
-        // Create split button container
-        const splitButtonContainer = globalChatInputContainer.createDiv({
+        // Create send button container
+        const splitButtonContainer = chatInputContainer.createDiv({
             cls: 'split-button-container'
         });
         
-        // Create main button part
+        // Create send button
         const sendButton = splitButtonContainer.createEl('button', {
             cls: 'split-button-main'
         });
+        sendButton.innerHTML = '<svg viewBox="0 0 24 24"><path fill="currentColor" d="M2,21L23,12L2,3V10L17,12L2,14V21Z" /></svg>';
         
-        // Check if we're on mobile
-        const isMobile = document.body.classList.contains('is-mobile') || 
-                         document.documentElement.classList.contains('is-mobile') || 
-                         document.documentElement.classList.contains('is-phone');
-        
-        if (isMobile) {
-            // For mobile, use text instead of SVG icon
-            sendButton.textContent = '↑';
-        } else {
-            // Desktop: Add send icon
-            setIcon(sendButton, 'arrow-right');
-        }
-        
-        // Create dropdown part
+        // Create dropdown button for quips
         const dropdownButton = splitButtonContainer.createEl('button', {
             cls: 'split-button-dropdown'
         });
+        dropdownButton.innerHTML = '<svg viewBox="0 0 24 24"><path fill="currentColor" d="M7,10L12,15L17,10H7Z" /></svg>';
         
-        if (isMobile) {
-            // For mobile, use text instead of SVG icon
-            dropdownButton.textContent = '↓';
-        } else {
-            // Desktop: Add dropdown icon
-            setIcon(dropdownButton, 'chevron-down');
-        }
-        
-        // Create dropdown menu (initially hidden)
-        const quipsDropdownMenu = container.createDiv({
-            cls: 'quips-dropdown-menu'
-        });
+        // Create quips dropdown menu
+        const quipsDropdownMenu = document.createElement('div');
+        quipsDropdownMenu.className = 'quips-dropdown-menu';
         quipsDropdownMenu.style.display = 'none';
+        document.body.appendChild(quipsDropdownMenu);
+        
+        // Toggle dropdown when clicking the dropdown button
         
         // Populate dropdown with quips
         this.populateQuipsDropdown(quipsDropdownMenu);
@@ -2434,6 +2463,21 @@ export class SkribeView extends ItemView {
                     this.plugin.transcriptManager.switchToTranscriptTab(index);
                 }
             });
+        });
+        
+        // Add Chat All button (left of the add button)
+        const chatAllButton = this.transcriptTabsContainer.createDiv({
+            cls: 'chat-all-button',
+            attr: {
+                'aria-label': 'Chat across all transcripts',
+                'title': 'Chat across all transcripts'
+            }
+        });
+        chatAllButton.innerHTML = '<svg viewBox="0 0 24 24" width="16" height="16"><path fill="currentColor" d="M20 2H4c-1.1 0-2 .9-2 2v18l4-4h14c1.1 0 2-.9 2-2V4c0-1.1-.9-2-2-2zm0 14H5.17L4 17.17V4h16v12z"></path><path d="M7 9h10M7 12h8" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"></path></svg> Chat All';
+        
+        // Add click handler for the Chat All button
+        chatAllButton.addEventListener('click', () => {
+            this.switchToGlobalChat();
         });
         
         // Add a "+" button to add a new transcript
@@ -2689,6 +2733,304 @@ export class SkribeView extends ItemView {
             new Notice('Transcript removed');
         } else {
             console.error(`Invalid transcript index: ${index}`);
+        }
+    }
+
+    // Method to switch to global chat that works across all transcripts
+    private switchToGlobalChat() {
+        console.log('Switching to global chat across all transcripts');
+        
+        // Initialize global chat state if it doesn't exist
+        if (!this.globalChatState) {
+            this.globalChatState = { messages: [] };
+        }
+        
+        // Update active tab to chat-all
+        this.activeTab = 'chat-all';
+        
+        // Hide all other containers
+        if (this.transcriptContainer) this.transcriptContainer.style.display = 'none';
+        if (this.revisedContainer) this.revisedContainer.style.display = 'none';
+        if (this.summaryContainer) this.summaryContainer.style.display = 'none';
+        if (this.chatContainer) this.chatContainer.style.display = 'none';
+        
+        // Check if we already have a global chat container, create if not
+        if (!this.globalChatContainer) {
+            // Get the main container
+            const container = this.containerEl.children[1] as HTMLElement;
+            
+            // Create global chat container
+            this.globalChatContainer = container.createDiv({
+                cls: 'global-chat-container chat-container'
+            });
+        }
+        
+        // Show the global chat container
+        this.globalChatContainer.style.display = 'block';
+        
+        // Render the global chat interface
+        this.renderGlobalChatInterface();
+        
+        // Update tab styles
+        this.updateTabsUI();
+        
+        // Save state
+        this.saveState();
+    }
+
+    // Render the global chat interface that works across all transcripts
+    private renderGlobalChatInterface() {
+        if (!this.globalChatContainer) return;
+        
+        this.globalChatContainer.empty();
+        
+        // Create chat toolbar container
+        const chatToolbarContainer = this.globalChatContainer.createDiv({
+            cls: 'chat-toolbar-container'
+        });
+        
+        // Get fresh command context for the toolbar
+        const toolbarContext = this.getCommandContext();
+        
+        // Add extra context specific to global chat
+        toolbarContext.isGlobalChat = true;
+        toolbarContext.chatMessages = this.globalChatState?.messages || [];
+        
+        // Create chat toolbar with standard context
+        this.plugin.toolbarService.createToolbar(chatToolbarContainer, 'chat', toolbarContext);
+        
+        // Add model indicator to the toolbar
+        const modelIndicator = chatToolbarContainer.createDiv({
+            cls: 'model-indicator'
+        });
+        modelIndicator.innerText = `Model: ${this.plugin.settings.model}`;
+        
+        // Add "Chat All" indicator next to the model
+        const globalChatIndicator = chatToolbarContainer.createDiv({
+            cls: 'global-chat-indicator'
+        });
+        globalChatIndicator.innerHTML = '<svg viewBox="0 0 24 24" width="16" height="16"><path fill="currentColor" d="M20 2H4c-1.1 0-2 .9-2 2v18l4-4h14c1.1 0 2-.9 2-2V4c0-1.1-.9-2-2-2zm0 14H5.17L4 17.17V4h16v12z"></path></svg> Chat All';
+        
+        // Create a single scrollable container for messages
+        const chatContentEl = this.globalChatContainer.createDiv({
+            cls: 'chat-content'
+        });
+        
+        // Add chat messages
+        this.renderGlobalChatMessages(chatContentEl);
+        
+        // Add "Chatting across all transcripts" heading at the top of the chat
+        if (!this.globalChatState?.messages || this.globalChatState.messages.length === 0) {
+            const header = chatContentEl.createDiv({
+                cls: 'global-chat-header'
+            });
+            
+            header.createEl('h3', {
+                text: 'Chatting across all transcripts'
+            });
+            
+            // Create a list of all transcript titles
+            if (this.transcripts && this.transcripts.length > 0) {
+                const transcriptsList = header.createEl('ul', {
+                    cls: 'global-chat-transcripts-list'
+                });
+                
+                this.transcripts.forEach((transcript, index) => {
+                    const title = transcript.title || `Video ${index + 1}`;
+                    transcriptsList.createEl('li', {
+                        text: title
+                    });
+                });
+            }
+        }
+        
+        // Similar event handlers for scrolling as in the regular chat interface
+        // Reuse the same scroll to bottom button
+        if (!this.scrollToBottomButton) {
+            this.scrollToBottomButton = document.createElement('div');
+            this.scrollToBottomButton.className = 'scroll-to-bottom-button hidden';
+            
+            // Check if we're on mobile
+            const isMobile = document.body.classList.contains('is-mobile') || 
+                      document.documentElement.classList.contains('is-mobile') || 
+                      document.documentElement.classList.contains('is-phone');
+            
+            if (isMobile) {
+                // For mobile, use text instead of SVG icon
+                this.scrollToBottomButton.textContent = '↓';
+            } else {
+                // For desktop, use SVG icon
+                this.scrollToBottomButton.innerHTML = '<svg viewBox="0 0 24 24"><path fill="currentColor" d="M7.41,8.58L12,13.17L16.59,8.58L18,10L12,16L6,10L7.41,8.58Z"></path></svg>';
+            }
+            
+            document.body.appendChild(this.scrollToBottomButton);
+            
+            // Scroll button click handler
+            this.scrollToBottomButton.addEventListener('click', (e: MouseEvent) => {
+                this.scrollChatToBottom();
+            });
+        }
+        
+        // Add scroll event listener for chat content
+        let scrollTimeout: NodeJS.Timeout | null = null;
+        const scrollHandler = (e: Event) => {
+            if (scrollTimeout) clearTimeout(scrollTimeout);
+            scrollTimeout = setTimeout(() => {
+                this.checkScrollPosition(chatContentEl);
+                scrollTimeout = null;
+            }, 50);
+        };
+        chatContentEl.addEventListener('scroll', scrollHandler);
+        
+        // Initial check
+        setTimeout(() => this.checkScrollPosition(chatContentEl), 100);
+    }
+    
+    // Render messages for the global chat
+    private renderGlobalChatMessages(container: HTMLElement) {
+        // Clear the container first
+        container.empty();
+        
+        // Check if global chat has any messages
+        if (!this.globalChatState?.messages || this.globalChatState.messages.length === 0) {
+            // Show welcome message for global chat
+            container.createDiv({
+                cls: 'empty-chat-message',
+                text: 'Ask questions about all the transcripts at once'
+            });
+            return;
+        }
+        
+        // Loop through and render each message
+        this.globalChatState.messages.forEach(async (message, index) => {
+            const messageDiv = container.createDiv({
+                cls: `chat-message ${message.role}-message`
+            });
+            
+            if (message.role === 'user') {
+                // Simple text for user messages
+                messageDiv.setText(message.content);
+            } else {
+                // Use standard MarkdownRenderer instead of executeExtensionTypeWord
+                try {
+                    await MarkdownRenderer.renderMarkdown(
+                        message.content,
+                        messageDiv,
+                        this.app.workspace.getActiveFile()?.path || '',
+                        this
+                    );
+                    
+                    // Ensure links open in a new tab
+                    messageDiv.querySelectorAll('a').forEach(a => {
+                        a.setAttribute('target', '_blank');
+                        a.setAttribute('rel', 'noopener noreferrer');
+                    });
+                } catch (error) {
+                    console.error('Error rendering markdown in global chat message:', error);
+                    messageDiv.setText(message.content); // Fallback to plain text
+                }
+            }
+            
+            // Add a clearfix after each message to prevent float issues
+            container.createDiv({ cls: 'message-clearfix' });
+        });
+        
+        // Scroll to bottom after rendering messages
+        setTimeout(() => {
+            this.scrollChatToBottom();
+        }, 50);
+    }
+
+    // Add processGlobalAIResponse method
+    private async processGlobalAIResponse(chatContentEl: HTMLElement) {
+        try {
+            // Show loading message
+            const loadingContainer = chatContentEl.createDiv({
+                cls: 'loading-spinner-container assistant-message'
+            });
+            
+            loadingContainer.createDiv({
+                cls: 'loading-spinner'
+            });
+            
+            const loadingMessage = loadingContainer.createDiv({
+                cls: 'loading-message',
+                text: 'Thinking...'
+            });
+            
+            // Create prompt with all transcripts combined
+            let fullContext = "You are analyzing multiple video transcripts. Here are all the transcripts:\n\n";
+            
+            // Add each transcript with clear separation
+            this.transcripts.forEach((transcript, index) => {
+                const title = transcript.title || `Video ${index + 1}`;
+                fullContext += `TRANSCRIPT ${index + 1}: ${title}\n`;
+                fullContext += "---------------------\n";
+                fullContext += transcript.content;
+                fullContext += "\n\n";
+            });
+            
+            // Get the last user message from global chat
+            const lastUserMessage = this.globalChatState?.messages.slice(-1)[0];
+            if (!lastUserMessage) {
+                throw new Error('No user message found');
+            }
+            
+            // Create message array for API call
+            const messages = [
+                { role: 'system', content: fullContext },
+                ...this.globalChatState!.messages
+            ];
+            
+            // Call OpenAI API using chatWithTranscript with an empty transcript
+            // since we've already embedded the transcripts in the system message
+            const response = await this.plugin.openaiService.chatWithTranscript(
+                this.globalChatState!.messages,
+                fullContext,
+                "Multiple Transcripts"
+            );
+            
+            // Remove the loading container
+            if (loadingContainer && loadingContainer.parentElement) {
+                loadingContainer.remove();
+            }
+            
+            // Add response to chat
+            this.globalChatState!.messages.push({
+                role: 'assistant',
+                content: response
+            });
+            
+            // Re-render chat messages
+            this.renderGlobalChatMessages(chatContentEl);
+            
+            // Save state
+            this.saveState();
+            
+        } catch (error) {
+            // Remove the loading container if it exists
+            const loadingContainer = chatContentEl.querySelector('.loading-spinner-container');
+            if (loadingContainer) {
+                loadingContainer.remove();
+            }
+            
+            // Show error message
+            const errorContent = error instanceof Error ? error.message : 'Unknown error';
+            const errorMessage = `Error: ${errorContent}`;
+            
+            // Add error message to chat
+            if (this.globalChatState?.messages) {
+                this.globalChatState.messages.push({
+                    role: 'assistant',
+                    content: errorMessage
+                });
+                
+                // Re-render chat messages
+                this.renderGlobalChatMessages(chatContentEl);
+            }
+            
+            // Log error
+            console.error('Error processing global chat:', error);
         }
     }
 } 
