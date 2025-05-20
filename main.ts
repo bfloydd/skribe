@@ -134,16 +134,16 @@ export default class SkribePlugin extends Plugin {
         new URLInputModal(
             this.app, 
             (url) => {
-                if (this.youtubeService.isYouTubeUrl(url)) {
-                    const videoId = this.youtubeService.extractVideoId(url);
-                    if (videoId) {
-                        this.transcriptManager.fetchAndResetView(url);
-                    } else {
-                        new Notice('Could not extract video ID from the URL');
-                    }
+            if (this.youtubeService.isYouTubeUrl(url)) {
+                const videoId = this.youtubeService.extractVideoId(url);
+                if (videoId) {
+                    this.transcriptManager.fetchAndResetView(url);
                 } else {
-                    new Notice('Invalid YouTube URL');
+                    new Notice('Could not extract video ID from the URL');
                 }
+            } else {
+                new Notice('Invalid YouTube URL');
+            }
             },
             "Skribe a Video",
             "",
