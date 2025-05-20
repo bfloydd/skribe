@@ -54,10 +54,61 @@ const createStartOverCommand = (): ToolbarCommand => ({
 });
 
 /**
+ * Create a command for loading YouTube playlists
+ */
+const createLoadPlaylistCommand = (): ToolbarCommand => ({
+    id: 'load-playlist',
+    icon: 'list-video',
+    tooltip: 'Load YouTube Playlist',
+    isEnabled: (context: CommandContext) => {
+        return true; // Always enabled
+    },
+    execute: async (context: CommandContext) => {
+        if (!context.plugin) {
+            console.error('Cannot load playlist: plugin not found in context');
+            new Notice('Error: Could not load playlist');
+            return;
+        }
+
+        try {
+            // Ask for playlist URL
+            const playlistUrl = await context.plugin.promptForInput(
+                'Enter YouTube playlist URL', 
+                '', 
+                'https://www.youtube.com/playlist?list=PLAYLIST_ID'
+            );
+            
+            if (!playlistUrl) {
+                console.log('Playlist URL input cancelled');
+                return;
+            }
+            
+            // Validate input is a YouTube playlist URL
+            const isValid = playlistUrl.match(/^(https?:\/\/)?(www\.)?(youtube\.com)\/playlist\?list=.+$/);
+            if (!isValid) {
+                new Notice('Invalid YouTube playlist URL. Please enter a valid playlist URL.');
+                return;
+            }
+            
+            // Show loading notice
+            new Notice('Loading playlist videos...');
+            
+            // Use the transcriptManager to fetch and process the playlist
+            await context.plugin.transcriptManager.fetchAndResetView(playlistUrl);
+            
+        } catch (error) {
+            console.error('Error loading playlist:', error);
+            new Notice(`Error: ${error instanceof Error ? error.message : 'Unknown error'}`);
+        }
+    }
+});
+
+/**
  * Top toolbar commands
  */
 const topToolbarCommands: ToolbarCommand[] = [
-    createStartOverCommand()
+    createStartOverCommand(),
+    createLoadPlaylistCommand()
 ];
 
 /**

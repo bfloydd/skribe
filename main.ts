@@ -131,18 +131,24 @@ export default class SkribePlugin extends Plugin {
         }
 
         // Otherwise, open the modal to get URL from user
-        new URLInputModal(this.app, (url) => {
-            if (this.youtubeService.isYouTubeUrl(url)) {
-                const videoId = this.youtubeService.extractVideoId(url);
-                if (videoId) {
-                    this.transcriptManager.fetchAndResetView(url);
+        new URLInputModal(
+            this.app, 
+            (url) => {
+                if (this.youtubeService.isYouTubeUrl(url)) {
+                    const videoId = this.youtubeService.extractVideoId(url);
+                    if (videoId) {
+                        this.transcriptManager.fetchAndResetView(url);
+                    } else {
+                        new Notice('Could not extract video ID from the URL');
+                    }
                 } else {
-                    new Notice('Could not extract video ID from the URL');
+                    new Notice('Invalid YouTube URL');
                 }
-            } else {
-                new Notice('Invalid YouTube URL');
-            }
-        }).open();
+            },
+            "Skribe a Video",
+            "",
+            "Enter YouTube URL..."
+        ).open();
     }
 
     async loadSettings() {
@@ -479,5 +485,22 @@ export default class SkribePlugin extends Plugin {
             // We don't need to call view.saveState() directly as it's already in the settings
             await this.saveSettings();
         }
+    }
+
+    /**
+     * Prompts the user for input with a modal dialog
+     * @param title Title of the modal
+     * @param value Initial value
+     * @param placeholder Placeholder text
+     * @returns Promise resolving to the input value or null if cancelled
+     */
+    public async promptForInput(title: string, value: string, placeholder: string): Promise<string | null> {
+        return new Promise((resolve) => {
+            const modal = new URLInputModal(this.app, (result) => {
+                resolve(result);
+            }, title, value, placeholder);
+            
+            modal.open();
+        });
     }
 } 

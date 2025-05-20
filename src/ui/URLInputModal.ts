@@ -3,10 +3,22 @@ import { App, Modal, setIcon } from 'obsidian';
 export class URLInputModal extends Modal {
     result: string;
     onSubmit: (result: string) => void;
+    title: string;
+    initialValue: string;
+    placeholder: string;
 
-    constructor(app: App, onSubmit: (result: string) => void) {
+    constructor(
+        app: App, 
+        onSubmit: (result: string) => void, 
+        title: string = "Skribe a Video", 
+        initialValue: string = "", 
+        placeholder: string = "Enter YouTube URL..."
+    ) {
         super(app);
         this.onSubmit = onSubmit;
+        this.title = title;
+        this.initialValue = initialValue;
+        this.placeholder = placeholder;
     }
 
     onOpen() {
@@ -27,9 +39,9 @@ export class URLInputModal extends Modal {
         });
         setIcon(iconEl, 'feather');
         
-        // Add the "Skribe a Video" text
+        // Add the title text
         titleContainer.createSpan({
-            text: "Skribe a Video",
+            text: this.title,
             cls: 'skribe-modal-title'
         });
         
@@ -41,7 +53,8 @@ export class URLInputModal extends Modal {
         // Create the input element with styling
         const inputEl = inputContainer.createEl("input", {
             type: "text",
-            placeholder: "Enter YouTube URL...",
+            value: this.initialValue,
+            placeholder: this.placeholder,
             cls: 'skribe-modal-input'
         });
         
@@ -89,6 +102,9 @@ export class URLInputModal extends Modal {
         buttonEl.style.border = "none";
         buttonEl.style.cursor = "pointer";
         buttonEl.style.flexShrink = "0"; // Prevent button from shrinking
+        
+        // Auto-focus the input field
+        inputEl.focus();
         
         // Add event listeners
         buttonEl.addEventListener("click", () => {

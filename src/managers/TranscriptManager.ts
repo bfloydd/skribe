@@ -2,6 +2,7 @@ import { Notice } from 'obsidian';
 import { BetterYouTubeStrategy } from '../services/BetterYouTubeStrategy';
 import { VideoInputStrategy } from '../services/VideoInputStrategy';
 import { YouTubeService } from '../services/YouTubeService';
+import { YouTubePlaylistStrategy } from '../services/YouTubePlaylistStrategy';
 import type SkribePlugin from '../../main';
 
 /**
@@ -34,11 +35,29 @@ export class TranscriptManager {
      * @returns An array of transcript objects
      */
     private async fetchTranscripts(input: string): Promise<{ transcript: string, title: string }[]> {
-        // Use BetterYouTubeStrategy for improved error handling and rate limiting
-        const strategy: VideoInputStrategy = new BetterYouTubeStrategy();
-        console.log('Using BetterYouTubeStrategy for input:', input);
+        let strategy: VideoInputStrategy;
+        
+        // Check if input is a YouTube playlist URL
+        if (this.isYouTubePlaylistUrl(input)) {
+            strategy = new YouTubePlaylistStrategy();
+            console.log('Using YouTubePlaylistStrategy for input:', input);
+        } else {
+            // Use BetterYouTubeStrategy for regular YouTube URLs or comma-separated URLs
+            strategy = new BetterYouTubeStrategy();
+            console.log('Using BetterYouTubeStrategy for input:', input);
+        }
         
         return await strategy.getTranscripts(input);
+    }
+
+    /**
+     * Check if the input is a YouTube playlist URL
+     * @param input URL to check
+     * @returns True if it's a playlist URL, false otherwise
+     */
+    private isYouTubePlaylistUrl(url: string): boolean {
+        const pattern = /^(https?:\/\/)?(www\.)?(youtube\.com)\/playlist\?list=.+$/;
+        return pattern.test(url);
     }
 
     /**
