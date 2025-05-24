@@ -1,7 +1,7 @@
 {
 	"id": "skribe",
 	"name": "Skribe",
-	"version": "0.4.1",
+	"version": "0.4.2",
 	"minAppVersion": "0.15.0",
 	"description": "Research: Transcribe, Summarize, Chat",
 	"author": "Floyd",
