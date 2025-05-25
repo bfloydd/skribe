@@ -38,8 +38,8 @@ export class SkribeView extends ItemView {
     toolbarStates: { [key: string]: any } = {};
     welcomeMessages: string[] = [
         'Hello, Skribe!',
-        'Hire a Skribe',
-        'Skribe a Video'
+        'Hire a Skribe!',
+        'Skribe something!'
     ];
     showQuips: boolean = true;
     isAtBottom: boolean = true;
