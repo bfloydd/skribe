@@ -12,7 +12,7 @@ export class URLInputModal extends Modal {
         onSubmit: (result: string) => void, 
         title: string = "Skribe a Video", 
         initialValue: string = "", 
-        placeholder: string = "Enter YouTube URL..."
+        placeholder: string = "Enter YouTube URL or paste transcript content..."
     ) {
         super(app);
         this.onSubmit = onSubmit;

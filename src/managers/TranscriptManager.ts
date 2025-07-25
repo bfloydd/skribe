@@ -3,6 +3,7 @@ import { BetterYouTubeStrategy } from '../services/BetterYouTubeStrategy';
 import { VideoInputStrategy } from '../services/VideoInputStrategy';
 import { YouTubeService } from '../services/YouTubeService';
 import { YouTubePlaylistStrategy } from '../services/YouTubePlaylistStrategy';
+import { TranscriptContentStrategy } from '../services/VideoInputStrategy';
 import type SkribePlugin from '../../main';
 
 /**
@@ -37,8 +38,13 @@ export class TranscriptManager {
     private async fetchTranscripts(input: string): Promise<{ transcript: string, title: string }[]> {
         let strategy: VideoInputStrategy;
         
+        // First, check if the input looks like transcript content rather than a URL
+        if (this.isTranscriptContent(input)) {
+            strategy = new TranscriptContentStrategy();
+            console.log('Using TranscriptContentStrategy for input (detected as transcript content)');
+        }
         // Check if input is a YouTube playlist URL
-        if (this.isYouTubePlaylistUrl(input)) {
+        else if (this.isYouTubePlaylistUrl(input)) {
             strategy = new YouTubePlaylistStrategy();
             console.log('Using YouTubePlaylistStrategy for input:', input);
         } else {
@@ -58,6 +64,34 @@ export class TranscriptManager {
     private isYouTubePlaylistUrl(url: string): boolean {
         const pattern = /^(https?:\/\/)?(www\.)?(youtube\.com)\/playlist\?list=.+$/;
         return pattern.test(url);
+    }
+
+    /**
+     * Check if the input looks like transcript content rather than a URL
+     * @param input The input string to check
+     * @returns True if it appears to be transcript content, false otherwise
+     */
+    private isTranscriptContent(input: string): boolean {
+        const trimmedInput = input.trim();
+        
+        // If it's very short, it's probably not transcript content
+        if (trimmedInput.length < 20) {
+            return false;
+        }
+        
+        // If it contains URL patterns, it's probably a URL
+        if (trimmedInput.includes('http://') || trimmedInput.includes('https://') || 
+            trimmedInput.includes('youtube.com') || trimmedInput.includes('youtu.be')) {
+            return false;
+        }
+        
+        // If it contains typical transcript patterns (sentences, punctuation, etc.)
+        // and doesn't look like a URL, it's probably transcript content
+        const hasMultipleSentences = (trimmedInput.match(/[.!?]/g) || []).length >= 2;
+        const hasWords = trimmedInput.split(/\s+/).length >= 5;
+        const hasTypicalTranscriptPatterns = /[.!?]\s+[A-Z]/.test(trimmedInput); // Sentence endings followed by capital letters
+        
+        return hasMultipleSentences && hasWords && hasTypicalTranscriptPatterns;
     }
 
     /**

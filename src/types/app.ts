@@ -38,18 +38,40 @@ export const DEFAULT_SETTINGS: SkribeSettings = {
     quips: []
 }
 
-export interface TranscriptSegment {
-    utf8: string;
-}
 
-export interface TranscriptEvent {
-    segs: TranscriptSegment[];
-}
 
 export interface CaptionTrack {
     languageCode: string;
     kind: string;
     baseUrl: string;
+}
+
+// Types for the YouTube transcript API
+export interface TranscriptConfig {
+    lang?: string;
+    country?: string;
+}
+
+export interface TranscriptLine {
+    text: string;
+    offset: number;
+    duration: number;
+}
+
+export interface VideoData {
+    title: string;
+    transcriptRequests: Array<{
+        url: string;
+        headers: Record<string, string>;
+        body: string;
+    }>;
+}
+
+export class YoutubeTranscriptError extends Error {
+    constructor(message: string | Error) {
+        super(typeof message === 'string' ? message : message.message);
+        this.name = 'YoutubeTranscriptError';
+    }
 }
 
 export interface ChatMessage {

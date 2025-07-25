@@ -125,7 +125,7 @@ export default class SkribePlugin extends Plugin {
                     new Notice('Could not extract video ID from the URL');
                 }
             } else {
-                new Notice('Invalid YouTube URL');
+                new Notice('Invalid YouTube URL or transcript content');
             }
             return;
         }
@@ -142,12 +142,12 @@ export default class SkribePlugin extends Plugin {
                     new Notice('Could not extract video ID from the URL');
                 }
             } else {
-                new Notice('Invalid YouTube URL');
+                new Notice('Invalid YouTube URL or transcript content');
             }
             },
             "Skribe a Video",
             "",
-            "Enter YouTube URL..."
+            "Enter YouTube URL or paste transcript content..."
         ).open();
     }
 

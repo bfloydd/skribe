@@ -65,4 +65,29 @@ export class CommaSeparatedYouTubeVideosStrategy implements VideoInputStrategy {
         console.log(`Successfully fetched ${transcripts.length} out of ${videoLinks.length} transcripts`);
         return transcripts;
     }
+}
+
+export class TranscriptContentStrategy implements VideoInputStrategy {
+    async getTranscripts(input: string): Promise<{ transcript: string, title: string }[]> {
+        // This strategy handles when users paste transcript content directly
+        // instead of YouTube URLs
+        
+        // Clean up the input text
+        const cleanedTranscript = input.trim();
+        
+        if (!cleanedTranscript) {
+            throw new Error('Empty transcript content provided');
+        }
+        
+        // Generate a title based on the first few words
+        const words = cleanedTranscript.split(/\s+/).slice(0, 5);
+        const title = words.join(' ') + (words.length >= 5 ? '...' : '');
+        
+        console.log(`Processing transcript content: "${title}" (${cleanedTranscript.length} characters)`);
+        
+        return [{
+            transcript: cleanedTranscript,
+            title: title
+        }];
+    }
 } 

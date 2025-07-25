@@ -101,7 +101,7 @@ export class SkribeView extends ItemView {
             cls: 'empty-state-url-input',
             attr: {
                 type: 'text',
-                placeholder: 'Enter YouTube URL...'
+                placeholder: 'Enter YouTube URL or paste transcript content...'
             }
         });
 
@@ -129,7 +129,7 @@ export class SkribeView extends ItemView {
     // Add handleUrlSubmit method to process URL input
     private handleUrlSubmit(url: string): void {
         if (!url.trim()) {
-            new Notice('Please enter a YouTube URL');
+            new Notice('Please enter a YouTube URL or paste transcript content');
             return;
         }
 
