@@ -1,5 +1,5 @@
 import { request, requestUrl } from 'obsidian';
-import { parseVideoPageWithFallbacks, parseTranscript } from './YouTubeApiParser';
+import { parseVideoPageWithFallbacks, parseTranscript } from '../utils/YouTubeApiParser';
 
 export class YouTubeService {
     private static instance: YouTubeService;
@@ -79,7 +79,7 @@ export class YouTubeService {
                         );
                         
                         // Convert lines to transcript text
-                        const transcript = lines.map(line => line.text).join(' ');
+                        const transcript = lines.map((line: { text: string }) => line.text).join(' ');
                         return {
                             title: videoData.title,
                             transcript,
