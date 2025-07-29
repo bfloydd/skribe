@@ -106,6 +106,19 @@ export class SettingsTab extends PluginSettingTab {
                     await this.plugin.saveSettings();
                 })
             );
+
+        new Setting(containerEl)
+            .setName('Max Transcript Length')
+            .setDesc(`Maximum characters to send to OpenAI API. Higher values provide more context but may hit API limits. Current model (${this.plugin.settings.model}) supports ~${Math.floor(this.plugin.openaiService.getMaxContextLength() / 4)}k characters. 50k chars ≈ 12.5k tokens.`)
+            .addSlider(slider => slider
+                .setLimits(10000, 100000, 5000)
+                .setValue(this.plugin.settings.maxTranscriptLength)
+                .setDynamicTooltip()
+                .onChange(async (value) => {
+                    this.plugin.settings.maxTranscriptLength = value;
+                    await this.plugin.saveSettings();
+                })
+            );
             
         // Quips Section with more visible header
         const quipsHeader = containerEl.createEl('h3', {text: 'Quick Chat Messages (Quips)'});

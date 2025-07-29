@@ -24,6 +24,33 @@ export class OpenAIService {
         this.plugin = plugin;
     }
 
+    /**
+     * Estimate the number of tokens in a text string
+     * This is a rough approximation: ~4 characters per token for English text
+     */
+    public estimateTokens(text: string): number {
+        return Math.ceil(text.length / 4);
+    }
+
+    /**
+     * Get the maximum context length for the current model
+     */
+    public getMaxContextLength(): number {
+        const model = this.plugin.settings.model;
+        switch (model) {
+            case 'gpt-4o':
+            case 'gpt-4o-mini':
+                return 128000;
+            case 'gpt-4':
+            case 'gpt-4-turbo':
+                return 8192;
+            case 'gpt-3.5-turbo':
+                return 4096;
+            default:
+                return 128000; // Default to GPT-4o limit
+        }
+    }
+
     public async reformatText(content: string): Promise<string> {
         if (!this.apiKey) {
             console.error('OpenAIService: API key not set');
@@ -31,14 +58,41 @@ export class OpenAIService {
         }
         
         console.log('OpenAIService: Starting to reformat text');
-        console.log('OpenAIService: Content length:', content.length);
+        console.log('OpenAIService: Original content length:', content.length);
+        
+        // Truncate content if it exceeds the maximum length setting
+        const maxLength = this.plugin.settings.maxTranscriptLength || 50000;
+        let truncatedContent = content;
+        let wasTruncated = false;
+        
+        if (content.length > maxLength) {
+            truncatedContent = content.substring(0, maxLength);
+            wasTruncated = true;
+            console.log(`OpenAIService: Content truncated from ${content.length} to ${truncatedContent.length} characters`);
+            
+            // Show a notice to the user about truncation with settings link
+            if (this.plugin) {
+                const notice = new Notice(`Transcript truncated from ${content.length.toLocaleString()} to ${truncatedContent.length.toLocaleString()} characters. Click to adjust settings.`, 10000);
+                
+                // Add click handler to open settings
+                notice.noticeEl.addEventListener('click', () => {
+                    (this.plugin.app as any).setting?.open();
+                    (this.plugin.app as any).setting?.openTabById('skribe');
+                });
+                
+                // Add hover effect to indicate it's clickable
+                notice.noticeEl.style.cursor = 'pointer';
+                notice.noticeEl.style.textDecoration = 'underline';
+            }
+        }
         
         try {
             // Make sure we're using a prompt that will work well
             const prompt = `Please analyze and provide a concise summary of the following transcript. 
             Include key points, insights, and important information in a well-structured format with headings:
+            ${wasTruncated ? '\n\n[Note: This transcript was truncated due to length limits]' : ''}
 
-            ${content}`;
+            ${truncatedContent}`;
             
             console.log('OpenAIService: Sending request to OpenAI');
             
@@ -145,11 +199,40 @@ export class OpenAIService {
             throw new Error('OpenAI API key not set');
         }
 
+        console.log('OpenAIService: Starting chat with transcript');
+        console.log('OpenAIService: Original transcript length:', transcript.length);
+
+        // Truncate transcript if it exceeds the maximum length setting
+        const maxLength = this.plugin.settings.maxTranscriptLength || 50000;
+        let truncatedTranscript = transcript;
+        let wasTruncated = false;
+        
+        if (transcript.length > maxLength) {
+            truncatedTranscript = transcript.substring(0, maxLength);
+            wasTruncated = true;
+            console.log(`OpenAIService: Transcript truncated from ${transcript.length} to ${truncatedTranscript.length} characters`);
+            
+            // Show a notice to the user about truncation with settings link
+            if (this.plugin) {
+                const notice = new Notice(`Transcript truncated from ${transcript.length.toLocaleString()} to ${truncatedTranscript.length.toLocaleString()} characters. Click to adjust settings.`, 10000);
+                
+                // Add click handler to open settings
+                notice.noticeEl.addEventListener('click', () => {
+                    (this.plugin.app as any).setting?.open();
+                    (this.plugin.app as any).setting?.openTabById('skribe');
+                });
+                
+                // Add hover effect to indicate it's clickable
+                notice.noticeEl.style.cursor = 'pointer';
+                notice.noticeEl.style.textDecoration = 'underline';
+            }
+        }
+
         const systemMessage = {
             role: "system",
             content: `You are a helpful assistant analyzing a video transcript. 
             Use the following transcript as context for answering the user's questions.
-            ${videoTitle ? `Video Title: ${videoTitle}\n    ` : ''}Transcript: ${transcript}`
+            ${videoTitle ? `Video Title: ${videoTitle}\n` : ''}${wasTruncated ? '[Note: This transcript was truncated due to length limits]\n' : ''}Transcript: ${truncatedTranscript}`
         };
 
         try {
@@ -216,7 +299,33 @@ export class OpenAIService {
         }
         
         console.log('OpenAIService: Creating revised transcript');
-        console.log('OpenAIService: Content length:', content.length);
+        console.log('OpenAIService: Original content length:', content.length);
+        
+        // Truncate content if it exceeds the maximum length setting
+        const maxLength = this.plugin.settings.maxTranscriptLength || 50000;
+        let truncatedContent = content;
+        let wasTruncated = false;
+        
+        if (content.length > maxLength) {
+            truncatedContent = content.substring(0, maxLength);
+            wasTruncated = true;
+            console.log(`OpenAIService: Content truncated from ${content.length} to ${truncatedContent.length} characters`);
+            
+            // Show a notice to the user about truncation with settings link
+            if (this.plugin) {
+                const notice = new Notice(`Transcript truncated from ${content.length.toLocaleString()} to ${truncatedContent.length.toLocaleString()} characters. Click to adjust settings.`, 10000);
+                
+                // Add click handler to open settings
+                notice.noticeEl.addEventListener('click', () => {
+                    (this.plugin.app as any).setting?.open();
+                    (this.plugin.app as any).setting?.openTabById('skribe');
+                });
+                
+                // Add hover effect to indicate it's clickable
+                notice.noticeEl.style.cursor = 'pointer';
+                notice.noticeEl.style.textDecoration = 'underline';
+            }
+        }
         
         try {
             console.log('OpenAIService: Sending request to OpenAI');
@@ -245,11 +354,12 @@ export class OpenAIService {
                                 DO NOT add any new information or change the meaning of the content.
                                 DO NOT add summaries, titles, or annotations.
                                 DO NOT introduce facts that aren't in the original transcript.
-                                DO focus on creating a clean, grammatically correct, and well-formatted version of the original.`
+                                DO focus on creating a clean, grammatically correct, and well-formatted version of the original.
+                                ${wasTruncated ? '\n\n[Note: This transcript was truncated due to length limits]' : ''}`
                             },
                             {
                                 role: "user",
-                                content: content
+                                content: truncatedContent
                             }
                         ],
                         temperature: 0.3

@@ -6,6 +6,7 @@ export interface SkribeSettings {
     voice: string;
     includeTimestampInFilename: boolean;
     includeContentTypeInFilename: boolean;
+    maxTranscriptLength: number; // New setting for controlling transcript length
     quips: string[];
     savedState?: SkribeState;
     debugMode?: boolean;
@@ -35,6 +36,7 @@ export const DEFAULT_SETTINGS: SkribeSettings = {
     voice: 'alloy',
     includeTimestampInFilename: true,
     includeContentTypeInFilename: false,
+    maxTranscriptLength: 50000, // Default to 50k characters (~12.5k tokens)
     quips: []
 }
 

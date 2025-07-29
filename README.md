@@ -29,3 +29,11 @@ An Obsidian plugin for transcribing, summarizing, and chatting with video conten
 ## Requirements
 - OpenAI API key for AI features
 - Internet connection for YouTube transcript fetching
+
+## Settings
+- **Transcript Folder**: Choose where to save transcript files
+- **OpenAI Model**: Select your preferred GPT model (GPT-4o, GPT-4, GPT-3.5-turbo, etc.)
+- **Max Transcript Length**: Control how much transcript content is sent to OpenAI API (default: 50k characters ≈ 12.5k tokens)
+  - Higher values provide more context but may hit API limits
+  - Lower values reduce API costs and improve response times
+  - Adjust based on your model's context window and needs
