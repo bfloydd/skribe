@@ -32,7 +32,7 @@ export const DEFAULT_SETTINGS: SkribeSettings = {
     youtubeApiKey: '',
     transcriptFolder: 'Transcripts',
     openaiApiKey: '',
-    model: 'gpt-4o-mini', // Default to the most cost-effective model
+    model: 'o4-mini', // Default to the fastest advanced reasoning model
     voice: 'alloy',
     includeTimestampInFilename: true,
     includeContentTypeInFilename: false,

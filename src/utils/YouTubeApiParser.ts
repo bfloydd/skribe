@@ -121,6 +121,35 @@ function debugLog(...args: any[]) {
 	}
 }
 
+/**
+ * Safely converts JavaScript object literals to valid JSON
+ * Handles unquoted property names and other common issues
+ */
+function sanitizeJavaScriptObject(jsString: string): string {
+	// Remove any leading/trailing whitespace
+	let sanitized = jsString.trim();
+	
+	// Handle unquoted property names by adding quotes
+	sanitized = sanitized.replace(/(\s*)(\w+)(\s*):/g, '$1"$2"$3:');
+	
+	// Handle single quotes by converting to double quotes
+	sanitized = sanitized.replace(/'/g, '"');
+	
+	// Handle trailing commas in objects and arrays
+	sanitized = sanitized.replace(/,(\s*[}\]])/g, '$1');
+	
+	// Handle undefined values by converting to null
+	sanitized = sanitized.replace(/:\s*undefined\s*([,}])/g, ': null$1');
+	
+	// Handle function definitions by removing them (they're not needed for our use case)
+	sanitized = sanitized.replace(/:\s*function\s*\([^)]*\)\s*\{[^}]*\}/g, ': null');
+	
+	// Handle any remaining function calls by converting to null
+	sanitized = sanitized.replace(/:\s*[a-zA-Z_$][a-zA-Z0-9_$]*\s*\([^)]*\)/g, ': null');
+	
+	return sanitized;
+}
+
 export function extractParamsFromPage(htmlContent: string): string | null {
 	debugLog("🔍 DEBUG: Looking for ytInitialData script tag...");
 	debugLog(
@@ -172,16 +201,17 @@ export function extractParamsFromPage(htmlContent: string): string | null {
 
 		let ytInitialData;
 		try {
-			// Try to parse as JavaScript object first (unquoted property names)
-			ytInitialData = eval("(" + ytInitialDataString + ")");
-		} catch (evalError) {
-			// Fallback to JSON.parse if eval fails
+			// Try to parse as JSON first (safer)
+			ytInitialData = JSON.parse(ytInitialDataString);
+		} catch (jsonError) {
+			// If JSON.parse fails, try to fix common issues and parse safely
 			try {
-				ytInitialData = JSON.parse(ytInitialDataString);
-			} catch (jsonError) {
+				const sanitizedString = sanitizeJavaScriptObject(ytInitialDataString);
+				ytInitialData = JSON.parse(sanitizedString);
+			} catch (sanitizedError) {
 				debugLog(
-					"❌ DEBUG: Failed to parse ytInitialData:",
-					jsonError.message,
+					"❌ DEBUG: Failed to parse ytInitialData after sanitization:",
+					sanitizedError.message,
 				);
 				return null;
 			}

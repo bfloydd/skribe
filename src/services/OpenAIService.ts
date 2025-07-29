@@ -40,13 +40,19 @@ export class OpenAIService {
         switch (model) {
             case 'gpt-4o':
                 return 128000; // 128k tokens
-            case 'gpt-4o-mini':
+            case 'o3':
+                return 128000; // 128k tokens
+            case 'o4-mini':
+                return 128000; // 128k tokens
+            case 'o4-mini-high':
+                return 128000; // 128k tokens
+            case 'gpt-4.5':
+                return 128000; // 128k tokens
+            case 'gpt-4.1':
+                return 128000; // 128k tokens
+            case 'gpt-4.1-mini':
                 return 128000; // 128k tokens
             case 'gpt-4-turbo':
-                return 128000; // 128k tokens
-            case 'gpt-4-1106-preview':
-                return 128000; // 128k tokens
-            case 'gpt-4-0125-preview':
                 return 128000; // 128k tokens
             case 'gpt-4':
                 return 8192; // 8k tokens
