@@ -39,13 +39,19 @@ export class OpenAIService {
         const model = this.plugin.settings.model;
         switch (model) {
             case 'gpt-4o':
+                return 128000; // 128k tokens
             case 'gpt-4o-mini':
-                return 128000;
-            case 'gpt-4':
+                return 128000; // 128k tokens
             case 'gpt-4-turbo':
-                return 8192;
+                return 128000; // 128k tokens
+            case 'gpt-4-1106-preview':
+                return 128000; // 128k tokens
+            case 'gpt-4-0125-preview':
+                return 128000; // 128k tokens
+            case 'gpt-4':
+                return 8192; // 8k tokens
             case 'gpt-3.5-turbo':
-                return 4096;
+                return 4096; // 4k tokens
             default:
                 return 128000; // Default to GPT-4o limit
         }

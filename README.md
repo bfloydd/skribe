@@ -32,8 +32,20 @@ An Obsidian plugin for transcribing, summarizing, and chatting with video conten
 
 ## Settings
 - **Transcript Folder**: Choose where to save transcript files
-- **OpenAI Model**: Select your preferred GPT model (GPT-4o, GPT-4, GPT-3.5-turbo, etc.)
+- **OpenAI Model**: Select your preferred GPT model
 - **Max Transcript Length**: Control how much transcript content is sent to OpenAI API (default: 50k characters ≈ 12.5k tokens)
   - Higher values provide more context but may hit API limits
   - Lower values reduce API costs and improve response times
   - Adjust based on your model's context window and needs
+
+## Available Models
+
+| Model | Context Window | Input Cost | Output Cost | Best For |
+|-------|---------------|------------|-------------|----------|
+| **GPT-4o** | 128k tokens | $2.50/1M | $5.00/1M | Best quality, complex analysis |
+| **GPT-4o-mini** | 128k tokens | $0.15/1M | $0.60/1M | Cost-effective, good quality |
+| **GPT-4 Turbo** | 128k tokens | $10.00/1M | $30.00/1M | High performance, expensive |
+| **GPT-4** | 8k tokens | $30.00/1M | $60.00/1M | Legacy, limited context |
+| **GPT-3.5-turbo** | 4k tokens | $0.50/1M | $1.50/1M | Legacy, very limited context |
+
+**Recommendation**: Start with **GPT-4o-mini** for the best balance of cost and quality.

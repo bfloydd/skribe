@@ -75,11 +75,13 @@ export class SettingsTab extends PluginSettingTab {
             .setDesc('Select the model to use for chat and summarization')
             .addDropdown(dropdown => dropdown
                 .addOptions({
-                    'gpt-4o': 'GPT-4o',
-                    'gpt-4o-mini': 'GPT-4o Mini',
-                    'gpt-4': 'GPT-4',
+                    'gpt-4o': 'GPT-4o (Latest)',
+                    'gpt-4o-mini': 'GPT-4o Mini (Fast & Cheap)',
                     'gpt-4-turbo': 'GPT-4 Turbo',
-                    'gpt-3.5-turbo': 'GPT-3.5 Turbo'
+                    'gpt-4-1106-preview': 'GPT-4 Turbo (Preview)',
+                    'gpt-4-0125-preview': 'GPT-4 Turbo (Latest Preview)',
+                    'gpt-4': 'GPT-4 (Legacy)',
+                    'gpt-3.5-turbo': 'GPT-3.5 Turbo (Legacy)'
                 })
                 .setValue(this.plugin.settings.model)
                 .onChange(async (value) => {
